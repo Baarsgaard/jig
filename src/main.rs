@@ -1,5 +1,6 @@
 pub mod config;
 pub mod interactivity;
+pub mod jira;
 use interactivity::{get_or_input_issue_key, select_date};
 
 fn main() {
