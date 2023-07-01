@@ -1,9 +1,13 @@
 pub mod config;
+pub mod interactivity;
+use interactivity::{get_or_input_issue_key, select_date};
 
 fn main() {
-    let now = chrono::Utc::now();
-    println!("Time {}", now.to_rfc3339());
-    println!("Git is present: {:?}", config::ensure_git_is_available());
-    let cfg = config::Config::load();
-    println!("{:?}", cfg.unwrap());
+    let cfg = config::Config::load().unwrap();
+    let rfc3339 = select_date(&cfg);
+    let issue = get_or_input_issue_key(&cfg);
+
+    dbg!(rfc3339);
+    dbg!(issue);
+    dbg!(cfg);
 }

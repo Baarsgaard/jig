@@ -11,9 +11,12 @@ use toml::de::Error as TomlError;
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
-    jira_host: String,
-    user_email: String,
-    api_token: String,
+    pub jira_url: String,
+    pub user_email: String,
+    pub api_token: String,
+    pub default_issue_key: Option<String>,
+    pub always_confirm_date: Option<bool>,
+    // pub issue_phases: Option<Vec<String>>,
 }
 
 impl Config {
@@ -94,13 +97,6 @@ pub fn find_workspace() -> PathBuf {
         }
     }
     current_dir
-}
-
-pub fn ensure_git_is_available() -> Result<(), which::Error> {
-    match which::which("git") {
-        Ok(_) => Ok(()),
-        Err(e) => Err(e),
-    }
 }
 
 pub fn merge_toml_values(left: toml::Value, right: toml::Value, merge_depth: usize) -> toml::Value {

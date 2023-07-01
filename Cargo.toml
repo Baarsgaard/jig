@@ -7,11 +7,14 @@ authors = ["Steffen Baarsgaard <sbaarsgaard@gmail.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+base64 = "0.21.2"
 chrono = "0.4.26"
 clap = "4.3.4"
 crossterm = "0.26.1"
 etcetera = "0.8.0"
-inquire = "0.6.2"
+fuzzy-matcher = "0.3.7"
+gix = { version = "0.48.0", default-features = false }
+inquire = { version = "0.6.2", features = ["date"] }
 regex = { version = "1.8.4", features = ["std"], default-features = false }
 reqwest = { version = "0.11.18", features = ["json"] }
 serde = { version = "1.0.164", features = ["derive"] }
