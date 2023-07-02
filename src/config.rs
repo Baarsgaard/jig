@@ -5,8 +5,13 @@ use std::fmt::Display;
 use std::fs;
 use std::io::Error as IOError;
 use std::path::PathBuf;
-use toml;
+use std::sync::OnceLock;
 use toml::de::Error as TomlError;
+
+use crate::jira::client::JiraAPIClient;
+
+// Proof of concept
+static CONFIG_FILE: OnceLock<PathBuf> = OnceLock::new();
 
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -20,6 +25,32 @@ pub struct Config {
 }
 
 impl Config {
+    pub fn build_api_client(&self) -> JiraAPIClient {
+        let mut url = self.jira_url.clone();
+
+        url = match url.starts_with("http") {
+            false => String::from("https://") + &url,
+            true => url,
+        };
+
+        if url.ends_with('/') {
+            url.pop();
+        }
+
+        let client = reqwest::ClientBuilder::new()
+            .default_headers(JiraAPIClient::get_headers(self.clone()))
+            .https_only(true)
+            .build()
+            .expect("Unable to instantiate request client");
+
+        JiraAPIClient {
+            url: self.jira_url.clone(),
+            user_email: self.user_email.clone(),
+            version: String::from("latest"),
+            client,
+        }
+    }
+
     pub fn load() -> Result<Config, ConfigLoadError> {
         let global_raw_config = fs::read_to_string(config_file()).map_err(ConfigLoadError::Error);
         let local_raw_config =
@@ -66,7 +97,16 @@ impl Display for ConfigLoadError {
 }
 
 pub fn config_file() -> PathBuf {
-    config_dir().join("config.toml")
+    let stored_path = CONFIG_FILE.get().map(|path| path.to_path_buf());
+
+    match stored_path {
+        Some(path) => path,
+        None => {
+            let cfg_path = config_dir().join("config.toml");
+            CONFIG_FILE.set(cfg_path.clone()).unwrap();
+            cfg_path
+        }
+    }
 }
 
 pub fn workspace_config_file() -> PathBuf {
@@ -87,8 +127,8 @@ pub fn cache_dir() -> PathBuf {
     path
 }
 
-/// This function starts searching the FS upward from the CWD
-/// and returns the first directory that contains either `.git`.
+/// Search parent folders from PWD
+/// and returns the first directory that contains `.git`.
 pub fn find_workspace() -> PathBuf {
     let current_dir = std::env::current_dir().expect("unable to determine current directory");
     for ancestor in current_dir.ancestors() {

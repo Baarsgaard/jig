@@ -5,9 +5,7 @@ use inquire::{validator::Validation, CustomUserError, DateSelect, Text};
 use regex::Regex;
 use std::cmp::Reverse;
 
-use crate::config;
-use config::Config;
-// use crate::jira;
+use crate::config::{find_workspace, Config};
 
 pub fn select_date(cfg: &Config) -> String {
     let now = Utc::now().to_rfc3339();
@@ -27,7 +25,7 @@ pub fn select_date(cfg: &Config) -> String {
 }
 
 fn get_branch_name() -> String {
-    let repo = ThreadSafeRepository::open(config::find_workspace())
+    let repo = ThreadSafeRepository::open(find_workspace())
         .unwrap()
         .to_thread_local();
     let head_ref = repo.head_ref().unwrap();
@@ -81,10 +79,10 @@ pub fn get_or_input_issue_key(cfg: &Config) -> String {
         return result.get(0).unwrap().as_str().to_owned();
     }
 
-    let mut issue_key = cfg.default_issue_key.clone().unwrap_or_default();
-    if !String::is_empty(&issue_key) {
-        issue_key.push('-');
-    }
+    let issue_key = match cfg.default_issue_key.clone() {
+        Some(issue_key) => issue_key + "-",
+        None => String::default(),
+    };
 
     let text_input = Text::new("Jira Issue: ")
         .with_initial_value(&issue_key)
@@ -95,5 +93,6 @@ pub fn get_or_input_issue_key(cfg: &Config) -> String {
                 None => Ok(Validation::Invalid("Must be valid Jira Issue key".into())),
             },
         );
-    text_input.prompt().unwrap().as_str().to_owned()
+
+    text_input.prompt().unwrap()
 }
