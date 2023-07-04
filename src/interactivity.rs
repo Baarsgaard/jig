@@ -1,9 +1,7 @@
 use chrono::{Utc, Weekday};
-use fuzzy_matcher::FuzzyMatcher;
 use gix::ThreadSafeRepository;
-use inquire::{validator::Validation, CustomUserError, DateSelect, Text};
+use inquire::{DateSelect, Select};
 use regex::Regex;
-use std::cmp::Reverse;
 
 use crate::config::{find_workspace, Config};
 
@@ -37,37 +35,30 @@ fn get_branch_name() -> String {
     }
 }
 
-fn issue_fuzzer(input: &str) -> Result<Vec<String>, CustomUserError> {
-    let input = input;
-    let matcher = fuzzy_matcher::skim::SkimMatcherV2::default().ignore_case();
-    let mut names = my_issues();
+// fn issue_fuzzer(input: &str, issues: Vec<Issue>) -> Result<Vec<String>, CustomUserError> {
+//     let input = input;
+//     let mut names = issues
+//         .iter()
+//         .map(|i| i.key + " " + i.fields.summary.as_str())
+//         .collect::<Vec<String>>();
 
-    // Loop through names, score each against input, store results
-    let mut matches: Vec<(String, i64)> = names
-        .into_iter()
-        .filter_map(|name| {
-            matcher
-                .fuzzy_match(&name, input)
-                .map(|score| (name.to_owned(), score))
-        })
-        .collect();
+//     // Loop through names, score each against input, store results
+//     let matcher = fuzzy_matcher::skim::SkimMatcherV2::default().ignore_case();
+//     let mut matches: Vec<(String, i64)> = names
+//         .into_iter()
+//         .filter_map(|name| {
+//             matcher
+//                 .fuzzy_match(&name, input)
+//                 .map(|score| (name.to_owned(), score))
+//         })
+//         .collect();
 
-    // Sort by score and retrieve names.
-    matches.sort_unstable_by_key(|(_file, score)| Reverse(*score));
-    names = matches.into_iter().map(|(name, _)| name).collect();
+//     // Sort by score and retrieve names.
+//     matches.sort_unstable_by_key(|(_file, score)| Reverse(*score));
+//     names = matches.into_iter().map(|(name, _)| name).collect();
 
-    Ok(names)
-}
-
-// TODO Replace with JiraAPIClient::my_issues
-fn my_issues() -> Vec<String> {
-    vec![
-        String::from("JB-2 TO DO Issue"),
-        String::from("JB-1 Minimal issue"),
-        String::from("JA-2 Other"),
-        String::from("JC-3 Other"),
-    ]
-}
+//     Ok(names)
+// }
 
 pub fn get_or_input_issue_key(cfg: &Config) -> String {
     let issue_re = Regex::new(r"([A-Z]{2,}-[0-9]+)").unwrap();
@@ -79,20 +70,9 @@ pub fn get_or_input_issue_key(cfg: &Config) -> String {
         return result.get(0).unwrap().as_str().to_owned();
     }
 
-    let issue_key = match cfg.default_issue_key.clone() {
-        Some(issue_key) => issue_key + "-",
-        None => String::default(),
-    };
+    let client = cfg.build_api_client();
+    let my_issues = client.my_issues(cfg.default_issue_key.clone().unwrap_or_default());
 
-    let text_input = Text::new("Jira Issue: ")
-        .with_initial_value(&issue_key)
-        .with_autocomplete(&issue_fuzzer)
-        .with_validator(
-            move |s: &str| match issue_re.captures(s.to_uppercase().as_str()) {
-                Some(_) => Ok(Validation::Valid),
-                None => Ok(Validation::Invalid("Must be valid Jira Issue key".into())),
-            },
-        );
-
-    text_input.prompt().unwrap()
+    let issue = Select::new("Jira issue:", my_issues).prompt().unwrap();
+    issue.key
 }

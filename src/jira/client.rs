@@ -1,8 +1,10 @@
 use base64::{engine::general_purpose, Engine as _};
+use core::panic;
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use std::convert::From;
 
 use crate::config::Config;
+use crate::jira::types::{Issue, IssueQueryBody, IssueQueryResult};
 
 #[derive(Debug, Clone)]
 pub struct JiraAPIClient {
@@ -11,6 +13,7 @@ pub struct JiraAPIClient {
     pub version: String,
 
     pub(crate) client: reqwest::Client,
+    pub(crate) max_results: u32,
 }
 
 impl JiraAPIClient {
@@ -32,22 +35,34 @@ impl JiraAPIClient {
         headers
     }
 
-    pub fn get_issues(&self, _query: String) -> Vec<String> {
-        // self.client
-        vec![]
+    #[tokio::main]
+    pub async fn fetch_issues(&self, query: String) -> Result<IssueQueryResult, reqwest::Error> {
+        let search_url = self.url.clone() + "/rest/api/latest/search";
+        let body = IssueQueryBody {
+            jql: query,
+            start_at: 0,
+            max_results: self.max_results,
+            fields: vec![String::from("summary")],
+        };
+        let response = self.client.post(search_url).json(&body).send().await?;
+
+        response.json().await
     }
 
-    pub fn my_issues(&self, project: String, text: String) -> Vec<String> {
+    pub fn my_issues(&self, project: String) -> Vec<Issue> {
         let mut query = String::from("assignee = currentuser() ORDER BY updated DESC");
 
         if !project.is_empty() {
             query = format!("project = {} AND {}", project, query);
         }
-        if !text.is_empty() {
-            query = format!("text ~ {} AND {}", text, query);
-        }
 
-        self.get_issues(query)
+        match self.fetch_issues(query) {
+            Ok(issue_query_result) => issue_query_result.issues,
+            Err(e) => {
+                eprint!("{}", e);
+                Vec::new()
+            }
+        }
     }
 
     pub fn post_worklog(&self) -> bool {

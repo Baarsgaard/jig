@@ -21,6 +21,7 @@ pub struct Config {
     pub api_token: String,
     pub default_issue_key: Option<String>,
     pub always_confirm_date: Option<bool>,
+    pub max_query_results: Option<u32>,
     // pub issue_phases: Option<Vec<String>>,
 }
 
@@ -28,9 +29,8 @@ impl Config {
     pub fn build_api_client(&self) -> JiraAPIClient {
         let mut url = self.jira_url.clone();
 
-        url = match url.starts_with("http") {
-            false => String::from("https://") + &url,
-            true => url,
+        if !url.starts_with("http") {
+            url = String::from("https://") + &url;
         };
 
         if url.ends_with('/') {
@@ -44,10 +44,11 @@ impl Config {
             .expect("Unable to instantiate request client");
 
         JiraAPIClient {
-            url: self.jira_url.clone(),
+            url,
             user_email: self.user_email.clone(),
             version: String::from("latest"),
             client,
+            max_results: self.max_query_results.unwrap_or(15),
         }
     }
 
