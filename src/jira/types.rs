@@ -11,52 +11,35 @@ use std::{
 pub struct WorklogAddRequestBody {
     pub comment: String,
     pub started: String,
-    pub time_spent_seconds: u32,
+    pub time_spent: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct WorklogDuration(String);
 
-impl WorklogDuration {
-    pub fn to_seconds(&self) -> Result<u32, ()> {
-        let mut dur = self.0.clone().to_lowercase();
-        if dur.len() < 2 || dur.chars().last().unwrap().is_numeric() {
-            return Err(());
-        }
-
-        let multiplier = match dur.chars().last() {
-            Some(m) if m == 'h' => 3600,
-            Some(m) if m == 'd' => 86400,
-            Some(m) if m == 'w' => 604800,
-            _ => return Err(()),
-        };
-
-        dur.pop();
-        match dur.parse::<f32>() {
-            Err(_) => Err(()),
-            Ok(duration) if duration.is_sign_negative() => Err(()),
-            Ok(duration) if duration.is_nan() => Err(()),
-            Ok(duration) => Ok((multiplier as f32 * duration).round() as u32),
-        }
+impl Display for WorklogDuration {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        write!(f, "{}", self.0)
     }
 }
 
-impl From<WorklogDuration> for u32 {
-    fn from(value: WorklogDuration) -> Self {
-        value.to_seconds().unwrap()
-    }
-}
+pub(self) static WORKLOG_RE: OnceLock<Regex> = OnceLock::new();
 
 impl TryFrom<String> for WorklogDuration {
     type Error = ();
 
     fn try_from(value: String) -> Result<Self, ()> {
-        let item = WorklogDuration(value);
-        match item.to_seconds() {
-            Ok(_) => Ok(item),
-            Err(e) => Err(e),
+        let worklog_re =
+            WORKLOG_RE.get_or_init(|| Regex::new(r"([0-9](?:\.[0-9]+)?)[wdh]").unwrap());
+
+        if let Some(capture) = worklog_re.captures(&value) {
+            return match capture.get(0) {
+                Some(worklog_match) => Ok(WorklogDuration(worklog_match.as_str().to_string())),
+                None => Err(()),
+            };
         }
+        Err(())
     }
 }
 

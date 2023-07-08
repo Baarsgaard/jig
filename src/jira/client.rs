@@ -86,7 +86,7 @@ impl JiraAPIClient {
         body: WorklogAddRequestBody,
     ) -> Result<reqwest::Response, reqwest::Error> {
         let worklog_url =
-            self.url.clone() + format!("/rest/api/2/issue/{}/worklog", issue_key).as_str();
+            self.url.clone() + format!("/rest/api/latest/issue/{}/worklog", issue_key).as_str();
 
         self.client.post(worklog_url).json(&body).send().await
     }

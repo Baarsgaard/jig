@@ -7,7 +7,9 @@ use crate::jira::types::{Issue, IssueKey};
 use crate::repo::Repository;
 
 pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> String {
-    let now = Utc::now().to_rfc3339();
+    // Jira sucks and can't parse correct rfc3339 due to the ':' in tz.. https://jira.atlassian.com/browse/JRASERVER-61378
+    // Fix: https://docs.rs/chrono/latest/chrono/format/strftime/index.html
+    let now = Utc::now().format("%FT%X%.3f%z").to_string();
 
     let mut do_prompt = cfg.always_confirm_date.unwrap_or(true);
 

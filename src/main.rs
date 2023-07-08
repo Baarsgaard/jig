@@ -1,10 +1,10 @@
 use clap::{command, Parser, Subcommand};
 use std::process::exit;
 
-pub mod config;
-pub mod interactivity;
-pub mod jira;
-pub mod repo;
+mod config;
+mod interactivity;
+mod jira;
+mod repo;
 use jira::types::{IssueKey, WorklogAddRequestBody, WorklogDuration};
 use repo::Repository;
 
@@ -38,7 +38,7 @@ enum Commands {
     },
     /// Create a work log entry on a Jira issue
     Log {
-        /// Invert current value of 'always_confirm_date'
+        /// Inverts 'always_confirm_date' setting
         #[arg(short, long)]
         date: bool,
         #[arg(value_name = "DURATION")]
@@ -92,7 +92,10 @@ impl Commands {
                         }
                     };
 
-                    let issue = interactivity::prompt_user_with_issue_select(issues).unwrap();
+                    let issue = match interactivity::prompt_user_with_issue_select(issues) {
+                        Some(i) => i,
+                        None => exit(1),
+                    };
                     if short_branch {
                         issue.key.to_string()
                     } else {
@@ -150,8 +153,8 @@ impl Commands {
                     }
                 };
 
-                let wl_duration: u32 = match WorklogDuration::try_from(duration.clone()) {
-                    Ok(d) => d.into(),
+                let wl_duration = match WorklogDuration::try_from(duration.clone()) {
+                    Ok(wl) => wl,
                     Err(_) => {
                         eprintln!("Parsing Worklog duration failed: {}", duration);
                         eprintln!(
@@ -164,11 +167,12 @@ impl Commands {
                 let wl = WorklogAddRequestBody {
                     comment: comment.unwrap_or_default(),
                     started: interactivity::get_date(&cfg, date),
-                    time_spent_seconds: wl_duration,
+                    time_spent: wl_duration.to_string(),
                 };
 
                 match client.post_worklog(issue.key, wl.clone()) {
-                    Ok(_) => println!("Worklog created!"),
+                    Ok(r) if r.status().is_success() => println!("Worklog created!"),
+                    Ok(r) => println!("Worklog creation failed!\n{:?}", r.error_for_status()),
                     Err(e) => {
                         eprintln!("Failed to create worklog: {:?}", wl);
                         eprintln!("{:?}", e);

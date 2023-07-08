@@ -89,6 +89,7 @@ fn config_dir() -> PathBuf {
     path
 }
 
+#[allow(dead_code)]
 pub fn cache_dir() -> PathBuf {
     let strategy = choose_base_strategy().expect("Unable to find the config directory!");
     let mut path = strategy.cache_dir();
