@@ -1,14 +1,21 @@
 use chrono::{Utc, Weekday};
-use gix::ThreadSafeRepository;
 use inquire::{DateSelect, Select};
-use regex::Regex;
 
-use crate::config::{find_workspace, Config};
+use crate::config::Config;
+use crate::jira::client::JiraAPIClient;
+use crate::jira::types::{Issue, IssueKey};
+use crate::repo::Repository;
 
-pub fn select_date(cfg: &Config) -> String {
+pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> String {
     let now = Utc::now().to_rfc3339();
 
-    if cfg.always_confirm_date.unwrap_or(true) {
+    let mut do_prompt = cfg.always_confirm_date.unwrap_or(true);
+
+    if force_toggle_prompt {
+        do_prompt = !do_prompt;
+    }
+
+    if do_prompt {
         let date = DateSelect::new("")
             .with_week_start(Weekday::Mon)
             .prompt()
@@ -19,19 +26,6 @@ pub fn select_date(cfg: &Config) -> String {
         date + &now[10..]
     } else {
         now
-    }
-}
-
-fn get_branch_name() -> String {
-    let repo = ThreadSafeRepository::open(find_workspace())
-        .unwrap()
-        .to_thread_local();
-    let head_ref = repo.head_ref().unwrap();
-    let head_commit = repo.head_commit().unwrap();
-
-    match head_ref {
-        Some(reference) => reference.name().shorten().to_string(),
-        None => head_commit.id.to_hex_with_len(8).to_string(),
     }
 }
 
@@ -60,19 +54,64 @@ fn get_branch_name() -> String {
 //     Ok(names)
 // }
 
-pub fn get_or_input_issue_key(cfg: &Config) -> String {
-    let issue_re = Regex::new(r"([A-Z]{2,}-[0-9]+)").unwrap();
-    let head = get_branch_name().to_uppercase();
-
-    let captures = issue_re.captures(&head);
-
-    if let Some(result) = captures {
-        return result.get(0).unwrap().as_str().to_owned();
+pub fn query_issues(
+    client: &JiraAPIClient,
+    mut query: String,
+    project: Option<String>,
+) -> Option<Vec<Issue>> {
+    if let Some(p) = project {
+        query = format!("project = {} AND {}", p, query);
     }
 
-    let client = cfg.build_api_client();
-    let my_issues = client.my_issues(cfg.default_issue_key.clone().unwrap_or_default());
+    match client.query_issues(query) {
+        Ok(issue_query_result) => Some(issue_query_result.issues),
+        Err(_) => None,
+    }
+}
 
-    let issue = Select::new("Jira issue:", my_issues).prompt().unwrap();
-    issue.key
+pub fn query_assigned_issues(
+    client: &JiraAPIClient,
+    project: Option<String>,
+) -> Option<Vec<Issue>> {
+    let assignee_query = String::from("assignee = currentUser() ORDER BY updated DESC");
+    query_issues(client, assignee_query, project)
+}
+
+pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Option<Issue> {
+    let option = client.query_issues(format!("issuekey = {}", issue_key));
+    match option {
+        Ok(i) => Some(i.issues.first().unwrap().to_owned()),
+        Err(_) => None,
+    }
+}
+
+pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Option<Issue> {
+    match Select::new("Jira issue:", issues).prompt() {
+        Ok(i) => Some(i),
+        Err(_) => None,
+    }
+}
+
+pub fn issue_from_branch_or_prompt(
+    client: &JiraAPIClient,
+    cfg: &Config,
+    repo: &Repository,
+) -> Option<Issue> {
+    let head = repo.get_branch_name().to_uppercase();
+
+    if let Ok(issue_key) = IssueKey::try_from(head) {
+        return query_issue_details(client, issue_key);
+    }
+
+    let issues = match query_assigned_issues(client, cfg.default_issue_key.clone()) {
+        Some(i) => i,
+        None => {
+            let retry_query = cfg.retry_query_override.clone().unwrap_or(String::from(
+                "(reporter = currentUser()) ORDER BY updated DESC",
+            ));
+            query_issues(client, retry_query, cfg.default_issue_key.clone())?
+        }
+    };
+
+    prompt_user_with_issue_select(issues)
 }

@@ -4,15 +4,14 @@ version = "0.1.0"
 edition = "2021"
 authors = ["Steffen Baarsgaard <sbaarsgaard@gmail.com>"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 base64 = "0.21.2"
 chrono = "0.4.26"
-clap = "4.3.4"
-crossterm = "0.26.1"
+clap = { version = "4.3.0", features = ["derive"] }
+clap_complete = "4.3.0"
+#crossterm = "0.26.1"
 etcetera = "0.8.0"
-fuzzy-matcher = "0.3.7"
+#fuzzy-matcher = "0.3.7"
 gix = { version = "0.48.0", default-features = false }
 inquire = { version = "0.6.2", features = ["date"] }
 regex = { version = "1.8.4", features = ["std"], default-features = false }
@@ -21,5 +20,4 @@ serde = { version = "1.0.164", features = ["derive"] }
 serde_json = "1.0.97"
 tokio = { version = "1.29.1", features = ["full"] }
 toml = "0.7.5"
-tui = "0.19.0"
-which = "4.4.0"
+#tui = "0.19.0"

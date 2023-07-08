@@ -8,8 +8,6 @@ use std::path::PathBuf;
 use std::sync::OnceLock;
 use toml::de::Error as TomlError;
 
-use crate::jira::client::JiraAPIClient;
-
 // Proof of concept
 static CONFIG_FILE: OnceLock<PathBuf> = OnceLock::new();
 
@@ -20,38 +18,15 @@ pub struct Config {
     pub user_email: String,
     pub api_token: String,
     pub default_issue_key: Option<String>,
+    /// This overrides the content of the retry query.
+    pub retry_query_override: Option<String>,
     pub always_confirm_date: Option<bool>,
+    pub always_short_branch_names: Option<bool>,
     pub max_query_results: Option<u32>,
-    // pub issue_phases: Option<Vec<String>>,
+    // pub issue_transitions: Option<Vec<String>>,
 }
 
 impl Config {
-    pub fn build_api_client(&self) -> JiraAPIClient {
-        let mut url = self.jira_url.clone();
-
-        if !url.starts_with("http") {
-            url = String::from("https://") + &url;
-        };
-
-        if url.ends_with('/') {
-            url.pop();
-        }
-
-        let client = reqwest::ClientBuilder::new()
-            .default_headers(JiraAPIClient::get_headers(self.clone()))
-            .https_only(true)
-            .build()
-            .expect("Unable to instantiate request client");
-
-        JiraAPIClient {
-            url,
-            user_email: self.user_email.clone(),
-            version: String::from("latest"),
-            client,
-            max_results: self.max_query_results.unwrap_or(15),
-        }
-    }
-
     pub fn load() -> Result<Config, ConfigLoadError> {
         let global_raw_config = fs::read_to_string(config_file()).map_err(ConfigLoadError::Error);
         let local_raw_config =
@@ -98,16 +73,13 @@ impl Display for ConfigLoadError {
 }
 
 pub fn config_file() -> PathBuf {
-    let stored_path = CONFIG_FILE.get().map(|path| path.to_path_buf());
-
-    match stored_path {
-        Some(path) => path,
-        None => {
+    CONFIG_FILE
+        .get_or_init(|| {
             let cfg_path = config_dir().join("config.toml");
             CONFIG_FILE.set(cfg_path.clone()).unwrap();
             cfg_path
-        }
-    }
+        })
+        .to_owned()
 }
 
 pub fn workspace_config_file() -> PathBuf {
