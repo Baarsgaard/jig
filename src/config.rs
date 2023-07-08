@@ -74,11 +74,7 @@ impl Display for ConfigLoadError {
 
 pub fn config_file() -> PathBuf {
     CONFIG_FILE
-        .get_or_init(|| {
-            let cfg_path = config_dir().join("config.toml");
-            CONFIG_FILE.set(cfg_path.clone()).unwrap();
-            cfg_path
-        })
+        .get_or_init(|| config_dir().join("config.toml"))
         .to_owned()
 }
 

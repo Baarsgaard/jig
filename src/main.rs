@@ -1,6 +1,5 @@
 use clap::{command, Parser, Subcommand};
-use std::os::unix::process::CommandExt;
-use std::process::{exit, Command};
+use std::process::exit;
 
 pub mod config;
 pub mod interactivity;
