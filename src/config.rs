@@ -23,6 +23,7 @@ pub struct Config {
     pub always_confirm_date: Option<bool>,
     pub always_short_branch_names: Option<bool>,
     pub max_query_results: Option<u32>,
+    pub skip_branch_confirmation: Option<String>,
     // pub issue_transitions: Option<Vec<String>>,
 }
 

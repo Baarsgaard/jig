@@ -108,12 +108,19 @@ impl Commands {
                 };
 
                 // TODO Decide if confirm prompt should be included.
-                // let confirm = inquire::Confirm::new(
-                //     format!("Create and switch to: {} [y/n]", branch_name).as_str(),
-                // )
-                // .with_help_message("Defaults to yes")
-                // .with_default(true)
-                // .prompt_skippable();
+                if cfg.skip_branch_confirmation.unwrap_or(false) {
+                    let confirmation = inquire::Confirm::new(
+                        format!("Create and switch to: {} [y/n]", branch_name).as_str(),
+                    )
+                    .with_help_message("Defaults to yes")
+                    .with_default(true)
+                    .prompt()
+                    .unwrap();
+
+                    if !confirmation {
+                        exit(1);
+                    }
+                }
                 repo.create_branch(branch_name);
             }
 

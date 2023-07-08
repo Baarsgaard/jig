@@ -1,0 +1,11 @@
+# Example configuration
+jira_url = ""
+username = ""
+api_token = ""
+# default_issue_key = "JIT"
+# This overrides the content of the retry query.
+# retry_query_override = "reporter = currentUser() ORDER BY updated"
+# always_confirm_date = false
+# always_short_branch_names = true
+# max_query_results = 50
+# skip_branch_confirmation = true
