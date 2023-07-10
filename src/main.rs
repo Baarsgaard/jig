@@ -19,6 +19,7 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     // Gix does not support switching branch/worktree
+    /// Create and checkout branch using issue key with(out) summary as branch name
     Branch {
         /// Only use ISSUE_KEY as branch name
         /// Inverts 'always_short_branch_names' setting
@@ -58,6 +59,8 @@ enum Commands {
         #[arg(value_name = "COMMENT")]
         comment: Option<String>,
     },
+    /// List config file locations
+    Configs,
 }
 
 impl Commands {
@@ -203,6 +206,19 @@ impl Commands {
                         exit(1);
                     }
                 }
+            }
+            Some(Commands::Configs) => {
+                println!("At least one config file is required");
+                println!(
+                    "Global: {:?} exists: {}",
+                    config::config_file(),
+                    config::config_file().exists()
+                );
+                println!(
+                    "workspace: {:?} exists: {}",
+                    config::workspace_config_file(),
+                    config::workspace_config_file().exists()
+                );
             }
             None => {
                 println!("Planned: Terminal UI or something, dunno")
