@@ -1,6 +1,6 @@
 # Example configuration
 jira_url = ""
-username = ""
+user_login = ""
 api_token = ""
 # default_issue_key = "JIT"
 # This overrides the content of the retry query.

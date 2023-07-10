@@ -1,5 +1,5 @@
 use base64::{engine::general_purpose, Engine as _};
-use reqwest::blocking::{Client, Response};
+use reqwest::blocking::{Client, ClientBuilder, Response};
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use reqwest::Error;
 use std::convert::From;
@@ -12,7 +12,7 @@ use super::types::{IssueKey, WorklogAddRequestBody};
 #[derive(Debug, Clone)]
 pub struct JiraAPIClient {
     pub url: String,
-    pub user_email: String,
+    pub user_login: String,
     pub version: String,
 
     pub(crate) client: Client,
@@ -24,7 +24,7 @@ impl JiraAPIClient {
         let header_content = HeaderValue::from_static("application/json");
 
         let jira_encoded_auth: String = general_purpose::STANDARD_NO_PAD
-            .encode(format!("{}:{}", cfg.user_email, cfg.api_token));
+            .encode(format!("{}:{}", cfg.user_login, cfg.api_token));
 
         let mut header_basic_auth_token =
             HeaderValue::from_str(format!("Basic {}", jira_encoded_auth).as_str()).unwrap();
@@ -49,7 +49,7 @@ impl JiraAPIClient {
             url.pop();
         }
 
-        let client = reqwest::blocking::ClientBuilder::new()
+        let client = ClientBuilder::new()
             .default_headers(JiraAPIClient::get_headers(cfg))
             .https_only(true)
             .build()
@@ -57,7 +57,7 @@ impl JiraAPIClient {
 
         JiraAPIClient {
             url,
-            user_email: cfg.user_email.clone(),
+            user_login: cfg.user_login.clone(),
             version: String::from("latest"),
             client,
             max_results: cfg.max_query_results.unwrap_or(15),
