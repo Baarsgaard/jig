@@ -34,7 +34,10 @@ enum Commands {
         issue_key_input: Option<String>,
     },
     /// Initialise config file(s)
-    Init,
+    Init {
+        #[arg(short, long)]
+        all: bool,
+    },
     /// Create comment on a Jira Issue
     Comment {
         #[arg(value_name = "COMMENT")]
@@ -121,7 +124,7 @@ impl Commands {
                 if skip_confirm {
                     do_confirm = true;
                 }
-                // TODO Decide if confirm prompt should be included.
+
                 if do_confirm {
                     let confirmation = inquire::Confirm::new(
                         format!("Create and switch to: {} [y/n]", branch_name).as_str(),
@@ -139,7 +142,7 @@ impl Commands {
             }
 
             // TODO Implement init flow
-            Some(Commands::Init) => println!("Init"),
+            Some(Commands::Init { all }) => println!("Init all? {}", all),
 
             // TODO post_comment in jira client
             Some(Commands::Comment {
