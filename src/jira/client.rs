@@ -1,5 +1,7 @@
 use base64::{engine::general_purpose, Engine as _};
+use reqwest::blocking::{Client, Response};
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
+use reqwest::Error;
 use std::convert::From;
 
 use crate::config::Config;
@@ -13,7 +15,7 @@ pub struct JiraAPIClient {
     pub user_email: String,
     pub version: String,
 
-    pub(crate) client: reqwest::Client,
+    pub(crate) client: Client,
     pub(crate) max_results: u32,
 }
 
@@ -47,7 +49,7 @@ impl JiraAPIClient {
             url.pop();
         }
 
-        let client = reqwest::ClientBuilder::new()
+        let client = reqwest::blocking::ClientBuilder::new()
             .default_headers(JiraAPIClient::get_headers(cfg))
             .https_only(true)
             .build()
@@ -62,11 +64,7 @@ impl JiraAPIClient {
         }
     }
 
-    #[tokio::main]
-    pub async fn query_issues(
-        &self,
-        query: String,
-    ) -> Result<IssueQueryResponseResult, reqwest::Error> {
+    pub fn query_issues(&self, query: String) -> Result<IssueQueryResponseResult, reqwest::Error> {
         let search_url = self.url.clone() + "/rest/api/latest/search";
         let body = IssueQueryRequestBody {
             jql: query,
@@ -74,20 +72,19 @@ impl JiraAPIClient {
             max_results: self.max_results,
             fields: vec![String::from("summary")],
         };
-        let response = self.client.post(search_url).json(&body).send().await?;
+        let response = self.client.post(search_url).json(&body).send()?;
 
-        response.json().await
+        response.json()
     }
 
-    #[tokio::main]
-    pub async fn post_worklog(
+    pub fn post_worklog(
         &self,
         issue_key: IssueKey,
         body: WorklogAddRequestBody,
-    ) -> Result<reqwest::Response, reqwest::Error> {
+    ) -> Result<Response, Error> {
         let worklog_url =
             self.url.clone() + format!("/rest/api/latest/issue/{}/worklog", issue_key).as_str();
 
-        self.client.post(worklog_url).json(&body).send().await
+        self.client.post(worklog_url).json(&body).send()
     }
 }

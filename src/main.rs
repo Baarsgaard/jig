@@ -21,8 +21,14 @@ enum Commands {
     // Gix does not support switching branch/worktree
     Branch {
         /// Only use ISSUE_KEY as branch name
+        /// Inverts 'always_short_branch_names' setting
         #[arg(short, long)]
-        short_branch: bool,
+        use_short_name: bool,
+
+        /// Skip confirmation, ignores config 'skip_branch_confirmation'
+        #[arg(short, long)]
+        skip_confirm: bool,
+
         /// Skip querying Jira for Issue summary
         #[arg(value_name = "ISSUE_KEY")]
         issue_key_input: Option<String>,
@@ -33,6 +39,7 @@ enum Commands {
     Comment {
         #[arg(value_name = "COMMENT")]
         comment: String,
+
         #[arg(value_name = "ISSUE_KEY")]
         issue_key_input: Option<String>,
     },
@@ -41,8 +48,10 @@ enum Commands {
         /// Inverts 'always_confirm_date' setting
         #[arg(short, long)]
         date: bool,
+
         #[arg(value_name = "DURATION")]
         duration: String,
+
         #[arg(value_name = "COMMENT")]
         comment: Option<String>,
     },
@@ -56,7 +65,8 @@ impl Commands {
         match args.command {
             Some(Commands::Branch {
                 issue_key_input,
-                short_branch,
+                use_short_name,
+                skip_confirm,
             }) => {
                 let branch_name = if let Some(maybe_issue_key) = issue_key_input {
                     let issue_key = match IssueKey::try_from(maybe_issue_key.clone()) {
@@ -67,7 +77,7 @@ impl Commands {
                         }
                     };
 
-                    if !short_branch {
+                    if !use_short_name {
                         let client = jira::client::JiraAPIClient::build(&cfg);
                         match interactivity::query_issue_details(&client, issue_key.clone()) {
                             Some(i) => i.to_string(),
@@ -96,7 +106,7 @@ impl Commands {
                         Some(i) => i,
                         None => exit(1),
                     };
-                    if short_branch {
+                    if use_short_name {
                         issue.key.to_string()
                     } else {
                         let branch_name = issue.to_string().replace(' ', "_");
@@ -107,8 +117,12 @@ impl Commands {
                     }
                 };
 
+                let mut do_confirm = cfg.skip_branch_confirmation.unwrap_or(false);
+                if skip_confirm {
+                    do_confirm = true;
+                }
                 // TODO Decide if confirm prompt should be included.
-                if cfg.skip_branch_confirmation.unwrap_or(false) {
+                if do_confirm {
                     let confirmation = inquire::Confirm::new(
                         format!("Create and switch to: {} [y/n]", branch_name).as_str(),
                     )

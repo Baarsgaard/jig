@@ -14,4 +14,3 @@ Cargo.lock
 *.pdb
 
 .jit.toml
-jira_data/

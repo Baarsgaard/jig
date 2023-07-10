@@ -67,7 +67,10 @@ pub fn query_issues(
 
     match client.query_issues(query) {
         Ok(issue_query_result) => Some(issue_query_result.issues),
-        Err(_) => None,
+        Err(e) => {
+            eprintln!("{}", e);
+            None
+        }
     }
 }
 
