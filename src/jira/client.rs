@@ -23,17 +23,23 @@ impl JiraAPIClient {
     pub fn get_headers(cfg: &Config) -> HeaderMap {
         let header_content = HeaderValue::from_static("application/json");
 
-        let jira_encoded_auth: String = general_purpose::STANDARD_NO_PAD
-            .encode(format!("{}:{}", cfg.user_login, cfg.api_token));
+        let mut auth_header_value = if cfg.api_token.is_some() {
+            let jira_encoded_auth: String = general_purpose::STANDARD_NO_PAD.encode(format!(
+                "{}:{}",
+                cfg.user_login,
+                cfg.api_token.clone().unwrap()
+            ));
+            HeaderValue::from_str(format!("Basic {}", jira_encoded_auth).as_str()).unwrap()
+        } else {
+            HeaderValue::from_str(format!("Bearer {}", cfg.pat_token.clone().unwrap()).as_str())
+                .unwrap()
+        };
 
-        let mut header_basic_auth_token =
-            HeaderValue::from_str(format!("Basic {}", jira_encoded_auth).as_str()).unwrap();
-        header_basic_auth_token.set_sensitive(true);
-
+        auth_header_value.set_sensitive(true);
         let mut headers = HeaderMap::new();
         headers.insert(ACCEPT, header_content.clone());
         headers.insert(CONTENT_TYPE, header_content);
-        headers.insert(AUTHORIZATION, header_basic_auth_token);
+        headers.insert(AUTHORIZATION, auth_header_value);
 
         headers
     }
@@ -64,7 +70,7 @@ impl JiraAPIClient {
         }
     }
 
-    pub fn query_issues(&self, query: String) -> Result<IssueQueryResponseResult, reqwest::Error> {
+    pub fn query_issues(&self, query: String) -> Result<IssueQueryResponseResult, Error> {
         let search_url = self.url.clone() + "/rest/api/latest/search";
         let body = IssueQueryRequestBody {
             jql: query,

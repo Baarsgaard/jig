@@ -16,7 +16,8 @@ static CONFIG_FILE: OnceLock<PathBuf> = OnceLock::new();
 pub struct Config {
     pub jira_url: String,
     pub user_login: String,
-    pub api_token: String,
+    pub api_token: Option<String>,
+    pub pat_token: Option<String>,
     pub default_issue_key: Option<String>,
     /// This overrides the content of the retry query.
     pub retry_query_override: Option<String>,

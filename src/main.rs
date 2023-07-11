@@ -65,8 +65,12 @@ enum Commands {
 
 impl Commands {
     fn exec(args: Cli) -> Result<(), clap::Error> {
-        let cfg = config::Config::load().unwrap();
         let repo = Repository::open();
+        let cfg = config::Config::load().unwrap();
+        if cfg.api_token.is_none() && cfg.pat_token.is_none() {
+            eprintln!("Neither api_token nor pat_token specified");
+            exit(1)
+        }
 
         match args.command {
             Some(Commands::Branch {

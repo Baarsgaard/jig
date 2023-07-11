@@ -86,14 +86,20 @@ pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Optio
     let option = client.query_issues(format!("issuekey = {}", issue_key));
     match option {
         Ok(i) => Some(i.issues.first().unwrap().to_owned()),
-        Err(_) => None,
+        Err(e) => {
+            eprintln!("{}", e);
+            None
+        }
     }
 }
 
 pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Option<Issue> {
     match Select::new("Jira issue:", issues).prompt() {
         Ok(i) => Some(i),
-        Err(_) => None,
+        Err(e) => {
+            eprintln!("{}", e);
+            None
+        }
     }
 }
 
