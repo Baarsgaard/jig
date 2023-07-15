@@ -1,20 +1,21 @@
 use std::process::{exit, Command};
 
 use crate::config::find_workspace;
-use gix::{Repository as Gix_Repo, ThreadSafeRepository};
+use anyhow::{Context, Result};
+use gix::{Repository as Gix_Repository, ThreadSafeRepository};
 
 #[derive(Debug, Clone)]
 pub struct Repository {
-    repo: Gix_Repo,
+    repo: Gix_Repository,
 }
 
 impl Repository {
-    pub fn open() -> Self {
+    pub fn open() -> Result<Self> {
         let repo = ThreadSafeRepository::open(find_workspace())
-            .unwrap()
+            .context("Repository load error")?
             .to_thread_local();
 
-        Repository { repo }
+        Ok(Repository { repo })
     }
 
     pub fn get_branch_name(&self) -> String {

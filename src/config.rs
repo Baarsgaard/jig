@@ -1,12 +1,11 @@
 /// Shamelessly lifted from Helix-editor/helix/helix-loader/src/lib.rs
+use anyhow::{anyhow, Context, Result};
 use etcetera::base_strategy::{choose_base_strategy, BaseStrategy};
 use serde::Deserialize;
-use std::fmt::Display;
 use std::fs;
-use std::io::Error as IOError;
 use std::path::PathBuf;
 use std::sync::OnceLock;
-use toml::de::Error as TomlError;
+use toml::from_str;
 
 // Proof of concept
 static CONFIG_FILE: OnceLock<PathBuf> = OnceLock::new();
@@ -18,59 +17,44 @@ pub struct Config {
     pub user_login: String,
     pub api_token: Option<String>,
     pub pat_token: Option<String>,
-    pub default_issue_key: Option<String>,
     /// This overrides the content of the retry query.
-    pub retry_query_override: Option<String>,
+    pub issue_query: Option<String>,
+    pub retry_query: Option<String>,
     pub always_confirm_date: Option<bool>,
     pub always_short_branch_names: Option<bool>,
     pub max_query_results: Option<u32>,
-    pub skip_branch_confirmation: Option<bool>,
+    pub always_skip_branch_confirm: Option<bool>,
+    pub enable_comment_prompts: Option<bool>,
     // pub issue_transitions: Option<Vec<String>>,
 }
 
 impl Config {
-    pub fn load() -> Result<Config, ConfigLoadError> {
-        let global_raw_config = fs::read_to_string(config_file()).map_err(ConfigLoadError::Error);
+    pub fn load() -> Result<Config> {
+        let global_raw_config = fs::read_to_string(config_file()).context("Config load error");
         let local_raw_config =
-            fs::read_to_string(workspace_config_file()).map_err(ConfigLoadError::Error);
+            fs::read_to_string(workspace_config_file()).context("Config load error");
 
-        let global_config: Result<toml::Value, ConfigLoadError> = global_raw_config
-            .and_then(|file| toml::from_str(&file).map_err(ConfigLoadError::BadConfig));
-        let local_config: Result<toml::Value, ConfigLoadError> = local_raw_config
-            .and_then(|file| toml::from_str(&file).map_err(ConfigLoadError::BadConfig));
+        let global_config: Result<toml::Value> = global_raw_config
+            .and_then(|file| from_str(&file).context("Config load error: Bad config"));
+        let local_config: Result<toml::Value> = local_raw_config
+            .and_then(|file| from_str(&file).context("Config load error: Bad config"));
 
-        let result: Result<Config, ConfigLoadError> = match (global_config, local_config) {
+        let cfg: Config = match (global_config, local_config) {
             (Ok(global), Ok(local)) => merge_toml_values(global, local, 3)
                 .try_into::<Config>()
-                .map_err(ConfigLoadError::BadConfig),
-            (Ok(cfg), Err(_)) | (Err(_), Ok(cfg)) => {
-                cfg.try_into::<Config>().map_err(ConfigLoadError::BadConfig)
-            }
-            (Err(e), Err(_)) => Err(e),
-        };
+                .context("Config load error: Bad configs"),
 
-        result
-    }
-}
+            (Ok(cfg), Err(_)) | (Err(_), Ok(cfg)) => cfg
+                .try_into::<Config>()
+                .context("Config load error: Bad config"),
+            (Err(e), Err(_)) => Err(e).context("Config load error"),
+        }?;
 
-#[derive(Debug)]
-pub enum ConfigLoadError {
-    BadConfig(TomlError),
-    Error(IOError),
-}
-
-impl Default for ConfigLoadError {
-    fn default() -> ConfigLoadError {
-        ConfigLoadError::Error(IOError::new(std::io::ErrorKind::NotFound, "placeholder"))
-    }
-}
-
-impl Display for ConfigLoadError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ConfigLoadError::BadConfig(err) => err.fmt(f),
-            ConfigLoadError::Error(err) => err.fmt(f),
+        if cfg.api_token.is_none() && cfg.pat_token.is_none() {
+            return Err(anyhow!("Neither api_token nor pat_token specified"));
         }
+
+        Ok(cfg)
     }
 }
 
