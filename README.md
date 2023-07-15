@@ -1,13 +1,13 @@
-# Jit
+# Jig
 
-(J)ira G(it)
+(Ji)ra (G)it
 Most if not all my work at $day_job was coordinated or logged in Jira.
 And I grow old using the Jira UI..
 
 I looked at a couple of Jira CLI tools, none of them solve my exact problem.
-Hence, Jit!
+Hence, [Jig!](https://www.youtube.com/watch?v=3JcmQONgXJM)
 
-Jit is opinionated towards working with a healthy "Per issue" branching model, also known as "My workflow".
+Jig is opinionated towards working with a healthy "Per issue" branching model, also known as "My workflow".
 It therefore includes options and features I value.
 
 Primarily:
@@ -23,23 +23,23 @@ See [example_config.toml](./example_config.toml)
 
 Generate your configuraiton using:
 ```bash
-jit init [-a]
+jig init [-a]
 ```
 
 ## Usage
 
 ```bash
-jit --help
+jig --help
 ```
 
 `CD` into a repository.
 Be on or create a branch with an issue key in the name.
-`jit branch`
+`jig branch`
 
 Work in the repository as normal.
 
 Log work/Comment progress as you work normally.
-`jit log/comment`
+`jig log/comment`
 
 That's it.
 

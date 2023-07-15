@@ -125,6 +125,8 @@ impl Commands {
             Commands::Init { all } => {
                 let _repo = Repository::open().context("Failed to open repo")?;
                 println!("Init all? {}", all);
+                // https://id.atlassian.com/manage-profile/security/api-tokens
+                // https://support.systematic.com/secure/ViewProfile.jspa
                 Ok("".to_string())
             }
 
@@ -182,9 +184,9 @@ impl Commands {
                 let wl = WorklogAddRequestBody {
                     comment,
                     started: interactivity::get_date(&cfg, date)
-                        .context("Cannot create worklog request body: field=started")?,
+                        .context("Cannot create worklog request body: missing field=date")?,
                     time_spent: WorklogDuration::try_from(duration)
-                        .context("Cannot create worklog request body: field=time_spent")?
+                        .context("Cannot create worklog request body: missing field=time_spent")?
                         .to_string(),
                 };
 

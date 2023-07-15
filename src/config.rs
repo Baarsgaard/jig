@@ -65,13 +65,13 @@ pub fn config_file() -> PathBuf {
 }
 
 pub fn workspace_config_file() -> PathBuf {
-    find_workspace().join(".jit.toml")
+    find_workspace().join(".jig.toml")
 }
 
 fn config_dir() -> PathBuf {
     let strategy = choose_base_strategy().expect("Unable to find the config directory!");
     let mut path = strategy.config_dir();
-    path.push("jit");
+    path.push("jig");
     path
 }
 
@@ -79,7 +79,7 @@ fn config_dir() -> PathBuf {
 pub fn cache_dir() -> PathBuf {
     let strategy = choose_base_strategy().expect("Unable to find the config directory!");
     let mut path = strategy.cache_dir();
-    path.push("jit");
+    path.push("jig");
     path
 }
 
