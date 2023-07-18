@@ -5,7 +5,6 @@ use inquire::{DateSelect, Select};
 use crate::config::Config;
 use crate::jira::client::JiraAPIClient;
 use crate::jira::types::{Issue, IssueKey};
-use crate::repo::Repository;
 
 pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> Result<String> {
     // Jira sucks and can't parse correct rfc3339 due to the ':' in tz.. https://jira.atlassian.com/browse/JRASERVER-61378
@@ -67,7 +66,7 @@ pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Resul
 }
 
 pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
-    if issues.len() == 0 {
+    if issues.is_empty() {
         Err(anyhow!("Select Prompt: Empty issue list"))?
     }
 
@@ -102,11 +101,9 @@ pub fn query_issues_with_retry(client: &JiraAPIClient, cfg: &Config) -> Result<V
 pub fn issue_from_branch_or_prompt(
     client: &JiraAPIClient,
     cfg: &Config,
-    repo: &Repository,
+    head_name: String,
 ) -> Result<Issue> {
-    let head = repo.get_branch_name().to_uppercase();
-
-    if let Ok(issue_key) = IssueKey::try_from(head) {
+    if let Ok(issue_key) = IssueKey::try_from(head_name) {
         return query_issue_details(client, issue_key);
     }
 

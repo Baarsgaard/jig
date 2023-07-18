@@ -1,14 +1,9 @@
+use crate::{config::Config, jira::types::*};
 use anyhow::{anyhow, Context, Result};
 use base64::{engine::general_purpose, Engine as _};
 use reqwest::blocking::{Client, ClientBuilder, Response};
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use std::convert::From;
-
-use crate::config::Config;
-use crate::jira::types::{
-    CommentRequestBody, IssueKey, IssueQueryRequestBody, IssueQueryResponseBody,
-    WorklogAddRequestBody,
-};
 
 #[derive(Debug, Clone)]
 pub struct JiraAPIClient {
@@ -27,8 +22,8 @@ impl JiraAPIClient {
         let mut auth_header_value = if cfg.api_token.is_some() {
             let jira_encoded_auth: String = general_purpose::STANDARD_NO_PAD.encode(format!(
                 "{}:{}",
-                cfg.user_login,
-                cfg.api_token.clone().unwrap()
+                cfg.user_login.clone().unwrap(),
+                cfg.api_token.clone().unwrap(),
             ));
             HeaderValue::from_str(format!("Basic {}", jira_encoded_auth).as_str()).unwrap()
         } else {
@@ -63,16 +58,16 @@ impl JiraAPIClient {
 
         Ok(JiraAPIClient {
             url,
-            user_login: cfg.user_login.clone(),
+            user_login: cfg.user_login.clone().unwrap(),
             version: String::from("latest"),
             client,
-            max_results: cfg.max_query_results.unwrap_or(15),
+            max_results: cfg.max_query_results.unwrap_or(50),
         })
     }
 
-    pub fn query_issues(&self, query: String) -> Result<IssueQueryResponseBody> {
-        let search_url = self.url.clone() + "/rest/api/latest/search";
-        let body = IssueQueryRequestBody {
+    pub fn query_issues(&self, query: String) -> Result<PostIssueQueryResponseBody> {
+        let search_url = format!("{}/rest/api/latest/search", self.url.clone());
+        let body = PostIssueQueryBody {
             jql: query,
             start_at: 0,
             max_results: self.max_results,
@@ -86,23 +81,22 @@ impl JiraAPIClient {
             .context("Post issue query failed")?;
 
         let query_response_body = response
-            .json::<IssueQueryResponseBody>()
+            .json::<PostIssueQueryResponseBody>()
             .context("Failed parsing issue query response")?;
 
-        if query_response_body.issues.len() == 0 {
+        if query_response_body.issues.is_empty() {
             return Err(anyhow!("List of issues is empty"));
         }
 
         Ok(query_response_body)
     }
 
-    pub fn post_worklog(
-        &self,
-        issue_key: IssueKey,
-        body: WorklogAddRequestBody,
-    ) -> Result<Response> {
-        let worklog_url =
-            self.url.clone() + format!("/rest/api/latest/issue/{}/worklog", issue_key).as_str();
+    pub fn post_worklog(&self, issue_key: &IssueKey, body: PostWorklogBody) -> Result<Response> {
+        let worklog_url = format!(
+            "{}/rest/api/latest/issue/{}/worklog",
+            self.url.clone(),
+            issue_key
+        );
 
         let response = self
             .client
@@ -113,9 +107,12 @@ impl JiraAPIClient {
         Ok(response)
     }
 
-    pub fn post_comment(&self, issue_key: IssueKey, body: CommentRequestBody) -> Result<Response> {
-        let comment_url =
-            self.url.clone() + format!("/rest/api/latest/issue/{}/comment", issue_key).as_str();
+    pub fn post_comment(&self, issue_key: &IssueKey, body: PostCommentBody) -> Result<Response> {
+        let comment_url = format!(
+            "{}/rest/api/latest/issue/{}/comment",
+            self.url.clone(),
+            issue_key
+        );
 
         let response = self
             .client
@@ -123,6 +120,52 @@ impl JiraAPIClient {
             .json(&body)
             .send()
             .context("Post comment request failed")?;
+        Ok(response)
+    }
+
+    pub fn get_transitions(&self, issue_key: &IssueKey) -> Result<Vec<Transition>> {
+        let transitions_url = format!(
+            "{}/rest/api/latest/issue/{}/transitions?expand=transitions.fields",
+            self.url.clone(),
+            issue_key
+        );
+
+        let response = self
+            .client
+            .get(transitions_url)
+            .send()
+            .context("Get transitions request failed")?;
+
+        let transition_response_body = response
+            .json::<GetTransitionsBody>()
+            .context("Failed parsing transition query response")?;
+
+        if transition_response_body.transitions.is_empty() {
+            return Err(anyhow!("List of transitions is empty"));
+        }
+
+        Ok(transition_response_body.transitions)
+    }
+
+    pub fn post_transition(
+        &self,
+        issue_key: &IssueKey,
+        transition: Transition,
+    ) -> Result<Response> {
+        let transition_url = format!(
+            "{}/rest/api/latest/issue/{}/transitions",
+            self.url.clone(),
+            issue_key
+        );
+
+        let body = PostTransitionBody { transition };
+
+        let response = self
+            .client
+            .post(transition_url)
+            .json(&body)
+            .send()
+            .context("Post transition request failed")?;
         Ok(response)
     }
 }

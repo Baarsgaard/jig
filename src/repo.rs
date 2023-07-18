@@ -1,8 +1,7 @@
-use std::process::{exit, Command};
-
 use crate::config::find_workspace;
 use anyhow::{Context, Result};
 use gix::{Repository as Gix_Repository, ThreadSafeRepository};
+use std::process::Command;
 
 #[derive(Debug, Clone)]
 pub struct Repository {
@@ -29,16 +28,13 @@ impl Repository {
     }
 
     #[allow(dead_code)]
-    pub fn create_branch(&self, branch_name: String) {
+    pub fn create_branch(&self, branch_name: String) -> Result<String> {
         let result = Command::new("git")
             .args(["checkout", "-b", branch_name.as_str()])
             .spawn();
         match result {
-            Ok(_) => (),
-            Err(e) => {
-                eprintln!("Failed to create branch:\n{}", e);
-                exit(1);
-            }
+            Ok(_) => Ok(format!("Switched to branch '{}'", branch_name)),
+            Err(e) => Err(e).context("Failed to create branch"),
         }
     }
 }

@@ -14,7 +14,7 @@ static CONFIG_FILE: OnceLock<PathBuf> = OnceLock::new();
 #[serde(deny_unknown_fields)]
 pub struct Config {
     pub jira_url: String,
-    pub user_login: String,
+    pub user_login: Option<String>,
     pub api_token: Option<String>,
     pub pat_token: Option<String>,
     /// This overrides the content of the retry query.
@@ -23,9 +23,8 @@ pub struct Config {
     pub always_confirm_date: Option<bool>,
     pub always_short_branch_names: Option<bool>,
     pub max_query_results: Option<u32>,
-    pub always_skip_branch_confirm: Option<bool>,
     pub enable_comment_prompts: Option<bool>,
-    // pub issue_transitions: Option<Vec<String>>,
+    pub one_transition_auto_move: Option<bool>,
 }
 
 impl Config {
@@ -50,8 +49,12 @@ impl Config {
             (Err(e), Err(_)) => Err(e).context("Config load error"),
         }?;
 
-        if cfg.api_token.is_none() && cfg.pat_token.is_none() {
-            return Err(anyhow!("Neither api_token nor pat_token specified"));
+        if cfg.pat_token.is_none() && cfg.api_token.is_none() {
+            Err(anyhow!("Neither api_token nor pat_token specified"))
+                .context("Config load error: Bad config")?
+        } else if cfg.api_token.is_none() || cfg.user_login.is_none() {
+            Err(anyhow!("'user_login' missing, required with api_token"))
+                .context("Config load error: Bad config")?
         }
 
         Ok(cfg)

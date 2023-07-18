@@ -2,27 +2,28 @@ use anyhow::{anyhow, Context, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::HashMap,
     fmt::{Display, Error, Formatter},
     sync::OnceLock,
 };
 
 /// Comment related types
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct CommentRequestBody {
+pub struct PostCommentBody {
     pub body: String,
 }
 
 /// Worklog related types
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct WorklogAddRequestBody {
+pub struct PostWorklogBody {
     pub comment: String,
     pub started: String,
     pub time_spent: String,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct WorklogDuration(String);
 
@@ -55,40 +56,40 @@ impl TryFrom<String> for WorklogDuration {
 }
 
 /// Issue related types
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct IssueQueryRequestBody {
-    pub jql: String,
-    pub start_at: u32,
-    pub max_results: u32,
+pub struct PostIssueQueryBody {
     pub fields: Vec<String>,
+    pub jql: String,
+    pub max_results: u32,
+    pub start_at: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct IssueQueryResponseBody {
+pub struct PostIssueQueryResponseBody {
     /// https://docs.atlassian.com/software/jira/docs/api/REST/7.6.1/#api/2/search
     pub expand: String,
-    pub start_at: u32,
-    pub max_results: u32,
-    pub total: u32,
     pub issues: Vec<Issue>,
+    pub max_results: u32,
+    pub start_at: u32,
+    pub total: u32,
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Issue {
     pub expand: String,
+    pub fields: PostIssueQueryResponseBodyFields,
     pub id: String,
+    pub key: IssueKey,
     #[serde(alias = "self")]
     pub self_reference: String,
-    pub key: IssueKey,
-    pub fields: IssueQueryResultIssueFields,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-pub struct IssueQueryResultIssueFields {
+pub struct PostIssueQueryResponseBodyFields {
     pub summary: String,
 }
 
@@ -125,5 +126,38 @@ impl TryFrom<String> for IssueKey {
         };
 
         Ok(IssueKey(issue_key.as_str().to_string()))
+    }
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GetTransitionsBody {
+    pub expand: String,
+    pub transitions: Vec<Transition>,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct Transition {
+    pub fields: HashMap<String, TransitionExpandedFields>,
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct TransitionExpandedFields {
+    pub required: bool,
+    pub name: String,
+    pub operations: Vec<String>,
+    pub allowed_values: Vec<String>,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct PostTransitionBody {
+    pub transition: Transition,
+}
+
+impl Display for Transition {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        write!(f, "{}", self.name)
     }
 }
