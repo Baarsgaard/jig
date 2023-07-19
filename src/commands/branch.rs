@@ -24,31 +24,26 @@ impl ExecCommand for Branch {
     fn exec(self, cfg: &Config) -> anyhow::Result<String> {
         let repo = Repository::open().context("Failed to open repo")?;
 
-        let branch_name = if let Some(maybe_issue_key) = self.issue_key_input {
+        let issue = if let Some(maybe_issue_key) = self.issue_key_input {
             let issue_key = IssueKey::try_from(maybe_issue_key)?;
+            let client = jira::client::JiraAPIClient::new(cfg)?;
 
-            if !self.short_name {
-                let client = jira::client::JiraAPIClient::new(cfg)?;
-                interactivity::query_issue_details(&client, issue_key)?.to_string()
-            } else {
-                issue_key.to_string()
-            }
+            interactivity::query_issue_details(&client, issue_key)?
         } else {
             let client = jira::client::JiraAPIClient::new(cfg)?;
             let issues = interactivity::query_issues_with_retry(&client, cfg)?;
-            let issue = interactivity::prompt_user_with_issue_select(issues)?;
-
-            if self.short_name {
-                issue.key.to_string()
-            } else {
-                let branch_name = issue.to_string().replace(' ', "_");
-                match branch_name.len() {
-                    n if n > 50 => branch_name.split_at(51).0.to_owned(),
-                    _ => branch_name,
-                }
-            }
+            interactivity::prompt_user_with_issue_select(issues)?
         };
 
-        repo.create_branch(branch_name.clone())
+        match repo.issue_branch_exists(&issue) {
+            Ok(branch) => repo.checkout_branch(branch),
+            Err(_) => {
+                if self.short_name {
+                    repo.create_branch(issue.key.to_string())
+                } else {
+                    repo.create_branch(repo.branch_name_from_issue(&issue))
+                }
+            }
+        }
     }
 }

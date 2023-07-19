@@ -1,6 +1,6 @@
-use crate::config::find_workspace;
-use anyhow::{Context, Result};
-use gix::{Repository as Gix_Repository, ThreadSafeRepository};
+use crate::{config::find_workspace, jira::types::Issue};
+use anyhow::{anyhow, Context, Result};
+use gix::{Remote, Repository as Gix_Repository, ThreadSafeRepository};
 use std::process::Command;
 
 #[derive(Debug, Clone)]
@@ -27,14 +27,69 @@ impl Repository {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn create_branch(&self, branch_name: String) -> Result<String> {
-        let result = Command::new("git")
-            .args(["checkout", "-b", branch_name.as_str()])
-            .spawn();
+    pub fn issue_branch_exists(&self, issue: &Issue) -> Result<String> {
+        let full_name = self.branch_name_from_issue(issue);
+        if self.branch_exists(full_name.clone()) {
+            Ok(full_name)
+        } else if self.branch_exists(issue.key.to_string()) {
+            Ok(issue.key.to_string())
+        } else {
+            Err(anyhow!("Issue branch does not exist"))
+        }
+    }
+
+    pub fn get_origin(&self) -> Result<Remote> {
+        let maybe_remote = self
+            .repo
+            .find_default_remote(gix::remote::Direction::Fetch)
+            .transpose()
+            .context("Failed to find default remote")?;
+
+        match maybe_remote {
+            Some(remote) => Ok(remote),
+            None => Err(anyhow!("Failed to parse remote")),
+        }
+    }
+
+    pub fn branch_exists(&self, branch_name: String) -> bool {
+        if self.repo.refs.find(&branch_name).is_ok() {
+            return true;
+        }
+
+        let origin = match self.get_origin() {
+            Ok(o) => o,
+            Err(_) => return false,
+        };
+
+        let remote_branch_name = match origin.name() {
+            Some(origin) => format!("{}/{}", origin.as_bstr(), branch_name),
+            None => return false,
+        };
+
+        self.repo.refs.find(&remote_branch_name).is_ok()
+    }
+
+    pub fn branch_name_from_issue(&self, issue: &Issue) -> String {
+        let branch_name = issue.to_string().replace(' ', "_");
+        match branch_name.len() {
+            n if n > 50 => branch_name.split_at(51).0.to_owned(),
+            _ => branch_name,
+        }
+    }
+
+    pub fn checkout_branch(&self, branch_name: String) -> Result<String> {
+        let result = Command::new("git").args(["checkout", &branch_name]).spawn();
         match result {
             Ok(_) => Ok(String::default()),
-            Err(e) => Err(e).context("Failed to create branch"),
+            Err(e) => Err(e).context(anyhow!("Failed switching to branch: {}", branch_name)),
+        }
+    }
+
+    pub fn create_branch(&self, branch_name: String) -> Result<String> {
+        let result = Command::new("git").args(["branch", &branch_name]).spawn();
+        match result {
+            Ok(_) => Ok(String::default()),
+            Err(e) => Err(e).context(anyhow!("Failed creating branch: {}", branch_name)),
         }
     }
 }

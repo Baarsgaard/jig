@@ -1,7 +1,7 @@
 /// Shamelessly lifted from Helix-editor/helix/helix-loader/src/lib.rs
 use anyhow::{anyhow, Context, Result};
 use etcetera::base_strategy::{choose_base_strategy, BaseStrategy};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
 use std::sync::OnceLock;
@@ -10,14 +10,13 @@ use toml::from_str;
 // Proof of concept
 static CONFIG_FILE: OnceLock<PathBuf> = OnceLock::new();
 
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
     pub jira_url: String,
     pub user_login: Option<String>,
     pub api_token: Option<String>,
     pub pat_token: Option<String>,
-    /// This overrides the content of the retry query.
     pub issue_query: Option<String>,
     pub retry_query: Option<String>,
     pub always_confirm_date: Option<bool>,

@@ -1,9 +1,6 @@
 use anyhow::{Context, Result};
 use clap::{command, Parser, Subcommand};
-use commands::{
-    branch::Branch, comment::Comment, create::Create, init_config::InitConfig, open::Open,
-    print_configs::PrintConfigs, query::Query, transition::Transition, worklog::Worklog,
-};
+use commands::*;
 use config::Config;
 
 mod commands;

@@ -24,10 +24,9 @@ impl JiraAPIClient {
                 cfg.user_login.clone().unwrap(),
                 cfg.api_token.clone().unwrap(),
             ));
-            HeaderValue::from_str(format!("Basic {}", jira_encoded_auth).as_str()).unwrap()
+            HeaderValue::from_str(&format!("Basic {}", jira_encoded_auth)).unwrap()
         } else {
-            HeaderValue::from_str(format!("Bearer {}", cfg.pat_token.clone().unwrap()).as_str())
-                .unwrap()
+            HeaderValue::from_str(&format!("Bearer {}", cfg.pat_token.clone().unwrap())).unwrap()
         };
 
         auth_header_value.set_sensitive(true);
