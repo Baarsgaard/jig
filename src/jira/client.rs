@@ -8,7 +8,6 @@ use std::convert::From;
 #[derive(Debug, Clone)]
 pub struct JiraAPIClient {
     pub url: String,
-    pub user_login: String,
     pub version: String,
 
     pub(crate) client: Client,
@@ -58,7 +57,6 @@ impl JiraAPIClient {
 
         Ok(JiraAPIClient {
             url,
-            user_login: cfg.user_login.clone().unwrap(),
             version: String::from("latest"),
             client,
             max_results: cfg.max_query_results.unwrap_or(50),

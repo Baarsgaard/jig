@@ -52,8 +52,11 @@ impl Config {
         if cfg.pat_token.is_none() && cfg.api_token.is_none() {
             Err(anyhow!("Neither api_token nor pat_token specified"))
                 .context("Config load error: Bad config")?
-        } else if cfg.api_token.is_none() || cfg.user_login.is_none() {
+        } else if cfg.api_token.is_some() && cfg.user_login.is_none() {
             Err(anyhow!("'user_login' missing, required with api_token"))
+                .context("Config load error: Bad config")?
+        } else if cfg.api_token.is_none() && cfg.user_login.is_some() {
+            Err(anyhow!("'api_token' missing, required with user_login"))
                 .context("Config load error: Bad config")?
         }
 

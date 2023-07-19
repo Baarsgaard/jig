@@ -49,7 +49,6 @@ impl ExecCommand for Branch {
             }
         };
 
-        repo.create_branch(branch_name.clone())?;
-        Ok(format!("Checked out: {}", branch_name))
+        repo.create_branch(branch_name.clone())
     }
 }

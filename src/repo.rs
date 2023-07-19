@@ -33,7 +33,7 @@ impl Repository {
             .args(["checkout", "-b", branch_name.as_str()])
             .spawn();
         match result {
-            Ok(_) => Ok(format!("Switched to branch '{}'", branch_name)),
+            Ok(_) => Ok(String::default()),
             Err(e) => Err(e).context("Failed to create branch"),
         }
     }
