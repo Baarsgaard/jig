@@ -28,7 +28,7 @@ impl Repository {
     }
 
     pub fn issue_branch_exists(&self, issue: &Issue) -> Result<String> {
-        let full_name = self.branch_name_from_issue(issue);
+        let full_name = self.branch_name_from_issue(issue, false);
         if self.branch_exists(full_name.clone()) {
             Ok(full_name)
         } else if self.branch_exists(issue.key.to_string()) {
@@ -69,27 +69,32 @@ impl Repository {
         self.repo.refs.find(&remote_branch_name).is_ok()
     }
 
-    pub fn branch_name_from_issue(&self, issue: &Issue) -> String {
-        let branch_name = issue.to_string().replace(' ', "_");
-        match branch_name.len() {
-            n if n > 50 => branch_name.split_at(51).0.to_owned(),
-            _ => branch_name,
+    pub fn branch_name_from_issue(&self, issue: &Issue, use_short: bool) -> String {
+        if use_short {
+            issue.key.to_string()
+        } else {
+            let branch_name = issue.to_string().replace(' ', "_");
+            match branch_name.len() {
+                n if n > 50 => branch_name.split_at(51).0.to_owned(),
+                _ => branch_name,
+            }
         }
     }
 
-    pub fn checkout_branch(&self, branch_name: String) -> Result<String> {
-        let result = Command::new("git").args(["checkout", &branch_name]).spawn();
-        match result {
-            Ok(_) => Ok(String::default()),
-            Err(e) => Err(e).context(anyhow!("Failed switching to branch: {}", branch_name)),
-        }
-    }
+    pub fn checkout_branch(&self, issue: &Issue, use_short: bool) -> Result<String> {
+        let mut args = vec!["checkout"];
 
-    pub fn create_branch(&self, branch_name: String) -> Result<String> {
-        let result = Command::new("git").args(["branch", &branch_name]).spawn();
-        match result {
+        let branch_name = if let Ok(branch_name) = self.issue_branch_exists(issue) {
+            branch_name
+        } else {
+            args.push("-b");
+            self.branch_name_from_issue(issue, use_short)
+        };
+
+        args.push(&branch_name);
+        match Command::new("git").args(args).spawn() {
             Ok(_) => Ok(String::default()),
-            Err(e) => Err(e).context(anyhow!("Failed creating branch: {}", branch_name)),
+            Err(e) => Err(e).context(anyhow!("Failed to checkout branch: {}", branch_name)),
         }
     }
 }

@@ -35,17 +35,6 @@ impl ExecCommand for Branch {
             interactivity::prompt_user_with_issue_select(issues)?
         };
 
-        match repo.issue_branch_exists(&issue) {
-            Ok(branch) => repo.checkout_branch(branch),
-            Err(_) => {
-                let branch = if self.short_name {
-                    issue.key.to_string()
-                } else {
-                    repo.branch_name_from_issue(&issue)
-                };
-                repo.create_branch(branch.clone())?;
-                repo.checkout_branch(branch)
-            }
-        }
+        repo.checkout_branch(&issue, self.short_name)
     }
 }
