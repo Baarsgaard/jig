@@ -38,11 +38,13 @@ impl ExecCommand for Branch {
         match repo.issue_branch_exists(&issue) {
             Ok(branch) => repo.checkout_branch(branch),
             Err(_) => {
-                if self.short_name {
-                    repo.create_branch(issue.key.to_string())
+                let branch = if self.short_name {
+                    issue.key.to_string()
                 } else {
-                    repo.create_branch(repo.branch_name_from_issue(&issue))
-                }
+                    repo.branch_name_from_issue(&issue)
+                };
+                repo.create_branch(branch.clone())?;
+                repo.checkout_branch(branch)
             }
         }
     }

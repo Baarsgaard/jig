@@ -148,7 +148,7 @@ pub struct TransitionExpandedFields {
     pub required: bool,
     pub name: String,
     pub operations: Vec<String>,
-    pub allowed_values: Vec<String>,
+    pub allowed_values: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Debug, Clone)]
