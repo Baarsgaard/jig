@@ -81,17 +81,13 @@ impl Repository {
         }
     }
 
-    pub fn checkout_branch(&self, issue: &Issue, use_short: bool) -> Result<String> {
+    pub fn checkout_branch(&self, branch_name: &str, create_new: bool) -> Result<String> {
         let mut args = vec!["checkout"];
-
-        let branch_name = if let Ok(branch_name) = self.issue_branch_exists(issue) {
-            branch_name
-        } else {
+        if create_new {
             args.push("-b");
-            self.branch_name_from_issue(issue, use_short)
-        };
+        }
+        args.push(branch_name);
 
-        args.push(&branch_name);
         match Command::new("git").args(args).spawn() {
             Ok(_) => Ok(String::default()),
             Err(e) => Err(e).context(anyhow!("Failed to checkout branch: {}", branch_name)),

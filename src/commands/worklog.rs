@@ -20,7 +20,8 @@ pub struct Worklog {
     #[arg(value_name = "DURATION")]
     duration: String,
 
-    #[arg(value_name = "COMMENT")]
+    /// Include Worklog comment
+    #[arg(short, long = "comment", value_name = "COMMENT")]
     comment_input: Option<String>,
 
     #[arg(value_name = "ISSUE_KEY")]

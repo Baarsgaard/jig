@@ -16,8 +16,8 @@ pub struct Branch {
 
     /// Only use ISSUE_KEY as branch name
     /// Inverts 'always_short_branch_names' setting
-    #[arg(short, long)]
-    short_name: bool,
+    #[arg(short = 's', long = "short")]
+    toggle_short_name: bool,
 }
 
 impl ExecCommand for Branch {
@@ -35,6 +35,16 @@ impl ExecCommand for Branch {
             interactivity::prompt_user_with_issue_select(issues)?
         };
 
-        repo.checkout_branch(&issue, self.short_name)
+        let mut use_short_name = cfg.always_short_branch_names.unwrap_or(false);
+        if self.toggle_short_name {
+            use_short_name = !use_short_name;
+        }
+
+        if let Ok(branch_name) = repo.issue_branch_exists(&issue) {
+            repo.checkout_branch(&branch_name, false)
+        } else {
+            let branch_name = repo.branch_name_from_issue(&issue, use_short_name);
+            repo.checkout_branch(&branch_name, true)
+        }
     }
 }
