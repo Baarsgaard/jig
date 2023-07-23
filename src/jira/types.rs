@@ -69,11 +69,11 @@ pub struct PostIssueQueryBody {
 #[serde(rename_all = "camelCase")]
 pub struct PostIssueQueryResponseBody {
     /// https://docs.atlassian.com/software/jira/docs/api/REST/7.6.1/#api/2/search
-    pub expand: String,
-    pub issues: Vec<Issue>,
-    pub max_results: u32,
-    pub start_at: u32,
-    pub total: u32,
+    pub expand: Option<String>,
+    pub issues: Option<Vec<Issue>>,
+    pub max_results: Option<u32>,
+    pub start_at: Option<u32>,
+    pub total: Option<u32>,
 }
 
 #[derive(Deserialize, Debug, Clone)]

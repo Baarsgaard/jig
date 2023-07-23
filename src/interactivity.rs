@@ -57,7 +57,8 @@ pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> Result<String> {
 pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Result<Issue> {
     let issues = client
         .query_issues(format!("issuekey = {}", issue_key))?
-        .issues;
+        .issues
+        .unwrap();
 
     match issues.first() {
         Some(i) => Ok(i.to_owned()),
@@ -76,23 +77,16 @@ pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
 }
 
 pub fn query_issues_with_retry(client: &JiraAPIClient, cfg: &Config) -> Result<Vec<Issue>> {
-    let default_query = cfg.issue_query.clone().unwrap_or(String::from(
-        "assignee = currentUser() ORDER BY updated DESC",
-    ));
     let issues = match client
-        .query_issues(default_query)
+        .query_issues(cfg.issue_query.clone())
         .context("First issue query failed")
     {
-        Ok(issue_body) => issue_body.issues,
-        Err(e) => {
-            let retry_query = cfg.retry_query.clone().unwrap_or(String::from(
-                "assignee = currentUser() ORDER BY updated DESC",
-            ));
-            client
-                .query_issues(retry_query)
-                .context(anyhow!("Retry query failed {}", e))?
-                .issues
-        }
+        Ok(issue_body) => issue_body.issues.unwrap(),
+        Err(_) => client
+            .query_issues(cfg.retry_query.clone())
+            .context(anyhow!("Retry query failed"))?
+            .issues
+            .unwrap(),
     };
 
     Ok(issues)

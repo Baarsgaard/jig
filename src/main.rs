@@ -33,7 +33,6 @@ enum Commands {
     #[cfg(debug_assertions)]
     Create(Create),
     /// Initialise config file(s)
-    #[cfg(debug_assertions)]
     Init(InitConfig),
     /// Create a work log entry on a Jira issue
     Log(Worklog),
@@ -48,21 +47,20 @@ enum Commands {
 
 impl Commands {
     fn exec(args: Cli) -> Result<String> {
-        let cfg = config::Config::load().context("Failed to load config")?;
+        let cfg = config::Config::load().context("Failed to load config");
 
         match args.command {
-            Commands::Branch(branch) => branch.exec(&cfg),
-            Commands::Comment(comment) => comment.exec(&cfg),
-            Commands::Configs(print_config) => print_config.exec(&cfg),
+            Commands::Branch(branch) => branch.exec(&cfg?),
+            Commands::Comment(comment) => comment.exec(&cfg?),
+            Commands::Configs(print_config) => print_config.exec(&cfg?),
             #[cfg(debug_assertions)]
-            Commands::Create(create) => create.exec(&cfg),
+            Commands::Create(create) => create.exec(&cfg?),
+            Commands::Init(init) => init.init(),
+            Commands::Log(worklog) => worklog.exec(&cfg?),
+            Commands::Move(transition) => transition.exec(&cfg?),
+            Commands::Open(open) => open.exec(&cfg?),
             #[cfg(debug_assertions)]
-            Commands::Init(init) => init.exec(&cfg),
-            Commands::Log(worklog) => worklog.exec(&cfg),
-            Commands::Move(transition) => transition.exec(&cfg),
-            Commands::Open(open) => open.exec(&cfg),
-            #[cfg(debug_assertions)]
-            Commands::Query(query) => query.exec(&cfg),
+            Commands::Query(query) => query.exec(&cfg?),
         }
     }
 }

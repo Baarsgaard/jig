@@ -14,11 +14,11 @@ static CONFIG_FILE: OnceLock<PathBuf> = OnceLock::new();
 #[serde(deny_unknown_fields)]
 pub struct Config {
     pub jira_url: String,
+    pub issue_query: String,
+    pub retry_query: String,
     pub user_login: Option<String>,
     pub api_token: Option<String>,
     pub pat_token: Option<String>,
-    pub issue_query: Option<String>,
-    pub retry_query: Option<String>,
     pub always_confirm_date: Option<bool>,
     pub always_short_branch_names: Option<bool>,
     pub max_query_results: Option<u32>,

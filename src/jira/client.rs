@@ -81,9 +81,11 @@ impl JiraAPIClient {
             .json::<PostIssueQueryResponseBody>()
             .context("Failed parsing issue query response")?;
 
-        if query_response_body.issues.is_empty() {
-            return Err(anyhow!("List of issues is empty"));
-        }
+        let _ = match query_response_body.issues.clone() {
+            Some(i) if i.is_empty() => Err(anyhow!("List of issues is empty"))?,
+            Some(i) => i,
+            None => Err(anyhow!("List of issues is empty"))?,
+        };
 
         Ok(query_response_body)
     }
