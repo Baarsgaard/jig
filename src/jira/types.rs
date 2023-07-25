@@ -161,3 +161,29 @@ impl Display for Transition {
         write!(f, "{}", self.name)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn issue_key_try_from() {
+        let key = String::from("JB-1");
+        let issue = IssueKey::try_from(key.clone());
+        assert!(issue.is_ok());
+        assert_eq!(key, issue.unwrap().0);
+    }
+
+    #[test]
+    fn lowercase_issue_key_try_from_err() {
+        let issue = IssueKey::try_from(String::from("jb-1"));
+        assert!(issue.is_err());
+    }
+
+    #[test]
+    fn display_issue_key() {
+        let key = String::from("JB-1");
+        let issue = IssueKey(key.clone());
+        assert_eq!(key, issue.to_string());
+    }
+}
