@@ -28,7 +28,7 @@ impl Repository {
     }
 
     pub fn issue_branch_exists(&self, issue: &Issue) -> Result<String> {
-        let full_name = self.branch_name_from_issue(issue, false);
+        let full_name = Repository::branch_name_from_issue(issue, false);
         if self.branch_exists(full_name.clone()) {
             Ok(full_name)
         } else if self.branch_exists(issue.key.to_string()) {
@@ -69,8 +69,41 @@ impl Repository {
         self.repo.refs.find(&remote_branch_name).is_ok()
     }
 
-    pub fn branch_name_from_issue(&self, issue: &Issue, use_short: bool) -> String {
-        branch_name_from_issue(issue, use_short)
+    pub fn branch_name_from_issue(issue: &Issue, use_short: bool) -> String {
+        if use_short {
+            issue.key.to_string()
+        } else {
+            let branch_name = Self::sanitize_branch_name(&issue.to_string());
+            match branch_name.len() {
+                n if n > 50 => branch_name.split_at(51).0.to_owned(),
+                _ => branch_name,
+            }
+        }
+    }
+
+    pub fn sanitize_branch_name(branch: &str) -> String {
+        let mut branch_name = branch.replace([' ', ':', '~', '^', '?', '*', '[', '\\'], "_");
+        while branch_name.contains("..") {
+            // .... -> .. -> .
+            branch_name = branch_name.replace("..", ".");
+        }
+        while branch_name.contains("${") {
+            // $${{ -> $( ->
+            branch_name = branch_name.replace("${", "");
+        }
+        while branch_name.contains(".lock/") {
+            // .lock.lock/ -> .lock/ -> /
+            branch_name = branch_name.replace(".lock/", "/");
+        }
+
+        // /.. will never happen due to .. removal above
+        branch_name = branch_name.replace("/.", "/");
+
+        while branch_name.ends_with(['.', '/']) {
+            // ././ ->
+            branch_name.pop();
+        }
+        branch_name
     }
 
     pub fn checkout_branch(&self, branch_name: &str, create_new: bool) -> Result<String> {
@@ -87,54 +120,38 @@ impl Repository {
     }
 }
 
-pub fn branch_name_from_issue(issue: &Issue, use_short: bool) -> String {
-    if use_short {
-        issue.key.to_string()
-    } else {
-        let branch_name = issue.to_string().replace(' ', "_");
-        match branch_name.len() {
-            n if n > 50 => branch_name.split_at(51).0.to_owned(),
-            _ => branch_name,
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::jira::types::{IssueKey, PostIssueQueryResponseBodyFields};
 
-    #[test]
-    fn issue_branch_name() {
-        let issue_key = IssueKey(String::from("JB-1"));
-        let issue = Issue {
+    fn test_issue(issue_key: Option<IssueKey>, summary: Option<&str>) -> Issue {
+        Issue {
             fields: PostIssueQueryResponseBodyFields {
-                summary: String::from("Example summary"),
+                summary: String::from(summary.unwrap_or("Example summary")),
             },
             id: String::from("10001"),
-            key: issue_key,
+            key: issue_key.unwrap_or(IssueKey(String::from("JB-1"))),
             self_reference: String::from("https://ddd.ddd.com/"),
             expand: String::from("Don't remember"),
-        };
-        let branch_name = branch_name_from_issue(&issue, false);
+        }
+    }
+
+    #[test]
+    fn issue_branch_name() {
+        let branch_name = Repository::branch_name_from_issue(&test_issue(None, None), false);
         assert_eq!(String::from("JB-1_Example_summary"), branch_name);
     }
 
     #[test]
     fn long_issue_branch_name() {
-        let issue_key = IssueKey(String::from("JB-1"));
-        let issue = Issue {
-            fields: PostIssueQueryResponseBodyFields {
-                summary: String::from(
-                    "Example summary that is really long not really but over 50 characters",
-                ),
-            },
-            id: String::from("10001"),
-            key: issue_key,
-            self_reference: String::from("https://ddd.ddd.com/"),
-            expand: String::from("Don't remember"),
-        };
-        let branch_name = branch_name_from_issue(&issue, false);
+        let branch_name = Repository::branch_name_from_issue(
+            &test_issue(
+                None,
+                Some("Example summary that is really long not really but over 50 characters"),
+            ),
+            false,
+        );
         assert_eq!(
             String::from("JB-1_Example_summary_that_is_really_long_not_really"),
             branch_name
@@ -143,18 +160,15 @@ mod test {
 
     #[test]
     fn short_issue_branch_name() {
-        let issue_key = IssueKey(String::from("JB-1"));
-        let issue = Issue {
-            fields: PostIssueQueryResponseBodyFields {
-                summary: String::from("Example summary"),
-            },
-            id: String::from("10001"),
-            key: issue_key,
-            self_reference: String::from("https://ddd.ddd.com/"),
-            expand: String::from("Don't remember"),
-        };
-
-        let branch_name = branch_name_from_issue(&issue, true);
+        let branch_name = Repository::branch_name_from_issue(&test_issue(None, None), true);
         assert_eq!(String::from("JB-1"), branch_name);
+    }
+
+    #[test]
+    fn sanitize_problematic_branch_name() {
+        let shit_summary = "ter rible/..bra nch.lock.lock/name$${{....causing/. issues/././";
+        let branch_name =
+            Repository::branch_name_from_issue(&test_issue(None, Some(shit_summary)), false);
+        assert_eq!("JB-1_ter_rible/bra_nch/name.causing/_issues", branch_name);
     }
 }

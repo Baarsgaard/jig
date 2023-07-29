@@ -43,7 +43,7 @@ impl ExecCommand for Branch {
         if let Ok(branch_name) = repo.issue_branch_exists(&issue) {
             repo.checkout_branch(&branch_name, false)
         } else {
-            let branch_name = repo.branch_name_from_issue(&issue, use_short_name);
+            let branch_name = Repository::branch_name_from_issue(&issue, use_short_name);
             repo.checkout_branch(&branch_name, true)
         }
     }
