@@ -1,71 +1,99 @@
 name: "Release"
 
-permissions:
-  contents: "write"
-
 on:
   workflow_dispatch:
 
 jobs:
   get-tag:
     name: "Get Tag From Package Version"
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: self-hosted
     outputs:
-      pkg-version: ${{ steps.pkg-version.outputs.PKG_VERSION }} 
+      crate-version: ${{ steps.crate-version.outputs.PKG_VERSION }}
     steps:
-      - name: "Check out the repo"
-        uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
+      - uses: actions/checkout@v3
       - name: "Get tag"
-        id: "pkg-version"
+        id: "crate-version"
         shell: "bash"
         run: |
           echo PKG_VERSION=$(awk -F ' = ' '$1 ~ /version/ { gsub(/["]/, "", $2); printf("%s",$2) }' Cargo.toml) >> $GITHUB_OUTPUT
 
-  create-release:
-    name: "Create release"
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    needs: "get-tag"
-    runs-on: self-hosted
-    steps:
-      - name: "Check out the repo"
-        uses: actions/checkout@v3
-      
-      - name: "Create release"
-        uses: "taiki-e/create-gh-release-action@v1"
-        with:
-          # (optional) Path to changelog.
-          # changelog: CHANGELOG.md
-          branch: "main"
-          ref: refs/tags/v${{ needs.get-tag.outputs.pkg-version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  upload-assets:
-    name: "Upload assets to Github releases"
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
-    needs: 
-     - "get-tag"
-     - "create-release"
+  build:
+    name: "Build binaries and upload as artifacts"
+    needs: get-tag
     strategy:
+      fail-fast: true
       matrix:
         include:
-          - target: "x86_64-unknown-linux-gnu"
-            os: self-hosted
-          - target: "x86_64-unknown-linux-musl"
-            os: self-hosted
+          - os: self-hosted
+            target: aarch64-unknown-linux-gnu
+          - os: self-hosted
+            target: arm-unknown-linux-gnueabi
+          - os: self-hosted
+            target: armv7-unknown-linux-gnueabihf
+          - os: self-hosted
+            target: i686-unknown-linux-gnu
+          - os: self-hosted
+            target: i686-unknown-linux-musl
+          - os: self-hosted
+            target: x86_64-unknown-linux-gnu
+          - os: self-hosted
+            target: x86_64-unknown-linux-musl
+          - os: self-hosted
+            target: x86_64-pc-windows-gnu
     runs-on: ${{ matrix.os }}
     steps:
-      - name: "Check out the repo"
-        uses: actions/checkout@v3
-
-      - name: "Upload Binaries"
-        uses: "taiki-e/upload-rust-binary-action@v1"
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          bin: "shazam"
-          target: ${{ matrix.target }}
-          archive: $bin-${{ matrix.target }}
-          ref: refs/tags/v${{ needs.get-tag.outputs.pkg-version }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          targets: "${{ matrix.target }}"
+
+      - run: "cargo build --release --target ${{ matrix.target }}"
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: "jig-${{ matrix.target }}"
+          path: target/release/jig
+
+  create-release:
+    name: "Create release"
+    needs:
+      - get-tag
+      - build
+    runs-on: self-hosted
+    steps:
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "${{ needs.get-tag.outputs.crate-version}}"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            LICENSE.txt
+            *.jar  upload-binaries:
+
+  upload-binaries:
+    name: "Create release"
+    needs:
+      - get-tag
+      - build
+    runs-on: self-hosted
+    strategy:
+      fail-fast: true
+      matrix:
+        target:
+          - aarch64-unknown-linux-gnu
+          - arm-unknown-linux-gnueabi
+          - armv7-unknown-linux-gnueabihf
+          - i686-unknown-linux-gnu
+          - i686-unknown-linux-musl
+          - x86_64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - x86_64-pc-windows-gnu
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: "jig-${{ matrix.target }}"
+
+      upload assets to release here

@@ -1,82 +1,31 @@
-# Grifted from: https://codingpackets.com/blog/rust-binary-and-docker-releases-using-github-actions/
 name: "Test"
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  workflow_dispatch:
 
 jobs:
-  check:
-    name: "Cargo check"
-    runs-on: self-hosted
-    steps:
-      - name: "Check out the repo"
-        uses: actions/checkout@v3
-
-      - uses: "actions-rs/toolchain@v1"
-        with:
-          profile: "minimal"
-          toolchain: "stable"
-          override: true
-
-      - uses: "actions-rs/cargo@v1"
-        with:
-          command: "check"
-
   test:
     name: "Cargo test"
     runs-on: self-hosted
     steps:
-      - name: "Check out the repo"
-        uses: actions/checkout@v3
-
-      - uses: "actions-rs/toolchain@v1"
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          profile: "minimal"
-          toolchain: "stable"
-          override: true
+          components: clippy
 
-      - uses: "actions-rs/cargo@v1"
-        with:
-          command: "test"
+      - run: cargo check
+      - run: cargo clippy -- -D warnings
+      - run: cargo test
 
   fmt:
     name: "Cargo format"
     runs-on: self-hosted
     steps:
-      - name: "Check out the repo"
-        uses: actions/checkout@v3
-
-      - uses: "actions-rs/toolchain@v1"
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          profile: "minimal"
-          toolchain: "stable"
-          override: true
-          
-      - run: "rustup component add rustfmt"
-
-      - uses: "actions-rs/cargo@v1"
-        with:
-          command: "fmt"
-          args: "--all -- --check"
-
-  clippy:
-    name: "Cargo clippy"
-    runs-on: self-hosted
-    steps:
-      - name: "Check out the repo"
-        uses: actions/checkout@v3
-
-      - uses: "actions-rs/toolchain@v1"
-        with:
-          profile: "minimal"
-          toolchain: "stable"
-          override: true
-
-      - run: "rustup component add clippy"
-
-      - uses: "actions-rs/cargo@v1"
-        with:
-          command: "clippy"
-          args: "-- -D warnings"
+          components: rustfmt
+      - run: cargo fmt --all --verbose --check
