@@ -12,8 +12,17 @@ It therefore includes options and features I need to support that.
 
 Primarily:<br>
 Creating new branches from Jira issues with(out) summaries.<br>
-Quickly logging time and Commenting on the issue found in the branch name.
+Quickly logging time and Commenting on the issue found in the branch name.<br>
 Moving issues from one status to the next.
+
+## Installation
+
+Install Rustup to compile
+```bash
+git clone git@github.com:Raunow/jig.git
+cd jig
+cargo install --path . --locked
+```
 
 ## Configuration
 
