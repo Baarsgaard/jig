@@ -2,8 +2,16 @@ name: "Test"
 on:
   push:
     branches: [ "master" ]
+    paths:
+      - src/**
+      - .cargo/**
+      - .github/**
   pull_request:
     branches: [ "master" ]
+    paths:
+      - src/**
+      - .cargo/**
+      - .github/**
   workflow_dispatch:
 
 jobs:
