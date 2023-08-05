@@ -17,12 +17,11 @@ Moving issues from one status to the next.
 
 ## Installation
 
-Install Rustup to compile
+Install [Rust-lang](https://www.rust-lang.org/tools/install) to compile from source.
 ```bash
-git clone git@github.com:Raunow/jig.git
-cd jig
-cargo install --path . --locked
+cargo install --locked --git https://github.com/raunow/jig
 ```
+> Binaries will be part releases one day
 
 ## Configuration
 
@@ -39,9 +38,26 @@ jig init [--all]
 ## Usage
 
 ```bash
-# See all options
 jig --help
-jig <cmd> --help
+jig <COMMAND> --help
+# A Jira CLI integration with Git
+# 
+# Usage: jig
+#        jig <COMMAND>
+# 
+# Commands:
+#   branch   Create and checkout branch using issue key with(out) summary as branch name
+#   comment  Create comment on a Jira Issue
+#   configs  List config file locations
+#   init     Initialise config file(s)
+#   log      Create a work log entry on a Jira issue
+#   move     Move ticket through transitions
+#   open     Open issue using BROWSER var
+#   help     Print this message or the help of the given subcommand(s)
+# 
+# Options:
+#   -h, --help     Print help
+#   -V, --version  Print version
 ```
 
 Initialise a workspace or global config file:
