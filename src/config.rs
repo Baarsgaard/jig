@@ -1,5 +1,4 @@
-/// Shamelessly lifted from Helix-editor/helix/helix-loader/src/lib.rs
-use anyhow::{anyhow, Context, Result};
+use color_eyre::eyre::{eyre, Result, WrapErr};
 use etcetera::base_strategy::{choose_base_strategy, BaseStrategy};
 use serde::{Deserialize, Serialize};
 use std::fs;
@@ -28,35 +27,36 @@ pub struct Config {
 
 impl Config {
     pub fn load() -> Result<Config> {
-        let global_raw_config = fs::read_to_string(config_file()).context("Config load error");
-        let local_raw_config =
-            fs::read_to_string(workspace_config_file()).context("Config load error");
+        let global_raw_config =
+            fs::read_to_string(config_file()).wrap_err("Config load error: global config");
+        let local_raw_config = fs::read_to_string(workspace_config_file())
+            .wrap_err("Config load error: workspace config");
 
         let global_config: Result<toml::Value> = global_raw_config
-            .and_then(|file| from_str(&file).context("Config load error: Bad config"));
+            .and_then(|file| from_str(&file).wrap_err("Config load error: Bad global config"));
         let local_config: Result<toml::Value> = local_raw_config
-            .and_then(|file| from_str(&file).context("Config load error: Bad config"));
+            .and_then(|file| from_str(&file).wrap_err("Config load error: Bad workspace config"));
 
         let cfg: Config = match (global_config, local_config) {
             (Ok(global), Ok(local)) => merge_toml_values(global, local, 3)
                 .try_into::<Config>()
-                .context("Config load error: Bad configs"),
+                .wrap_err("Config load error: Bad configs"),
 
             (Ok(cfg), Err(_)) | (Err(_), Ok(cfg)) => cfg
                 .try_into::<Config>()
-                .context("Config load error: Bad config"),
-            (Err(e), Err(_)) => Err(e).context("Config load error"),
+                .wrap_err("Config load error: Bad config"),
+            (Err(e), Err(_)) => Err(e).wrap_err("Config load error"),
         }?;
 
         if cfg.pat_token.is_none() && cfg.api_token.is_none() {
-            Err(anyhow!("Neither api_token nor pat_token specified"))
-                .context("Config load error: Bad config")?
+            Err(eyre!("Neither api_token nor pat_token specified"))
+                .wrap_err("Config load error: Bad config")?
         } else if cfg.api_token.is_some() && cfg.user_login.is_none() {
-            Err(anyhow!("'user_login' missing, required with api_token"))
-                .context("Config load error: Bad config")?
+            Err(eyre!("'user_login' missing, required with api_token"))
+                .wrap_err("Config load error: Bad config")?
         } else if cfg.api_token.is_none() && cfg.user_login.is_some() {
-            Err(anyhow!("'api_token' missing, required with user_login"))
-                .context("Config load error: Bad config")?
+            Err(eyre!("'api_token' missing, required with user_login"))
+                .wrap_err("Config load error: Bad config")?
         }
 
         Ok(cfg)

@@ -8,8 +8,8 @@ use crate::{
     repo::Repository,
     ExecCommand,
 };
-use anyhow::{anyhow, Context};
 use clap::Args;
+use color_eyre::eyre::{eyre, Result, WrapErr};
 
 #[derive(Args, Debug)]
 pub struct Worklog {
@@ -36,9 +36,9 @@ pub struct Worklog {
 }
 
 impl ExecCommand for Worklog {
-    fn exec(self, cfg: &Config) -> anyhow::Result<String> {
+    fn exec(self, cfg: &Config) -> Result<String> {
         let client = jira::client::JiraAPIClient::new(cfg)?;
-        let maybe_repo = Repository::open().context("Failed to open repo");
+        let maybe_repo = Repository::open().wrap_err("Failed to open repo");
         let head = match maybe_repo {
             Ok(repo) => repo.get_branch_name(),
             Err(_) => String::default(),
@@ -61,7 +61,7 @@ impl ExecCommand for Worklog {
         let comment = if initial_comment.eq("#PROMPT_FOR_COMMENT#") {
             inquire::Text::new("Worklog comment:")
                 .prompt()
-                .context("Worklog comment prompt cancelled")?
+                .wrap_err("Worklog comment prompt cancelled")?
         } else {
             initial_comment
         };
@@ -69,19 +69,19 @@ impl ExecCommand for Worklog {
         let wl = PostWorklogBody {
             comment,
             started: interactivity::get_date(cfg, self.date)
-                .context("Cannot create worklog request body: missing field=date")?,
+                .wrap_err("Cannot create worklog request body: missing field=date")?,
             time_spent: WorklogDuration::try_from(self.duration)
-                .context("Cannot create worklog request body: missing field=time_spent")?
+                .wrap_err("Cannot create worklog request body: missing field=time_spent")?
                 .to_string(),
         };
 
         match client.post_worklog(&issue_key, wl.clone()) {
             Ok(r) if r.status().is_success() => Ok("Worklog created!".to_string()),
-            Ok(r) => Err(anyhow!(
+            Ok(r) => Err(eyre!(
                 "Worklog creation failed!\n{:?}",
                 r.error_for_status()
             )),
-            Err(e) => Err(anyhow!("Failed to create worklog:\n{:?}\n{:?}", wl, e)),
+            Err(e) => Err(eyre!("Failed to create worklog:\n{:?}\n{:?}", wl, e)),
         }
     }
 }

@@ -2,8 +2,8 @@ use crate::{
     config::{self, Config},
     ExecCommand,
 };
-use anyhow::{anyhow, Result};
 use clap::Args;
+use color_eyre::eyre::{eyre, Result};
 
 #[derive(Args, Debug)]
 pub struct PrintConfigs {}
@@ -18,7 +18,7 @@ impl ExecCommand for PrintConfigs {
         }
 
         if !config::config_file().exists() && !config::workspace_config_file().exists() {
-            Err(anyhow!(
+            Err(eyre!(
                 "Config files missing, expected one or both:\n{:?}\n{:?}",
                 config::config_file(),
                 config::workspace_config_file()

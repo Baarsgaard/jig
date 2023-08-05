@@ -5,8 +5,8 @@ use crate::{
     repo::Repository,
     ExecCommand,
 };
-use anyhow::Context;
 use clap::Args;
+use color_eyre::eyre::{Result, WrapErr};
 
 #[derive(Args, Debug)]
 pub struct Branch {
@@ -21,8 +21,8 @@ pub struct Branch {
 }
 
 impl ExecCommand for Branch {
-    fn exec(self, cfg: &Config) -> anyhow::Result<String> {
-        let repo = Repository::open().context("Failed to open repo")?;
+    fn exec(self, cfg: &Config) -> Result<String> {
+        let repo = Repository::open().wrap_err("Failed to open repo")?;
 
         let issue = if let Some(maybe_issue_key) = self.issue_key_input {
             let issue_key = IssueKey::try_from(maybe_issue_key)?;

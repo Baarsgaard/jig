@@ -1,5 +1,5 @@
 use crate::{config::find_workspace, jira::types::Issue};
-use anyhow::{anyhow, Context, Result};
+use color_eyre::eyre::{eyre, Result, WrapErr};
 use gix::{Remote, Repository as Gix_Repository, ThreadSafeRepository};
 use std::process::Command;
 
@@ -11,7 +11,7 @@ pub struct Repository {
 impl Repository {
     pub fn open() -> Result<Self> {
         let repo = ThreadSafeRepository::open(find_workspace())
-            .context("Repository load error")?
+            .wrap_err("Repository load error")?
             .to_thread_local();
 
         Ok(Repository { repo })
@@ -34,7 +34,7 @@ impl Repository {
         } else if self.branch_exists(issue.key.to_string()) {
             Ok(issue.key.to_string())
         } else {
-            Err(anyhow!("Issue branch does not exist"))
+            Err(eyre!("Issue branch does not exist"))
         }
     }
 
@@ -43,11 +43,11 @@ impl Repository {
             .repo
             .find_default_remote(gix::remote::Direction::Fetch)
             .transpose()
-            .context("Failed to find default remote")?;
+            .wrap_err("Failed to find default remote")?;
 
         match maybe_remote {
             Some(remote) => Ok(remote),
-            None => Err(anyhow!("Failed to parse remote")),
+            None => Err(eyre!("Failed to parse remote")),
         }
     }
 
@@ -115,7 +115,7 @@ impl Repository {
 
         match Command::new("git").args(args).spawn() {
             Ok(_) => Ok(String::default()),
-            Err(e) => Err(e).context(anyhow!("Failed to checkout branch: {}", branch_name)),
+            Err(e) => Err(e).wrap_err(eyre!("Failed to checkout branch: {}", branch_name)),
         }
     }
 }

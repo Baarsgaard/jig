@@ -1,6 +1,6 @@
 use crate::{config::Config, jira::types::*};
-use anyhow::{anyhow, Context, Result};
 use base64::{engine::general_purpose, Engine as _};
+use color_eyre::eyre::{eyre, Result, WrapErr};
 use reqwest::blocking::{Client, ClientBuilder, Response};
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use std::convert::From;
@@ -75,16 +75,16 @@ impl JiraAPIClient {
             .post(search_url)
             .json(&body)
             .send()
-            .context("Post issue query failed")?;
+            .wrap_err("Post issue query failed")?;
 
         let query_response_body = response
             .json::<PostIssueQueryResponseBody>()
-            .context("Failed parsing issue query response")?;
+            .wrap_err("Failed parsing issue query response")?;
 
         let _ = match query_response_body.issues.clone() {
-            Some(i) if i.is_empty() => Err(anyhow!("List of issues is empty"))?,
+            Some(i) if i.is_empty() => Err(eyre!("List of issues is empty"))?,
             Some(i) => i,
-            None => Err(anyhow!("List of issues is empty"))?,
+            None => Err(eyre!("List of issues is empty"))?,
         };
 
         Ok(query_response_body)
@@ -102,7 +102,7 @@ impl JiraAPIClient {
             .post(worklog_url)
             .json(&body)
             .send()
-            .context("Post worklog request failed")?;
+            .wrap_err("Post worklog request failed")?;
         Ok(response)
     }
 
@@ -118,7 +118,7 @@ impl JiraAPIClient {
             .post(comment_url)
             .json(&body)
             .send()
-            .context("Post comment request failed")?;
+            .wrap_err("Post comment request failed")?;
         Ok(response)
     }
 
@@ -133,14 +133,14 @@ impl JiraAPIClient {
             .client
             .get(transitions_url)
             .send()
-            .context("Get transitions request failed")?;
+            .wrap_err("Get transitions request failed")?;
 
         let transition_response_body = response
             .json::<GetTransitionsBody>()
-            .context("Failed parsing transition query response")?;
+            .wrap_err("Failed parsing transition query response")?;
 
         if transition_response_body.transitions.is_empty() {
-            return Err(anyhow!("List of transitions is empty"));
+            return Err(eyre!("List of transitions is empty"));
         }
 
         Ok(transition_response_body.transitions)
@@ -164,7 +164,7 @@ impl JiraAPIClient {
             .post(transition_url)
             .json(&body)
             .send()
-            .context("Post transition request failed")?;
+            .wrap_err("Post transition request failed")?;
         Ok(response)
     }
 }

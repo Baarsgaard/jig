@@ -5,8 +5,8 @@ use crate::{
     repo::Repository,
     ExecCommand,
 };
-use anyhow::Context;
 use clap::Args;
+use color_eyre::eyre::{Result, WrapErr};
 use std::env;
 use std::process::Command;
 
@@ -17,11 +17,11 @@ pub struct Open {
 }
 
 impl ExecCommand for Open {
-    fn exec(self, cfg: &Config) -> anyhow::Result<String> {
-        let browser = env::var("BROWSER").context("Failed to open, missing 'BROWSER' env var")?;
+    fn exec(self, cfg: &Config) -> Result<String> {
+        let browser = env::var("BROWSER").wrap_err("Failed to open, missing 'BROWSER' env var")?;
         let client = jira::client::JiraAPIClient::new(cfg)?;
 
-        let maybe_repo = Repository::open().context("Failed to open repo");
+        let maybe_repo = Repository::open().wrap_err("Failed to open repo");
         let head = match maybe_repo {
             Ok(repo) => repo.get_branch_name(),
             Err(_) => String::default(),
@@ -38,7 +38,7 @@ impl ExecCommand for Open {
             .spawn();
         match result {
             Ok(_) => Ok(String::default()),
-            Err(e) => Err(e).context(format!("Failed to open {} using {}", issue_key, browser)),
+            Err(e) => Err(e).wrap_err(format!("Failed to open {} using {}", issue_key, browser)),
         }
     }
 }

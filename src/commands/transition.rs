@@ -5,8 +5,8 @@ use crate::{
     repo::Repository,
     ExecCommand,
 };
-use anyhow::Context;
 use clap::Args;
+use color_eyre::eyre::{Result, WrapErr};
 use inquire::Select;
 
 #[derive(Args, Debug)]
@@ -17,10 +17,10 @@ pub struct Transition {
 }
 
 impl ExecCommand for Transition {
-    fn exec(self, cfg: &Config) -> anyhow::Result<String> {
+    fn exec(self, cfg: &Config) -> Result<String> {
         let client = jira::client::JiraAPIClient::new(cfg)?;
 
-        let maybe_repo = Repository::open().context("Failed to open repo");
+        let maybe_repo = Repository::open().wrap_err("Failed to open repo");
         let head = match maybe_repo {
             Ok(repo) => repo.get_branch_name(),
             Err(_) => String::default(),
@@ -39,7 +39,7 @@ impl ExecCommand for Transition {
         } else {
             Select::new("Move to:", transitions)
                 .prompt()
-                .context("No transition selected")?
+                .wrap_err("No transition selected")?
         };
 
         client.post_transition(&issue_key, transition)?;

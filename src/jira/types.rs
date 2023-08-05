@@ -1,4 +1,5 @@
-use anyhow::{anyhow, Context, Result};
+use color_eyre::eyre;
+use color_eyre::eyre::{eyre, Result};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -36,19 +37,22 @@ impl Display for WorklogDuration {
 pub(self) static WORKLOG_RE: OnceLock<Regex> = OnceLock::new();
 
 impl TryFrom<String> for WorklogDuration {
-    type Error = anyhow::Error;
+    type Error = eyre::Error;
 
     fn try_from(value: String) -> Result<Self>
     where
-        anyhow::Error: From<std::fmt::Error>,
+        eyre::Error: From<std::fmt::Error>,
     {
         let worklog_re = WORKLOG_RE.get_or_init(|| {
             Regex::new(r"([0-9](?:\.[0-9]+)?)[wdh]").expect("Unable to compile WORKLOG_RE")
         });
 
         let worklog = match worklog_re.captures(&value) {
-            Some(c) => c.get(0).context("First capture is none: WORKLOG_RE")?,
-            None => Err(anyhow!("Malformed worklog duration: {}", value))?,
+            Some(c) => match c.get(0) {
+                Some(cap) => cap,
+                None => Err(eyre!("First capture is none: WORKLOG_RE"))?,
+            },
+            None => Err(eyre!("Malformed worklog duration: {}", value))?,
         };
 
         Ok(WorklogDuration(worklog.as_str().to_string()))
@@ -111,18 +115,21 @@ impl Display for IssueKey {
 pub(self) static ISSUE_RE: OnceLock<Regex> = OnceLock::new();
 
 impl TryFrom<String> for IssueKey {
-    type Error = anyhow::Error;
+    type Error = eyre::Error;
 
     fn try_from(value: String) -> Result<Self>
     where
-        anyhow::Error: From<std::fmt::Error>,
+        eyre::Error: From<std::fmt::Error>,
     {
         let issue_re = ISSUE_RE
             .get_or_init(|| Regex::new(r"([A-Z]{2,}-[0-9]+)").expect("Unable to compile ISSUE_RE"));
 
         let issue_key = match issue_re.captures(&value) {
-            Some(c) => c.get(0).context("First capture is none: ISSUE_RE")?,
-            None => Err(anyhow!("Malformed issue key supplied: {}", value))?,
+            Some(c) => match c.get(0) {
+                Some(cap) => cap,
+                None => Err(eyre!("First capture is none: ISSUE_RE"))?,
+            },
+            None => Err(eyre!("Malformed issue key supplied: {}", value))?,
         };
 
         Ok(IssueKey(issue_key.as_str().to_string()))

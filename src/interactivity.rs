@@ -1,5 +1,5 @@
-use anyhow::{anyhow, Context, Result};
 use chrono::{Utc, Weekday};
+use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::{DateSelect, Select};
 
 use crate::config::Config;
@@ -62,29 +62,29 @@ pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Resul
 
     match issues.first() {
         Some(i) => Ok(i.to_owned()),
-        None => Err(anyhow!("Error issue not found: {}", issue_key)),
+        None => Err(eyre!("Error issue not found: {}", issue_key)),
     }
 }
 
 pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
     if issues.is_empty() {
-        Err(anyhow!("Select Prompt: Empty issue list"))?
+        Err(eyre!("Select Prompt: Empty issue list"))?
     }
 
     Select::new("Jira issue:", issues)
         .prompt()
-        .context("No issue selected")
+        .wrap_err("No issue selected")
 }
 
 pub fn query_issues_with_retry(client: &JiraAPIClient, cfg: &Config) -> Result<Vec<Issue>> {
     let issues = match client
         .query_issues(cfg.issue_query.clone())
-        .context("First issue query failed")
+        .wrap_err("First issue query failed")
     {
         Ok(issue_body) => issue_body.issues.unwrap(),
         Err(_) => client
             .query_issues(cfg.retry_query.clone())
-            .context(anyhow!("Retry query failed"))?
+            .wrap_err(eyre!("Retry query failed"))?
             .issues
             .unwrap(),
     };

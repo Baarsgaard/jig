@@ -8,8 +8,8 @@ use crate::{
     repo::Repository,
     ExecCommand,
 };
-use anyhow::{anyhow, Context};
 use clap::Args;
+use color_eyre::eyre::{eyre, Result, WrapErr};
 
 #[derive(Args, Debug)]
 pub struct Comment {
@@ -21,9 +21,9 @@ pub struct Comment {
 }
 
 impl ExecCommand for Comment {
-    fn exec(self, cfg: &Config) -> anyhow::Result<String> {
+    fn exec(self, cfg: &Config) -> Result<String> {
         let client = jira::client::JiraAPIClient::new(cfg)?;
-        let maybe_repo = Repository::open().context("Failed to open repo");
+        let maybe_repo = Repository::open().wrap_err("Failed to open repo");
         let head = match maybe_repo {
             Ok(repo) => repo.get_branch_name(),
             Err(_) => String::default(),
@@ -43,7 +43,7 @@ impl ExecCommand for Comment {
         if response.status().is_success() {
             Ok("Comment posted!".to_string())
         } else {
-            Err(anyhow!(
+            Err(eyre!(
                 "Posting comment failed!\n{:?}",
                 response.error_for_status()
             ))

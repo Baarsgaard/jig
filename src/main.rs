@@ -1,5 +1,5 @@
-use anyhow::{Context, Result};
 use clap::{command, Parser, Subcommand};
+use color_eyre::eyre::{Result, WrapErr};
 use commands::*;
 use config::Config;
 
@@ -47,7 +47,7 @@ enum Commands {
 
 impl Commands {
     fn exec(args: Cli) -> Result<String> {
-        let cfg = config::Config::load().context("Failed to load config");
+        let cfg = config::Config::load().wrap_err("Failed to load config");
 
         match args.command {
             Commands::Branch(branch) => branch.exec(&cfg?),
@@ -65,7 +65,8 @@ impl Commands {
     }
 }
 
-fn main() {
+fn main() -> Result<()> {
+    color_eyre::install()?;
     let args = Cli::parse();
 
     match Commands::exec(args) {
@@ -75,4 +76,6 @@ fn main() {
             std::process::exit(1);
         }
     }
+
+    Ok(())
 }

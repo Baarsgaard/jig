@@ -1,6 +1,6 @@
 use crate::config::{self, Config};
-use anyhow::{Context, Result};
 use clap::Args;
+use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::{Confirm, CustomType, Password, Select, Text};
 use reqwest::Url;
 use std::fs;
@@ -50,7 +50,7 @@ impl InitConfig {
 
         if !self.all {
             return InitConfig::write_config(&new_cfg, config_file)
-                .context("Failed to write partial config");
+                .wrap_err("Failed to write partial config");
         }
 
         // Text prompts
@@ -95,17 +95,20 @@ impl InitConfig {
                 .prompt()?,
         );
 
-        InitConfig::write_config(&new_cfg, config_file).context("Failed to write full config")
+        InitConfig::write_config(&new_cfg, config_file).wrap_err("Failed to write full config")
     }
 
     fn write_config(cfg: &Config, path: PathBuf) -> Result<String> {
-        let str_cfg = toml::to_string(&cfg).context("Failed to serialize new Config file")?;
+        let str_cfg = toml::to_string(&cfg).wrap_err("Failed to serialize new Config file")?;
 
-        let dir = path.parent().context("Unable to find parent directory")?;
-        fs::create_dir_all(dir).context("Unable to create config directory")?;
+        let dir = match path.parent() {
+            Some(parent_dir) => parent_dir,
+            None => Err(eyre!("Unable to find parent directory"))?,
+        };
+        fs::create_dir_all(dir).wrap_err("Unable to create config directory")?;
 
         fs::write(path.clone().into_os_string(), str_cfg)
-            .context("Failed to write config file to")?;
+            .wrap_err("Failed to write config file to")?;
 
         Ok(format!("Overwrote config: {}", path.to_str().unwrap()))
     }
@@ -116,9 +119,9 @@ impl InitConfig {
             .prompt()?;
 
         let parsed_url = if !url_input.starts_with("http") {
-            Url::parse(&format!("https://{}", url_input)).context("Unable to parse url")?
+            Url::parse(&format!("https://{}", url_input)).wrap_err("Unable to parse url")?
         } else {
-            Url::parse(&url_input).context("Unable to parse url")?
+            Url::parse(&url_input).wrap_err("Unable to parse url")?
         };
 
         Ok(format!(
@@ -154,14 +157,14 @@ impl InitConfig {
         let token = Password::new("Auth token")
             .without_confirmation()
             .prompt()
-            .context("Missing authentication token input")?;
+            .wrap_err("Missing authentication token input")?;
 
         if icfg.api_token.is_some() {
             icfg.api_token = Some(token);
             icfg.user_login = Some(
                 Text::new("Username")
                     .prompt()
-                    .context("Username prompt failed")?,
+                    .wrap_err("Username prompt failed")?,
             );
         } else {
             icfg.pat_token = Some(token);
