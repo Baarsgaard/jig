@@ -101,10 +101,13 @@ impl InitConfig {
     fn write_config(cfg: &Config, path: PathBuf) -> Result<String> {
         let str_cfg = toml::to_string(&cfg).context("Failed to serialize new Config file")?;
 
-        let cfg_file = config::workspace_config_file();
-        fs::write(path.into_os_string(), str_cfg).context("Failed to write config file to")?;
+        let dir = path.parent().context("Unable to find parent directory")?;
+        fs::create_dir_all(dir).context("Unable to create config directory")?;
 
-        Ok(format!("Overwrote config: {}", cfg_file.to_str().unwrap()))
+        fs::write(path.clone().into_os_string(), str_cfg)
+            .context("Failed to write config file to")?;
+
+        Ok(format!("Overwrote config: {}", path.to_str().unwrap()))
     }
 
     fn jira_url() -> Result<String> {

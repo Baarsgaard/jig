@@ -21,7 +21,9 @@ Install [Rust-lang](https://www.rust-lang.org/tools/install) to compile from sou
 ```bash
 cargo install --locked --git https://github.com/raunow/jig
 ```
-> Binaries will be part releases one day
+> Requirements:
+> 'cc' linker for compilation
+> `sudo apt update && sudo apt install build-essential`
 
 ## Configuration
 
