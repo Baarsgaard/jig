@@ -20,8 +20,15 @@ pub struct Worklog {
     #[arg(value_name = "DURATION")]
     duration: String,
 
-    /// Include Worklog comment
-    #[arg(short, long = "comment", value_name = "COMMENT")]
+    /// Include Worklog comment, specifying flag with no value opens prompt
+    #[arg(
+        short,
+        long = "comment",
+        value_name = "COMMENT",
+        num_args = 0..=1,
+        default_value = None,
+        default_missing_value = Some("#PROMPT_FOR_COMMENT#")
+    )]
     comment_input: Option<String>,
 
     #[arg(value_name = "ISSUE_KEY")]
@@ -43,14 +50,20 @@ impl ExecCommand for Worklog {
             interactivity::issue_from_branch_or_prompt(&client, cfg, head)?.key
         };
 
-        let comment = if let Some(cli_comment) = self.comment_input {
+        let initial_comment = if let Some(cli_comment) = self.comment_input {
             cli_comment
         } else if cfg.enable_comment_prompts.unwrap_or(false) {
+            String::from("#PROMPT_FOR_COMMENT#")
+        } else {
+            String::default()
+        };
+
+        let comment = if initial_comment.eq("#PROMPT_FOR_COMMENT#") {
             inquire::Text::new("Worklog comment:")
                 .prompt()
                 .context("Worklog comment prompt cancelled")?
         } else {
-            String::default()
+            initial_comment
         };
 
         let wl = PostWorklogBody {
