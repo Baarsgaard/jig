@@ -10,6 +10,7 @@ chrono = "0.4.26"
 clap = { version = "4.3.0", features = ["derive"] }
 color-eyre = { version = "0.6.2", default-features = false }
 etcetera = "0.8.0"
+fuzzy-matcher = { version = "0.3.7", optional = true }
 gix = { version = "0.48.0", default-features = false }
 inquire = { version = "0.6.2", features = ["date"] }
 regex = { version = "1.8.4", features = ["std"], default-features = false }
@@ -17,6 +18,8 @@ reqwest = { version = "0.11.18", default-features = false, features = ["blocking
 serde = { version = "1.0.164", features = ["derive"] }
 serde_json = "1.0.97"
 toml = "0.7.5"
-#crossterm
-#fuzzy-matcher
-#tui
+#tui/ratatui
+
+[features]
+default = ["fuzzy_filter"]
+fuzzy_filter = ["dep:fuzzy-matcher"]

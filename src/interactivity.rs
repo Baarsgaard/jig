@@ -1,10 +1,13 @@
-use chrono::{Utc, Weekday};
-use color_eyre::eyre::{eyre, Result, WrapErr};
-use inquire::{DateSelect, Select};
-
 use crate::config::Config;
 use crate::jira::client::JiraAPIClient;
 use crate::jira::types::{Issue, IssueKey};
+use chrono::{Utc, Weekday};
+use color_eyre::eyre::{eyre, Result, WrapErr};
+#[cfg(feature = "fuzzy_filter")]
+use fuzzy_matcher::skim::SkimMatcherV2;
+#[cfg(feature = "fuzzy_filter")]
+use fuzzy_matcher::FuzzyMatcher;
+use inquire::{DateSelect, Select};
 
 pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> Result<String> {
     // Jira sucks and can't parse correct rfc3339 due to the ':' in tz.. https://jira.atlassian.com/browse/JRASERVER-61378
@@ -29,30 +32,31 @@ pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> Result<String> {
     }
 }
 
-// fn issue_fuzzer(input: &str, issues: Vec<Issue>) -> Result<Vec<String>, CustomUserError> {
-//     let input = input;
-//     let mut names = issues
-//         .iter()
-//         .map(|i| i.key + " " + i.fields.summary.as_str())
-//         .collect::<Vec<String>>();
+#[cfg(feature = "fuzzy_filter")]
+fn issue_fuzzer_filter(input: &str, issue: &Issue, matcher: &SkimMatcherV2) -> bool {
+    let maybe_score = matcher.fuzzy_match(issue.to_string().as_str(), input);
 
-//     // Loop through names, score each against input, store results
-//     let matcher = fuzzy_matcher::skim::SkimMatcherV2::default().ignore_case();
-//     let mut matches: Vec<(String, i64)> = names
-//         .into_iter()
-//         .filter_map(|name| {
-//             matcher
-//                 .fuzzy_match(&name, input)
-//                 .map(|score| (name.to_owned(), score))
-//         })
-//         .collect();
+    if let Some(score) = maybe_score {
+        score.gt(&0)
+    } else {
+        false
+    }
+}
 
-//     // Sort by score and retrieve names.
-//     matches.sort_unstable_by_key(|(_file, score)| Reverse(*score));
-//     names = matches.into_iter().map(|(name, _)| name).collect();
+#[cfg(feature = "fuzzy_filter")]
+pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
+    if issues.is_empty() {
+        Err(eyre!("Select Prompt: Empty issue list"))?
+    }
 
-//     Ok(names)
-// }
+    let matcher = SkimMatcherV2::default().ignore_case();
+
+    let issue = Select::new("Jira issue:", issues)
+        .with_filter(&|input, issue, _value, _size| issue_fuzzer_filter(input, issue, &matcher))
+        .prompt()?;
+
+    Ok(issue)
+}
 
 pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Result<Issue> {
     let issues = client
@@ -66,6 +70,7 @@ pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Resul
     }
 }
 
+#[cfg(not(feature = "fuzzy_filter"))]
 pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
     if issues.is_empty() {
         Err(eyre!("Select Prompt: Empty issue list"))?

@@ -21,6 +21,8 @@ Install [Rust-lang](https://www.rust-lang.org/tools/install) to compile from sou
 ```bash
 cargo install --locked --git https://github.com/raunow/jig
 ```
+add `--no-default-features` to disable fuzzy selections
+
 > Requirements:
 > 'cc' linker for compilation
 > `sudo apt update && sudo apt install build-essential`
