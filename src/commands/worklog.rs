@@ -48,6 +48,7 @@ impl ExecCommand for Worklog {
             Err(_) => String::default(),
         };
 
+        // TODO Figure out if match or Option makes more sense
         let issue_key = if self.issue_key_input.is_some() {
             IssueKey::try_from(self.issue_key_input.unwrap())?
         } else {
