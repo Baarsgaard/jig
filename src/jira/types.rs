@@ -169,6 +169,37 @@ impl Display for Transition {
     }
 }
 
+#[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct GetFilterResponseBody {
+    // https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-filters/#api-rest-api-2-filter-search-get
+    pub max_results: u32,
+    pub start_at: u32,
+    pub total: u32,
+    pub is_last: bool,
+    #[serde(alias = "values")]
+    pub filters: Vec<Filter>,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct Filter {
+    pub id: String,
+    pub jql: String,
+    pub name: String,
+}
+
+impl Filter {
+    pub fn filter_query(filter: &Filter) -> String {
+        format!("filter={}", filter.id)
+    }
+}
+
+impl Display for Filter {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+        write!(f, "{}: {}", self.name, self.jql)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -14,6 +14,10 @@ use std::process::Command;
 pub struct Open {
     #[arg(value_name = "ISSUE_KEY")]
     issue_key_input: Option<String>,
+
+    /// Prompt for filter to use a default_query
+    #[arg(short = 'f', long = "filter")]
+    use_filter: bool,
 }
 
 impl ExecCommand for Open {
@@ -30,7 +34,7 @@ impl ExecCommand for Open {
         let issue_key = if self.issue_key_input.is_some() {
             IssueKey::try_from(self.issue_key_input.unwrap())?
         } else {
-            interactivity::issue_from_branch_or_prompt(&client, cfg, head)?.key
+            interactivity::issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)?.key
         };
 
         let result = Command::new(browser.clone())

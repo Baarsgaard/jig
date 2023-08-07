@@ -18,6 +18,10 @@ pub struct Branch {
     /// Inverts 'always_short_branch_names' setting
     #[arg(short = 's', long = "short")]
     toggle_short_name: bool,
+
+    /// Prompt for filter to use a default_query
+    #[arg(short = 'f', long = "filter")]
+    use_filter: bool,
 }
 
 impl ExecCommand for Branch {
@@ -31,8 +35,12 @@ impl ExecCommand for Branch {
             interactivity::query_issue_details(&client, issue_key)?
         } else {
             let client = jira::client::JiraAPIClient::new(cfg)?;
-            let issues = interactivity::query_issues_with_retry(&client, cfg)?;
-            interactivity::prompt_user_with_issue_select(issues)?
+            interactivity::issue_from_branch_or_prompt(
+                &client,
+                cfg,
+                String::default(),
+                self.use_filter,
+            )?
         };
 
         let mut use_short_name = cfg.always_short_branch_names.unwrap_or(false);

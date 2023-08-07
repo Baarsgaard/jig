@@ -167,4 +167,26 @@ impl JiraAPIClient {
             .wrap_err("Post transition request failed")?;
         Ok(response)
     }
+
+    pub fn search_filters(&self, filter: Option<String>) -> Result<GetFilterResponseBody> {
+        let mut search_url = format!(
+            "{}/rest/api/latest/filter/search?expand=jql&maxResults={}",
+            self.url.clone(),
+            self.max_results
+        );
+
+        if let Some(filter) = filter {
+            search_url.push_str(&format!("&filterName={}", filter));
+        }
+
+        let response = self
+            .client
+            .get(search_url)
+            .send()
+            .wrap_err("Fetching issue filters failed")?;
+
+        response
+            .json::<GetFilterResponseBody>()
+            .wrap_err("Failed parsing filter search response")
+    }
 }

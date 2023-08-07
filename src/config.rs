@@ -23,6 +23,7 @@ pub struct Config {
     pub max_query_results: Option<u32>,
     pub enable_comment_prompts: Option<bool>,
     pub one_transition_auto_move: Option<bool>,
+    pub inclusive_filters: Option<bool>,
 }
 
 impl Config {

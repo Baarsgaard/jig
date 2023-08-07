@@ -44,6 +44,7 @@ impl InitConfig {
             max_query_results: Some(50),
             enable_comment_prompts: None,
             one_transition_auto_move: None,
+            inclusive_filters: None,
         };
 
         InitConfig::set_credentials(&mut new_cfg)?;
@@ -92,6 +93,12 @@ impl InitConfig {
         new_cfg.one_transition_auto_move = Some(
             Confirm::new("Skip transition select on one valid transition:")
                 .with_default(false)
+                .prompt()?,
+        );
+        new_cfg.inclusive_filters = Some(
+            Confirm::new("Filters are joined using 'OR' instead of 'AND'")
+                .with_default(true)
+                .with_help_message("filter=10001 OR filter=10002")
                 .prompt()?,
         );
 

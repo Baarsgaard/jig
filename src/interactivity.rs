@@ -1,13 +1,16 @@
 use crate::config::Config;
 use crate::jira::client::JiraAPIClient;
-use crate::jira::types::{Issue, IssueKey};
+use crate::jira::types::{Filter, Issue, IssueKey};
 use chrono::{Utc, Weekday};
 use color_eyre::eyre::{eyre, Result, WrapErr};
 #[cfg(feature = "fuzzy_filter")]
 use fuzzy_matcher::skim::SkimMatcherV2;
 #[cfg(feature = "fuzzy_filter")]
 use fuzzy_matcher::FuzzyMatcher;
-use inquire::{DateSelect, Select};
+#[cfg(not(feature = "fuzzy_finder"))]
+use inquire::Select;
+use inquire::{DateSelect, MultiSelect};
+use std::fmt::Display;
 
 pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> Result<String> {
     // Jira sucks and can't parse correct rfc3339 due to the ':' in tz.. https://jira.atlassian.com/browse/JRASERVER-61378
@@ -33,13 +36,12 @@ pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> Result<String> {
 }
 
 #[cfg(feature = "fuzzy_filter")]
-fn issue_fuzzer_filter(input: &str, issue: &Issue, matcher: &SkimMatcherV2) -> bool {
+fn select_fuzzy_filter<T: Display>(input: &str, issue: &T, matcher: &SkimMatcherV2) -> bool {
     let maybe_score = matcher.fuzzy_match(issue.to_string().as_str(), input);
 
-    if let Some(score) = maybe_score {
-        score.gt(&0)
-    } else {
-        false
+    match maybe_score {
+        Some(score) => score.gt(&0),
+        None => false,
     }
 }
 
@@ -52,7 +54,7 @@ pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
     let matcher = SkimMatcherV2::default().ignore_case();
 
     let issue = Select::new("Jira issue:", issues)
-        .with_filter(&|input, issue, _value, _size| issue_fuzzer_filter(input, issue, &matcher))
+        .with_filter(&|input, issue, _value, _size| select_fuzzy_filter(input, issue, &matcher))
         .prompt()?;
 
     Ok(issue)
@@ -81,9 +83,13 @@ pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
         .wrap_err("No issue selected")
 }
 
-pub fn query_issues_with_retry(client: &JiraAPIClient, cfg: &Config) -> Result<Vec<Issue>> {
+pub fn query_issues_with_retry(
+    client: &JiraAPIClient,
+    cfg: &Config,
+    query: String,
+) -> Result<Vec<Issue>> {
     let issues = match client
-        .query_issues(cfg.issue_query.clone())
+        .query_issues(query)
         .wrap_err("First issue query failed")
     {
         Ok(issue_body) => issue_body.issues.unwrap(),
@@ -101,12 +107,38 @@ pub fn issue_from_branch_or_prompt(
     client: &JiraAPIClient,
     cfg: &Config,
     head_name: String,
+    use_filter: bool,
 ) -> Result<Issue> {
     if let Ok(issue_key) = IssueKey::try_from(head_name) {
         return query_issue_details(client, issue_key);
     }
 
-    let issues = query_issues_with_retry(client, cfg)?;
+    let query = if use_filter {
+        let mut filters = client.search_filters(None)?.filters;
+
+        if filters.is_empty() {
+            return Err(eyre!("List of filters is empty"))?;
+        }
+
+        let matcher = SkimMatcherV2::default().ignore_case();
+        filters = MultiSelect::new("Saved issue filter:", filters)
+            .with_help_message("Only displays favourited filters")
+            .with_filter(&|input, filter, _value, _size| {
+                select_fuzzy_filter(input, filter, &matcher)
+            })
+            .prompt()
+            .wrap_err("Filter prompt interrupted")?;
+
+        filters
+            .iter()
+            .map(Filter::filter_query)
+            .collect::<Vec<String>>()
+            .join(" OR ")
+    } else {
+        cfg.issue_query.clone()
+    };
+
+    let issues = query_issues_with_retry(client, cfg, query)?;
 
     prompt_user_with_issue_select(issues)
 }
