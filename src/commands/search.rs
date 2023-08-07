@@ -9,9 +9,13 @@ use clap::Args;
 use color_eyre::eyre::Result;
 
 #[derive(Args, Debug)]
-pub struct Create {}
+pub struct Search {
+    /// Prompt for filter to use a default_query
+    #[arg(short = 'f', long = "filter")]
+    use_filter: bool,
+}
 
-impl ExecCommand for Create {
+impl ExecCommand for Search {
     fn exec(self, _cfg: &Config) -> Result<String> {
         todo!()
     }

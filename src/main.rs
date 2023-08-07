@@ -29,9 +29,6 @@ enum Commands {
     Comment(Comment),
     /// List config file locations
     Configs(PrintConfigs),
-    /// Create new ticket
-    #[cfg(debug_assertions)]
-    Create(Create),
     /// Initialise config file(s)
     Init(InitConfig),
     /// Create a work log entry on a Jira issue
@@ -40,9 +37,9 @@ enum Commands {
     Move(Transition),
     /// Open issue using BROWSER var
     Open(Open),
-    /// Interactively send JQL queries to Jira
+    /// Interactively send JQL queries to Jira when tab is pressed
     #[cfg(debug_assertions)]
-    Query(Query),
+    Search(Search),
 }
 
 impl Commands {
@@ -53,14 +50,12 @@ impl Commands {
             Commands::Branch(branch) => branch.exec(&cfg?),
             Commands::Comment(comment) => comment.exec(&cfg?),
             Commands::Configs(print_config) => print_config.exec(&cfg?),
-            #[cfg(debug_assertions)]
-            Commands::Create(create) => create.exec(&cfg?),
             Commands::Init(init) => init.init(),
             Commands::Log(worklog) => worklog.exec(&cfg?),
             Commands::Move(transition) => transition.exec(&cfg?),
             Commands::Open(open) => open.exec(&cfg?),
             #[cfg(debug_assertions)]
-            Commands::Query(query) => query.exec(&cfg?),
+            Commands::Search(search) => search.exec(&cfg?),
         }
     }
 }
