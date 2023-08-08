@@ -83,6 +83,29 @@ pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
         .wrap_err("No issue selected")
 }
 
+pub fn pick_filter(cfg: &Config, filters: Vec<Filter>) -> Result<String> {
+    if filters.is_empty() {
+        return Err(eyre!("List of filters is empty"))?;
+    }
+
+    let matcher = SkimMatcherV2::default().ignore_case();
+    let selected_filters = MultiSelect::new("Saved issue filter:", filters)
+        .with_help_message("Only displays favourited filters")
+        .with_filter(&|input, filter, _value, _size| select_fuzzy_filter(input, filter, &matcher))
+        .prompt()
+        .wrap_err("Filter prompt interrupted")?;
+
+    let filter_list = selected_filters
+        .iter()
+        .map(Filter::filter_query)
+        .collect::<Vec<String>>();
+    if cfg.inclusive_filters.unwrap_or(true) {
+        Ok(filter_list.join(" OR "))
+    } else {
+        Ok(filter_list.join(" AND "))
+    }
+}
+
 pub fn query_issues_with_retry(
     client: &JiraAPIClient,
     cfg: &Config,
@@ -113,29 +136,9 @@ pub fn issue_from_branch_or_prompt(
         return query_issue_details(client, issue_key);
     }
 
-    let query = if use_filter {
-        let mut filters = client.search_filters(None)?.filters;
-
-        if filters.is_empty() {
-            return Err(eyre!("List of filters is empty"))?;
-        }
-
-        let matcher = SkimMatcherV2::default().ignore_case();
-        filters = MultiSelect::new("Saved issue filter:", filters)
-            .with_help_message("Only displays favourited filters")
-            .with_filter(&|input, filter, _value, _size| {
-                select_fuzzy_filter(input, filter, &matcher)
-            })
-            .prompt()
-            .wrap_err("Filter prompt interrupted")?;
-
-        filters
-            .iter()
-            .map(Filter::filter_query)
-            .collect::<Vec<String>>()
-            .join(" OR ")
-    } else {
-        cfg.issue_query.clone()
+    let query = match use_filter {
+        true => pick_filter(cfg, client.search_filters(None)?.filters)?,
+        false => cfg.issue_query.clone(),
     };
 
     let issues = query_issues_with_retry(client, cfg, query)?;
