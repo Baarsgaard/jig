@@ -3,14 +3,62 @@ use crate::jira::client::JiraAPIClient;
 use crate::jira::types::{Filter, Issue, IssueKey};
 use chrono::{Utc, Weekday};
 use color_eyre::eyre::{eyre, Result, WrapErr};
+use inquire::{DateSelect, MultiSelect, Select};
+
 #[cfg(feature = "fuzzy_filter")]
-use fuzzy_matcher::skim::SkimMatcherV2;
-#[cfg(feature = "fuzzy_filter")]
-use fuzzy_matcher::FuzzyMatcher;
-#[cfg(not(feature = "fuzzy_finder"))]
-use inquire::Select;
-use inquire::{DateSelect, MultiSelect};
-use std::fmt::Display;
+mod fuzzy_filter {
+    use super::*;
+    use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
+    use std::fmt::Display;
+
+    fn select_fuzzy_filter<T: Display>(input: &str, issue: &T, matcher: &SkimMatcherV2) -> bool {
+        let maybe_score = matcher.fuzzy_match(issue.to_string().as_str(), input);
+
+        match maybe_score {
+            Some(score) => score.gt(&0),
+            None => false,
+        }
+    }
+
+    pub fn pick_filter(cfg: &Config, filters: Vec<Filter>) -> Result<String> {
+        if filters.is_empty() {
+            return Err(eyre!("List of filters is empty"))?;
+        }
+
+        let matcher = SkimMatcherV2::default().ignore_case();
+        let selected_filters = MultiSelect::new("Saved issue filter:", filters)
+            .with_help_message("Only displays favourited filters")
+            .with_filter(&|input, filter, _value, _size| {
+                select_fuzzy_filter(input, filter, &matcher)
+            })
+            .prompt()
+            .wrap_err("Filter prompt interrupted")?;
+
+        let filter_list = selected_filters
+            .iter()
+            .map(Filter::filter_query)
+            .collect::<Vec<String>>();
+        if cfg.inclusive_filters.unwrap_or(true) {
+            Ok(filter_list.join(" OR "))
+        } else {
+            Ok(filter_list.join(" AND "))
+        }
+    }
+
+    pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
+        if issues.is_empty() {
+            Err(eyre!("Select Prompt: Empty issue list"))?
+        }
+
+        let matcher = SkimMatcherV2::default().ignore_case();
+
+        let issue = Select::new("Jira issue:", issues)
+            .with_filter(&|input, issue, _value, _size| select_fuzzy_filter(input, issue, &matcher))
+            .prompt()?;
+
+        Ok(issue)
+    }
+}
 
 pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> Result<String> {
     // Jira sucks and can't parse correct rfc3339 due to the ':' in tz.. https://jira.atlassian.com/browse/JRASERVER-61378
@@ -35,31 +83,6 @@ pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> Result<String> {
     }
 }
 
-#[cfg(feature = "fuzzy_filter")]
-fn select_fuzzy_filter<T: Display>(input: &str, issue: &T, matcher: &SkimMatcherV2) -> bool {
-    let maybe_score = matcher.fuzzy_match(issue.to_string().as_str(), input);
-
-    match maybe_score {
-        Some(score) => score.gt(&0),
-        None => false,
-    }
-}
-
-#[cfg(feature = "fuzzy_filter")]
-pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
-    if issues.is_empty() {
-        Err(eyre!("Select Prompt: Empty issue list"))?
-    }
-
-    let matcher = SkimMatcherV2::default().ignore_case();
-
-    let issue = Select::new("Jira issue:", issues)
-        .with_filter(&|input, issue, _value, _size| select_fuzzy_filter(input, issue, &matcher))
-        .prompt()?;
-
-    Ok(issue)
-}
-
 pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Result<Issue> {
     let issues = client
         .query_issues(format!("issuekey = {}", issue_key))?
@@ -72,6 +95,39 @@ pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Resul
     }
 }
 
+#[cfg(feature = "fuzzy_filter")]
+fn pick_filter(cfg: &Config, filters: Vec<Filter>) -> Result<String> {
+    fuzzy_filter::pick_filter(cfg, filters)
+}
+
+#[cfg(not(feature = "fuzzy_filter"))]
+fn pick_filter(cfg: &Config, filters: Vec<Filter>) -> Result<String> {
+    if filters.is_empty() {
+        return Err(eyre!("List of filters is empty"))?;
+    }
+
+    let selected_filters = MultiSelect::new("Saved issue filter:", filters)
+        .with_help_message("Only displays favourited filters")
+        .prompt()
+        .wrap_err("Filter prompt interrupted")?;
+
+    let filter_list = selected_filters
+        .iter()
+        .map(Filter::filter_query)
+        .collect::<Vec<String>>();
+
+    if cfg.inclusive_filters.unwrap_or(true) {
+        Ok(filter_list.join(" OR "))
+    } else {
+        Ok(filter_list.join(" AND "))
+    }
+}
+
+#[cfg(feature = "fuzzy_filter")]
+pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
+    fuzzy_filter::prompt_user_with_issue_select(issues)
+}
+
 #[cfg(not(feature = "fuzzy_filter"))]
 pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
     if issues.is_empty() {
@@ -81,29 +137,6 @@ pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
     Select::new("Jira issue:", issues)
         .prompt()
         .wrap_err("No issue selected")
-}
-
-pub fn pick_filter(cfg: &Config, filters: Vec<Filter>) -> Result<String> {
-    if filters.is_empty() {
-        return Err(eyre!("List of filters is empty"))?;
-    }
-
-    let matcher = SkimMatcherV2::default().ignore_case();
-    let selected_filters = MultiSelect::new("Saved issue filter:", filters)
-        .with_help_message("Only displays favourited filters")
-        .with_filter(&|input, filter, _value, _size| select_fuzzy_filter(input, filter, &matcher))
-        .prompt()
-        .wrap_err("Filter prompt interrupted")?;
-
-    let filter_list = selected_filters
-        .iter()
-        .map(Filter::filter_query)
-        .collect::<Vec<String>>();
-    if cfg.inclusive_filters.unwrap_or(true) {
-        Ok(filter_list.join(" OR "))
-    } else {
-        Ok(filter_list.join(" AND "))
-    }
 }
 
 pub fn query_issues_with_retry(
