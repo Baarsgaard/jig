@@ -1,0 +1,26 @@
+[package]
+name = "jig"
+version = "0.1.0"
+edition = "2021"
+authors = ["Steffen Baarsgaard <sbaarsgaard@gmail.com>"]
+
+[dependencies]
+base64 = "0.21.2"
+chrono = "0.4.26"
+clap = { version = "4.3.0", features = ["derive"] }
+color-eyre = { workspace = true, default-features = false }
+etcetera = "0.8.0"
+fuzzy-matcher = { version = "0.3.7", optional = true }
+gix = { version = "0.48.0", default-features = false }
+inquire = { version = "0.6.2", features = ["date"] }
+jira = { path = "../jira" }
+regex = { workspace = true, features = ["std"], default-features = false }
+reqwest = { workspace = true, default-features = false }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+toml = "0.7.5"
+#tui/ratatui
+
+[features]
+default = []
+fuzzy_filter = ["dep:fuzzy-matcher"]

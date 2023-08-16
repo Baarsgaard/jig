@@ -1,4 +1,4 @@
-use crate::config::{self, Config};
+use crate::config::{self, RawConfig};
 use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::{Confirm, CustomType, Password, Select, Text};
@@ -32,7 +32,7 @@ impl InitConfig {
         };
 
         let jira_url = InitConfig::jira_url()?;
-        let mut new_cfg = Config {
+        let mut new_cfg = RawConfig {
             jira_url,
             user_login: None,
             api_token: None,
@@ -105,7 +105,7 @@ impl InitConfig {
         InitConfig::write_config(&new_cfg, config_file).wrap_err("Failed to write full config")
     }
 
-    fn write_config(cfg: &Config, path: PathBuf) -> Result<String> {
+    fn write_config(cfg: &RawConfig, path: PathBuf) -> Result<String> {
         let str_cfg = toml::to_string(&cfg).wrap_err("Failed to serialize new Config file")?;
 
         let dir = match path.parent() {
@@ -138,7 +138,7 @@ impl InitConfig {
         ))
     }
 
-    fn set_credentials(icfg: &mut Config) -> Result<()> {
+    fn set_credentials(icfg: &mut RawConfig) -> Result<()> {
         let auth_url = if icfg.jira_url.contains("atlassian.net") {
             let url = String::from("https://id.atlassian.com/manage-profile/security/api-tokens");
             icfg.api_token = Some(String::default());

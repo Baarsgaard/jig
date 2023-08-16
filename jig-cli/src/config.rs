@@ -1,5 +1,6 @@
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use etcetera::base_strategy::{choose_base_strategy, BaseStrategy};
+use jira::{Credential, JiraClientConfig};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
@@ -11,7 +12,7 @@ static CONFIG_FILE: OnceLock<PathBuf> = OnceLock::new();
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
-pub struct Config {
+pub struct RawConfig {
     pub jira_url: String,
     pub issue_query: String,
     pub retry_query: String,
@@ -26,6 +27,18 @@ pub struct Config {
     pub inclusive_filters: Option<bool>,
 }
 
+#[derive(Debug, Clone)]
+pub struct Config {
+    pub issue_query: String,
+    pub retry_query: String,
+    pub always_confirm_date: Option<bool>,
+    pub always_short_branch_names: Option<bool>,
+    pub enable_comment_prompts: Option<bool>,
+    pub one_transition_auto_move: Option<bool>,
+    pub inclusive_filters: Option<bool>,
+    pub jira_cfg: JiraClientConfig,
+}
+
 impl Config {
     pub fn load() -> Result<Config> {
         let global_raw_config =
@@ -38,13 +51,13 @@ impl Config {
         let local_config: Result<toml::Value> = local_raw_config
             .and_then(|file| from_str(&file).wrap_err("Config load error: Bad workspace config"));
 
-        let cfg: Config = match (global_config, local_config) {
+        let mut cfg: RawConfig = match (global_config, local_config) {
             (Ok(global), Ok(local)) => merge_toml_values(global, local, 3)
-                .try_into::<Config>()
+                .try_into::<RawConfig>()
                 .wrap_err("Config load error: Bad configs"),
 
             (Ok(cfg), Err(_)) | (Err(_), Ok(cfg)) => cfg
-                .try_into::<Config>()
+                .try_into::<RawConfig>()
                 .wrap_err("Config load error: Bad config"),
             (Err(e), Err(_)) => Err(e).wrap_err("Config load error"),
         }?;
@@ -60,7 +73,46 @@ impl Config {
                 .wrap_err("Config load error: Bad config")?
         }
 
-        Ok(cfg)
+        let mut url = cfg.jira_url.clone();
+        if !url.starts_with("http") {
+            url = String::from("https://") + &url;
+        };
+        if url.ends_with('/') {
+            url.pop();
+        }
+        cfg.jira_url = url;
+
+        Ok(Config::from(cfg))
+    }
+}
+
+impl From<RawConfig> for Config {
+    fn from(cfg: RawConfig) -> Self {
+        let credential = if let Some(pat) = cfg.pat_token {
+            Credential::PersonalAccessToken(pat)
+        } else if let Some(api_token) = cfg.api_token {
+            Credential::ApiToken {
+                login: cfg.user_login.unwrap(),
+                token: api_token,
+            }
+        } else {
+            Credential::Anonymous
+        };
+
+        Config {
+            issue_query: cfg.issue_query,
+            retry_query: cfg.retry_query,
+            always_confirm_date: cfg.always_confirm_date,
+            always_short_branch_names: cfg.always_short_branch_names,
+            enable_comment_prompts: cfg.enable_comment_prompts,
+            one_transition_auto_move: cfg.one_transition_auto_move,
+            inclusive_filters: cfg.inclusive_filters,
+            jira_cfg: JiraClientConfig {
+                credential,
+                max_query_results: cfg.max_query_results.unwrap_or(50),
+                url: cfg.jira_url,
+            },
+        }
     }
 }
 

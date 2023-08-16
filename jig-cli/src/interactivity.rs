@@ -1,9 +1,11 @@
 use crate::config::Config;
-use crate::jira::client::JiraAPIClient;
-use crate::jira::types::{Filter, Issue, IssueKey};
 use chrono::{Utc, Weekday};
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::{DateSelect, MultiSelect, Select};
+use jira::{
+    types::{Filter, Issue, IssueKey},
+    JiraAPIClient,
+};
 
 #[cfg(feature = "fuzzy_filter")]
 mod fuzzy_filter {

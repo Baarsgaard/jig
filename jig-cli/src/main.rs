@@ -6,7 +6,6 @@ use config::Config;
 mod commands;
 mod config;
 mod interactivity;
-mod jira;
 mod repo;
 
 pub trait ExecCommand {

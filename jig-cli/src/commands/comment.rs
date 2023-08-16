@@ -1,15 +1,8 @@
-use crate::{
-    config::Config,
-    interactivity,
-    jira::{
-        self,
-        types::{IssueKey, PostCommentBody},
-    },
-    repo::Repository,
-    ExecCommand,
-};
+use crate::{config::Config, interactivity, repo::Repository, ExecCommand};
 use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
+use jira::types::{IssueKey, PostCommentBody};
+use jira::JiraAPIClient;
 
 #[derive(Args, Debug)]
 pub struct Comment {
@@ -26,7 +19,7 @@ pub struct Comment {
 
 impl ExecCommand for Comment {
     fn exec(self, cfg: &Config) -> Result<String> {
-        let client = jira::client::JiraAPIClient::new(cfg)?;
+        let client = JiraAPIClient::new(&cfg.jira_cfg)?;
         let maybe_repo = Repository::open().wrap_err("Failed to open repo");
         let head = match maybe_repo {
             Ok(repo) => repo.get_branch_name(),

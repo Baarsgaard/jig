@@ -1,13 +1,8 @@
-use crate::{
-    config::Config,
-    interactivity,
-    jira::{self, types::IssueKey},
-    repo::Repository,
-    ExecCommand,
-};
+use crate::{config::Config, interactivity, repo::Repository, ExecCommand};
 use clap::Args;
 use color_eyre::eyre::{Result, WrapErr};
 use inquire::Select;
+use jira::{types::IssueKey, JiraAPIClient};
 
 #[derive(Args, Debug)]
 pub struct Transition {
@@ -22,7 +17,7 @@ pub struct Transition {
 
 impl ExecCommand for Transition {
     fn exec(self, cfg: &Config) -> Result<String> {
-        let client = jira::client::JiraAPIClient::new(cfg)?;
+        let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
         let maybe_repo = Repository::open().wrap_err("Failed to open repo");
         let head = match maybe_repo {

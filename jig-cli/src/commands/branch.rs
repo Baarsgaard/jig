@@ -1,12 +1,8 @@
-use crate::{
-    config::Config,
-    interactivity,
-    jira::{self, types::IssueKey},
-    repo::Repository,
-    ExecCommand,
-};
+use crate::{config::Config, interactivity, repo::Repository, ExecCommand};
 use clap::Args;
 use color_eyre::eyre::{Result, WrapErr};
+use jira::types::IssueKey;
+use jira::JiraAPIClient;
 
 #[derive(Args, Debug)]
 pub struct Branch {
@@ -30,11 +26,11 @@ impl ExecCommand for Branch {
 
         let issue = if let Some(maybe_issue_key) = self.issue_key_input {
             let issue_key = IssueKey::try_from(maybe_issue_key)?;
-            let client = jira::client::JiraAPIClient::new(cfg)?;
+            let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
             interactivity::query_issue_details(&client, issue_key)?
         } else {
-            let client = jira::client::JiraAPIClient::new(cfg)?;
+            let client = JiraAPIClient::new(&cfg.jira_cfg)?;
             interactivity::issue_from_branch_or_prompt(
                 &client,
                 cfg,

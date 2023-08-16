@@ -1,6 +1,7 @@
-use crate::{config::find_workspace, jira::types::Issue};
+use crate::config::find_workspace;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use gix::{Remote, Repository as Gix_Repository, ThreadSafeRepository};
+use jira::types::Issue;
 use std::process::Command;
 
 #[derive(Debug, Clone)]
@@ -123,7 +124,7 @@ impl Repository {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::jira::types::{IssueKey, PostIssueQueryResponseBodyFields};
+    use jira::types::{IssueKey, PostIssueQueryResponseBodyFields};
 
     fn test_issue(issue_key: Option<IssueKey>, summary: Option<&str>) -> Issue {
         Issue {

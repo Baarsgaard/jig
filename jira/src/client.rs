@@ -1,13 +1,37 @@
-use crate::{config::Config, jira::types::*};
+use crate::types::*;
 use base64::{engine::general_purpose, Engine as _};
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use reqwest::blocking::{Client, ClientBuilder, Response};
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
+use reqwest::Url;
 use std::convert::From;
 
+///
+#[derive(Debug, Clone)]
+pub struct JiraClientConfig {
+    pub credential: Credential,
+    pub max_query_results: u32,
+    pub url: String,
+}
+
+/// Supported Authentication methods
+#[derive(Debug, Clone)]
+pub enum Credential {
+    /// Anonymous
+    /// Omit Authorization header
+    Anonymous,
+    /// User email/username and token
+    /// Authorization: Basic <b64 login:token>
+    ApiToken { login: String, token: String },
+    /// Personal Access Token
+    /// Authorization: Bearer <PAT>
+    PersonalAccessToken(String),
+}
+
+/// Reusable client for interfacing with Jira
 #[derive(Debug, Clone)]
 pub struct JiraAPIClient {
-    pub url: String,
+    pub url: Url,
     pub version: String,
 
     pub(crate) client: Client,
@@ -15,50 +39,47 @@ pub struct JiraAPIClient {
 }
 
 impl JiraAPIClient {
-    pub fn get_headers(cfg: &Config) -> HeaderMap {
+    fn build_headers(credentials: &Credential) -> HeaderMap {
         let header_content = HeaderValue::from_static("application/json");
 
-        let mut auth_header_value = if cfg.api_token.is_some() {
-            let jira_encoded_auth: String = general_purpose::STANDARD_NO_PAD.encode(format!(
-                "{}:{}",
-                cfg.user_login.clone().unwrap(),
-                cfg.api_token.clone().unwrap(),
-            ));
-            HeaderValue::from_str(&format!("Basic {}", jira_encoded_auth)).unwrap()
-        } else {
-            HeaderValue::from_str(&format!("Bearer {}", cfg.pat_token.clone().unwrap())).unwrap()
+        let auth_header = match credentials {
+            Credential::Anonymous => None,
+            Credential::ApiToken {
+                login: user_login,
+                token: api_token,
+            } => {
+                let jira_encoded_auth = general_purpose::STANDARD_NO_PAD
+                    .encode(format!("{}:{}", user_login, api_token,));
+                Some(HeaderValue::from_str(&format!("Basic {}", jira_encoded_auth)).unwrap())
+            }
+            Credential::PersonalAccessToken(token) => {
+                Some(HeaderValue::from_str(&format!("Bearer {}", token)).unwrap())
+            }
         };
 
-        auth_header_value.set_sensitive(true);
         let mut headers = HeaderMap::new();
         headers.insert(ACCEPT, header_content.clone());
         headers.insert(CONTENT_TYPE, header_content);
-        headers.insert(AUTHORIZATION, auth_header_value);
+
+        if let Some(mut auth_header_value) = auth_header {
+            auth_header_value.set_sensitive(true);
+            headers.insert(AUTHORIZATION, auth_header_value);
+        }
 
         headers
     }
 
-    pub fn new(cfg: &Config) -> Result<JiraAPIClient> {
-        let mut url = cfg.jira_url.clone();
-
-        if !url.starts_with("http") {
-            url = String::from("https://") + &url;
-        };
-
-        if url.ends_with('/') {
-            url.pop();
-        }
-
+    pub fn new(cfg: &JiraClientConfig) -> Result<JiraAPIClient> {
         let client = ClientBuilder::new()
-            .default_headers(JiraAPIClient::get_headers(cfg))
+            .default_headers(JiraAPIClient::build_headers(&cfg.credential))
             .https_only(true)
             .build()?;
 
         Ok(JiraAPIClient {
-            url,
+            url: Url::parse(cfg.url.as_str()).wrap_err("Unable to construct JiraApiClient.url")?,
             version: String::from("latest"),
             client,
-            max_results: cfg.max_query_results.unwrap_or(50),
+            max_results: cfg.max_query_results,
         })
     }
 
