@@ -5,6 +5,7 @@ use reqwest::blocking::{Client, ClientBuilder, Response};
 use reqwest::header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use reqwest::Url;
 use std::convert::From;
+use std::time::Duration;
 
 ///
 #[derive(Debug, Clone)]
@@ -12,6 +13,7 @@ pub struct JiraClientConfig {
     pub credential: Credential,
     pub max_query_results: u32,
     pub url: String,
+    pub timeout: u64,
 }
 
 /// Supported Authentication methods
@@ -73,6 +75,7 @@ impl JiraAPIClient {
         let client = ClientBuilder::new()
             .default_headers(JiraAPIClient::build_headers(&cfg.credential))
             .https_only(true)
+            .timeout(Some(Duration::from_secs(cfg.timeout)))
             .build()?;
 
         Ok(JiraAPIClient {

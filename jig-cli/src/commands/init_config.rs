@@ -45,6 +45,7 @@ impl InitConfig {
             enable_comment_prompts: None,
             one_transition_auto_move: None,
             inclusive_filters: None,
+            timeout: None,
         };
 
         InitConfig::set_credentials(&mut new_cfg)?;
@@ -68,6 +69,12 @@ impl InitConfig {
             CustomType::<u32>::new("Maximum query results:")
                 .with_help_message("Lower is faster in case of greedy queries")
                 .with_default(new_cfg.max_query_results.unwrap())
+                .prompt()?,
+        );
+        new_cfg.timeout = Some(
+            CustomType::new("Rest Timeout:")
+                .with_default(10u64)
+                .with_help_message("How long to wait on server to respond")
                 .prompt()?,
         );
 

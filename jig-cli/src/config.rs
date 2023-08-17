@@ -25,6 +25,7 @@ pub struct RawConfig {
     pub enable_comment_prompts: Option<bool>,
     pub one_transition_auto_move: Option<bool>,
     pub inclusive_filters: Option<bool>,
+    pub timeout: Option<u64>,
 }
 
 #[derive(Debug, Clone)]
@@ -109,8 +110,9 @@ impl From<RawConfig> for Config {
             inclusive_filters: cfg.inclusive_filters,
             jira_cfg: JiraClientConfig {
                 credential,
-                max_query_results: cfg.max_query_results.unwrap_or(50),
+                max_query_results: cfg.max_query_results.unwrap_or(50u32),
                 url: cfg.jira_url,
+                timeout: cfg.timeout.unwrap_or(10u64),
             },
         }
     }
