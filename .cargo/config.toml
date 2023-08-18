@@ -1,2 +1,5 @@
 [profile.release]
 strip = true
+
+[alias]
+b = "build --features cloud"

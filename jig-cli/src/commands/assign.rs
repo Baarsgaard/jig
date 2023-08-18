@@ -1,13 +1,18 @@
+use std::fmt::{Display, Formatter};
+
 use crate::{
     config::Config, interactivity::issue_from_branch_or_prompt, repo::Repository, ExecCommand,
 };
 use clap::Args;
 use color_eyre::eyre::{Result, WrapErr};
 use inquire::Select;
-use jira::{types::IssueKey, JiraAPIClient};
+use jira::{
+    types::{IssueKey, User},
+    JiraAPIClient,
+};
 
 #[derive(Args, Debug)]
-pub struct Transition {
+pub struct Assign {
     /// Skip querying Jira for Issue summary
     #[arg(value_name = "ISSUE_KEY")]
     issue_key_input: Option<String>,
@@ -18,7 +23,7 @@ pub struct Transition {
     use_filter: bool,
 }
 
-impl ExecCommand for Transition {
+impl ExecCommand for Assign {
     fn exec(self, cfg: &Config) -> Result<String> {
         let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
@@ -38,17 +43,32 @@ impl ExecCommand for Transition {
             issue_key
         };
 
-        let transitions = client.get_transitions(&issue_key)?;
-        let transition = if transitions.len() == 1 && cfg.one_transition_auto_move.unwrap_or(false)
-        {
-            transitions[0].clone()
-        } else {
-            Select::new("Move to:", transitions)
-                .prompt()
-                .wrap_err("No transition selected")?
-        };
+        let users = client
+            .get_assignable_users(&issue_key)?
+            .iter()
+            .map(|u| JiraUser(u.to_owned()))
+            .collect();
+        let user = Select::new("Assign:", users)
+            .prompt()
+            .wrap_err("No user selected")?;
 
-        client.post_transition(&issue_key, transition)?;
-        Ok(String::default())
+        client.post_assign_user(&issue_key, &user.0)?;
+        Ok(format!("Assigned {} to {}", user, issue_key))
+    }
+}
+
+// Necessary to allow also searching server:name and cloud:email
+struct JiraUser(User);
+#[cfg(not(feature = "cloud"))]
+impl Display for JiraUser {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {}", self.0.name, self.0.display_name)
+    }
+}
+
+#[cfg(feature = "cloud")]
+impl Display for JiraUser {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} {}", self.0.display_name, self.0.email_address)
     }
 }

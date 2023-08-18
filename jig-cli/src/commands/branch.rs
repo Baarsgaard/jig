@@ -1,4 +1,9 @@
-use crate::{config::Config, interactivity, repo::Repository, ExecCommand};
+use crate::{
+    config::Config,
+    interactivity::{issue_from_branch_or_prompt, query_issue_details},
+    repo::Repository,
+    ExecCommand,
+};
 use clap::Args;
 use color_eyre::eyre::{Result, WrapErr};
 use jira::types::IssueKey;
@@ -17,26 +22,27 @@ pub struct Branch {
 
     /// Prompt for filter to use a default_query
     #[arg(short = 'f', long = "filter")]
+    #[cfg(feature = "cloud")]
     use_filter: bool,
 }
 
 impl ExecCommand for Branch {
     fn exec(self, cfg: &Config) -> Result<String> {
         let repo = Repository::open().wrap_err("Failed to open repo")?;
+        let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
         let issue = if let Some(maybe_issue_key) = self.issue_key_input {
             let issue_key = IssueKey::try_from(maybe_issue_key)?;
-            let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
-            interactivity::query_issue_details(&client, issue_key)?
+            query_issue_details(&client, issue_key)?
         } else {
-            let client = JiraAPIClient::new(&cfg.jira_cfg)?;
-            interactivity::issue_from_branch_or_prompt(
-                &client,
-                cfg,
-                String::default(),
-                self.use_filter,
-            )?
+            #[cfg(feature = "cloud")]
+            let issue =
+                issue_from_branch_or_prompt(&client, cfg, String::default(), self.use_filter)?;
+            #[cfg(not(feature = "cloud"))]
+            let issue = issue_from_branch_or_prompt(&client, cfg, String::default())?;
+
+            issue
         };
 
         let mut use_short_name = cfg.always_short_branch_names.unwrap_or(false);

@@ -1,4 +1,9 @@
-use crate::{config::Config, interactivity, repo::Repository, ExecCommand};
+use crate::{
+    config::Config,
+    interactivity::{get_date, issue_from_branch_or_prompt},
+    repo::Repository,
+    ExecCommand,
+};
 use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use jira::{
@@ -31,6 +36,7 @@ pub struct Worklog {
 
     /// Prompt for filter to use a default_query
     #[arg(short = 'f', long = "filter")]
+    #[cfg(feature = "cloud")]
     use_filter: bool,
 }
 
@@ -47,7 +53,11 @@ impl ExecCommand for Worklog {
         let issue_key = if self.issue_key_input.is_some() {
             IssueKey::try_from(self.issue_key_input.unwrap())?
         } else {
-            interactivity::issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)?.key
+            #[cfg(feature = "cloud")]
+            let issue_key = issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)?.key;
+            #[cfg(not(feature = "cloud"))]
+            let issue_key = issue_from_branch_or_prompt(&client, cfg, head)?.key;
+            issue_key
         };
 
         let initial_comment = if let Some(cli_comment) = self.comment_input {
@@ -68,7 +78,7 @@ impl ExecCommand for Worklog {
 
         let wl = PostWorklogBody {
             comment,
-            started: interactivity::get_date(cfg, self.date)
+            started: get_date(cfg, self.date)
                 .wrap_err("Cannot create worklog request body: missing field=date")?,
             time_spent: WorklogDuration::try_from(self.duration)
                 .wrap_err("Cannot create worklog request body: missing field=time_spent")?

@@ -192,6 +192,42 @@ impl JiraAPIClient {
         Ok(response)
     }
 
+    pub fn get_assignable_users(&self, issue_key: &IssueKey) -> Result<Vec<User>> {
+        let users_url = format!(
+            "{}/rest/api/latest/user/assignable/search?issueKey={}",
+            self.url.clone(),
+            issue_key
+        );
+
+        let response = self.client.get(users_url).send().wrap_err(format!(
+            "Unable to fetch assignable users for issue: {}",
+            issue_key
+        ))?;
+
+        response
+            .json::<Vec<User>>()
+            .wrap_err("Failed parsing assignable users list")
+    }
+
+    pub fn post_assign_user(&self, issue_key: &IssueKey, user: &User) -> Result<Response> {
+        let assign_url = format!(
+            "{}/rest/api/latest/issue/{}/assignee",
+            self.url.clone(),
+            issue_key
+        );
+
+        let body = PostAssignBody::from(user.clone());
+
+        let response = self
+            .client
+            .post(assign_url)
+            .json(&body)
+            .send()
+            .wrap_err("Post transition request failed")?;
+        Ok(response)
+    }
+
+    #[cfg(feature = "cloud")]
     pub fn search_filters(&self, filter: Option<String>) -> Result<GetFilterResponseBody> {
         let mut search_url = format!(
             "{}/rest/api/latest/filter/search?expand=jql&maxResults={}",

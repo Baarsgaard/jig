@@ -8,6 +8,92 @@ use std::{
     sync::OnceLock,
 };
 
+#[cfg(not(feature = "cloud"))]
+mod versioned {
+    use super::*;
+
+    #[derive(Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct User {
+        pub active: bool,
+        pub display_name: String,
+        pub deleted: Option<bool>,
+        pub name: String,
+    }
+
+    #[derive(Serialize, Debug, Clone)]
+    pub struct PostAssignBody {
+        pub name: String,
+    }
+
+    impl From<User> for PostAssignBody {
+        fn from(value: User) -> Self {
+            PostAssignBody { name: value.name }
+        }
+    }
+}
+
+#[cfg(feature = "cloud")]
+mod versioned {
+    use super::*;
+
+    #[derive(Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct GetFilterResponseBody {
+        // https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-filters/#api-rest-api-2-filter-search-get
+        pub max_results: u32,
+        pub start_at: u32,
+        pub total: u32,
+        pub is_last: bool,
+        #[serde(alias = "values")]
+        pub filters: Vec<Filter>,
+    }
+
+    #[derive(Deserialize, Debug, Clone)]
+    pub struct Filter {
+        pub id: String,
+        pub jql: String,
+        pub name: String,
+    }
+
+    impl Filter {
+        pub fn filter_query(filter: &Filter) -> String {
+            format!("filter={}", filter.id)
+        }
+    }
+
+    impl Display for Filter {
+        fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
+            write!(f, "{}: {}", self.name, self.jql)
+        }
+    }
+
+    #[derive(Deserialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct User {
+        pub active: bool,
+        pub display_name: String,
+        pub account_id: String,
+        pub email_address: String,
+    }
+
+    #[derive(Serialize, Debug, Clone)]
+    #[serde(rename_all = "camelCase")]
+    pub struct PostAssignBody {
+        pub account_id: String,
+    }
+
+    impl From<User> for PostAssignBody {
+        fn from(value: User) -> Self {
+            PostAssignBody {
+                account_id: value.account_id,
+            }
+        }
+    }
+}
+
+pub use versioned::*;
+
 /// Comment related types
 #[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -80,7 +166,7 @@ pub struct PostIssueQueryResponseBody {
     pub total: Option<u32>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct Issue {
     pub expand: String,
@@ -166,37 +252,6 @@ pub struct PostTransitionBody {
 impl Display for Transition {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
         write!(f, "{}", self.name)
-    }
-}
-
-#[derive(Deserialize, Debug, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct GetFilterResponseBody {
-    // https://developer.atlassian.com/cloud/jira/platform/rest/v2/api-group-filters/#api-rest-api-2-filter-search-get
-    pub max_results: u32,
-    pub start_at: u32,
-    pub total: u32,
-    pub is_last: bool,
-    #[serde(alias = "values")]
-    pub filters: Vec<Filter>,
-}
-
-#[derive(Deserialize, Debug, Clone)]
-pub struct Filter {
-    pub id: String,
-    pub jql: String,
-    pub name: String,
-}
-
-impl Filter {
-    pub fn filter_query(filter: &Filter) -> String {
-        format!("filter={}", filter.id)
-    }
-}
-
-impl Display for Filter {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), Error> {
-        write!(f, "{}: {}", self.name, self.jql)
     }
 }
 

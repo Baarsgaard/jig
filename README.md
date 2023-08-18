@@ -21,7 +21,8 @@ Install [Rust-lang](https://www.rust-lang.org/tools/install) to compile from sou
 ```bash
 cargo install --locked --git https://github.com/raunow/jig
 ```
-add `--no-default-features` to disable fuzzy selections
+add `--features cloud` to enable just `cloud` only filters selections
+add `--features fuzzy` to enable `fuzzy` selections (Will also enable `cloud` only features)
 
 > Requirements:
 > 'cc' linker for compilation
