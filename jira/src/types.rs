@@ -94,6 +94,15 @@ mod versioned {
 
 pub use versioned::*;
 
+/// Define query parameters
+#[derive(Debug, Clone)]
+pub struct GetAssignableUserParams {
+    pub username: Option<String>,
+    pub project: Option<String>,
+    pub issue_key: Option<IssueKey>,
+    pub max_results: Option<u32>,
+}
+
 /// Comment related types
 #[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]

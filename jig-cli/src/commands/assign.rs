@@ -1,14 +1,16 @@
-use std::fmt::{Display, Formatter};
-
 use crate::{
     config::Config, interactivity::issue_from_branch_or_prompt, repo::Repository, ExecCommand,
 };
 use clap::Args;
-use color_eyre::eyre::{Result, WrapErr};
-use inquire::Select;
+use color_eyre::eyre::{eyre, Result, WrapErr};
+use inquire::{autocompletion::Replacement, Autocomplete, Text};
 use jira::{
-    types::{IssueKey, User},
+    types::{GetAssignableUserParams, IssueKey, User},
     JiraAPIClient,
+};
+use std::{
+    fmt::{Display, Formatter},
+    rc::Rc,
 };
 
 #[derive(Args, Debug)]
@@ -43,17 +45,90 @@ impl ExecCommand for Assign {
             issue_key
         };
 
-        let users = client
-            .get_assignable_users(&issue_key)?
-            .iter()
-            .map(|u| JiraUser(u.to_owned()))
-            .collect();
-        let user = Select::new("Assign:", users)
+        let mut completer = AssignableUsersCompleter {
+            client: client.clone(),
+            input: String::default(),
+            users: Rc::new(Vec::default()),
+            params: GetAssignableUserParams {
+                username: None,
+                project: None,
+                issue_key: Some(issue_key.clone()),
+                max_results: None,
+            },
+        };
+
+        completer.users = Rc::new(
+            client
+                .get_assignable_users(&completer.params)?
+                .iter()
+                .map(|u| JiraUser(u.to_owned()))
+                .collect(),
+        );
+
+        let username = Text::new("Assign:")
+            .with_autocomplete(completer)
             .prompt()
             .wrap_err("No user selected")?;
 
-        client.post_assign_user(&issue_key, &user.0)?;
-        Ok(format!("Assigned {} to {}", user, issue_key))
+        let maybe_user = client.get_assignable_users(&GetAssignableUserParams {
+            username: Some(username),
+            project: None,
+            issue_key: None,
+            max_results: None,
+        })?;
+
+        if let Some(user) = maybe_user.first() {
+            client.post_assign_user(&issue_key, &user.clone())?;
+            Ok(format!("Assigned {} to {}", user.display_name, issue_key))
+        } else {
+            Err(eyre!("Invalid username, user not found"))
+        }
+    }
+}
+
+#[derive(Clone)]
+struct AssignableUsersCompleter {
+    client: JiraAPIClient,
+    input: String,
+    users: Rc<Vec<JiraUser>>,
+    params: GetAssignableUserParams,
+}
+
+impl AssignableUsersCompleter {
+    pub fn stringify_users(&self) -> Vec<String> {
+        self.users
+            .iter()
+            .map(|u| u.to_string())
+            .collect::<Vec<String>>()
+    }
+}
+
+impl Autocomplete for AssignableUsersCompleter {
+    fn get_suggestions(
+        &mut self,
+        input: &str,
+    ) -> std::result::Result<Vec<String>, inquire::CustomUserError> {
+        if input == self.input {
+            return Ok(self.stringify_users());
+        }
+
+        let users = self.client.get_assignable_users(&self.params)?;
+        self.users = Rc::new(users.iter().map(|u| JiraUser(u.to_owned())).collect());
+        Ok(self.stringify_users())
+    }
+
+    fn get_completion(
+        &mut self,
+        _input: &str,
+        highlighted_suggestion: Option<String>,
+    ) -> std::result::Result<inquire::autocompletion::Replacement, inquire::CustomUserError> {
+        Ok(match highlighted_suggestion {
+            Some(suggestion) => Replacement::Some(suggestion),
+            None => match self.users.first() {
+                Some(user) => Replacement::Some(user.0.display_name.clone()),
+                None => Replacement::None,
+            },
+        })
     }
 }
 

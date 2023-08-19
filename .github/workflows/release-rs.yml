@@ -17,32 +17,44 @@ jobs:
         run: |
           echo PKG_VERSION=$(awk -F ' = ' '$1 ~ /version/ { gsub(/["]/, "", $2); printf("%s",$2) }' Cargo.toml) >> $GITHUB_OUTPUT
 
+  create-release:
+    name: "Create release"
+    needs:
+      - get-tag
+    runs-on: ubuntu-latest
+    steps:
+      - uses: "marvinpinto/action-automatic-releases@latest"
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          automatic_release_tag: "${{ needs.get-tag.outputs.crate-version}}"
+          prerelease: true
+          title: "Development Build"
+          files: |
+            LICENSE.txt
+            *.jar
+          upload-binaries:
+
   build:
     name: "Build binaries and upload as artifacts"
-    needs: get-tag
+    needs:
+      - get-tag
     strategy:
       fail-fast: true
       matrix:
         include:
-          - os: self-hosted
+          - os: ubuntu-latest
             target: aarch64-unknown-linux-gnu
-          - os: self-hosted
-            target: arm-unknown-linux-gnueabi
-          - os: self-hosted
-            target: armv7-unknown-linux-gnueabihf
-          - os: self-hosted
-            target: i686-unknown-linux-gnu
-          - os: self-hosted
-            target: i686-unknown-linux-musl
-          - os: self-hosted
+          - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
-          - os: self-hosted
-            target: x86_64-unknown-linux-musl
-          - os: self-hosted
+          - os: windows-latest
             target: x86_64-pc-windows-gnu
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
+
       - uses: dtolnay/rust-toolchain@stable
         with:
           targets: "${{ matrix.target }}"
@@ -53,23 +65,6 @@ jobs:
         with:
           name: "jig-${{ matrix.target }}"
           path: target/release/jig
-
-  create-release:
-    name: "Create release"
-    needs:
-      - get-tag
-      - build
-    runs-on: self-hosted
-    steps:
-      - uses: "marvinpinto/action-automatic-releases@latest"
-        with:
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          automatic_release_tag: "${{ needs.get-tag.outputs.crate-version}}"
-          prerelease: true
-          title: "Development Build"
-          files: |
-            LICENSE.txt
-            *.jar  upload-binaries:
 
   upload-binaries:
     name: "Create release"

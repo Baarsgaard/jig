@@ -24,6 +24,7 @@ struct Cli {
 enum Commands {
     /// Assign user to issue
     #[command(alias = "a")]
+    #[cfg(debug_assertions)]
     Assign(Assign),
     /// Create and checkout branch using issue key with(out) summary as branch name
     #[command(alias = "b")]
@@ -59,6 +60,7 @@ impl Commands {
         let cfg = config::Config::load().wrap_err("Failed to load config");
 
         match args.command {
+            #[cfg(debug_assertions)]
             Commands::Assign(assign) => assign.exec(&cfg?),
             Commands::Branch(branch) => branch.exec(&cfg?),
             Commands::Comment(comment) => comment.exec(&cfg?),
@@ -86,6 +88,9 @@ fn main() -> Result<()> {
             std::process::exit(1);
         }
     }
+
+    #[cfg(target_os = "windows")]
+    println!("");
 
     Ok(())
 }
