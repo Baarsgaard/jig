@@ -11,7 +11,7 @@ on:
 
 jobs:
   get-tag:
-    name: "Get Tag From & Create release"
+    name: "Create tagged release"
     runs-on: self-hosted
     outputs:
       crate-version: ${{ steps.crate-version.outputs.CRATE_VERSION }}
@@ -39,7 +39,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
   build:
-    name: "Build and upload artifacts"
+    name: "Build & Upload"
     needs:
       - get-tag
     strategy:
