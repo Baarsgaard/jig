@@ -1,0 +1,96 @@
+name: "Create Release"
+
+on:
+  workflow_dispatch:
+    inputs:
+      draft:
+        required: false
+        default: true
+        description: Produce a draft release
+        type: boolean
+
+jobs:
+  get-tag:
+    name: "Get Tag From & Create release"
+    runs-on: self-hosted
+    outputs:
+      crate-version: ${{ steps.crate-version.outputs.CRATE_VERSION }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Get tag
+        id: "crate-version"
+        shell: "bash"
+        run: |
+          echo CRATE_VERSION=$(awk -F ' = ' '$1 ~ /version/ { gsub(/["]/, "", $2); printf("%s",$2) }' jig-cli/Cargo.toml) >> $GITHUB_OUTPUT
+
+      - run: "echo '::notice:: Tag = v${{ steps.crate-version.outputs.CRATE_VERSION }}'"
+
+      - name: Create draft release
+        if: ${{ github.event.inputs.draft }}
+        run: gh release create 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --title 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --draft
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+      - name: Create release
+        if: ${{ !github.event.inputs.draft }}
+        run: gh release create 'v${{ steps.crate-version.outputs.CRATE_VERSION }}'
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+
+  build:
+    name: "Build and upload artifacts"
+    needs:
+      - get-tag
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - x86_64-linux
+          - x86_64-windows
+        feature:
+          - ""
+          - "cloud"
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            build: x86_64-linux
+            ext: ""
+
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            build: x86_64-windows
+            ext: .exe
+
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: cargo-release-${{ matrix.build }}-${{ matrix.feature }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: cargo-release-${{ matrix.build }}-${{ matrix.feature }}-
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: "${{ matrix.target }}"
+
+      - name: Build ${{ matrix.build }} default-features
+        if: ${{ matrix.feature == '' }}
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: "Build ${{ matrix.build }} features: ${{ matrix.feature }}"
+        if: ${{ matrix.feature != '' }}
+        run: cargo build --release --features ${{ matrix.feature }} --target ${{ matrix.target }}
+
+      - run: mkdir dist
+      - run: mv target/${{ matrix.target }}/release/jig${{ matrix.ext }}     dist/jig-${{ matrix.feature }}${{ matrix.target }}${{ matrix.ext }}
+      - run: gh release upload 'v${{ needs.get-tag.outputs.crate-version }}' dist/jig-${{ matrix.feature }}${{ matrix.target }}${{ matrix.ext }}
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}

@@ -5,7 +5,7 @@ on:
     paths:
       - src/**
       - .cargo/**
-      - .github/**
+      - .github/workflows/test-rs.yml
   pull_request:
     branches: [ "master" ]
     paths:
