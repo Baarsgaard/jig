@@ -23,5 +23,6 @@ toml = "0.7.5"
 
 [features]
 default = []
+server = [] # simplifies GH releases
 cloud = ["jira/cloud"]
 fuzzy = ["cloud", "dep:fuzzy-matcher"]
