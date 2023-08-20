@@ -90,3 +90,4 @@ jobs:
       - run: gh release upload 'v${{ needs.get-tag.outputs.crate-version }}' dist/jig-${{ matrix.feature }}-${{ matrix.target }}${{ matrix.ext }}
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      - run: "echo '::notice:: Upload finished: jig-${{ matrix.feature }}-${{ matrix.target }}${{ matrix.ext }}'"
