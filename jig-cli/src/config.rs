@@ -1,4 +1,5 @@
 use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::Section;
 use etcetera::base_strategy::{choose_base_strategy, BaseStrategy};
 use jira::{Credential, JiraClientConfig};
 use serde::{Deserialize, Serialize};
@@ -61,7 +62,8 @@ impl Config {
                 .try_into::<RawConfig>()
                 .wrap_err("Config load error: Bad config"),
             (Err(e), Err(_)) => Err(e).wrap_err("Config load error"),
-        }?;
+        }
+        .with_suggestion(|| "Create or overwrite config with: jig init")?;
 
         if cfg.pat_token.is_none() && cfg.api_token.is_none() {
             Err(eyre!("Neither api_token nor pat_token specified"))
