@@ -1,9 +1,8 @@
-use crate::{
-    config::{self, Config},
-    ExecCommand,
-};
+use crate::config::{self, Config};
 use clap::Args;
 use color_eyre::eyre::{eyre, Result};
+
+use super::shared::ExecCommand;
 
 #[derive(Args, Debug)]
 pub struct PrintConfigs {}

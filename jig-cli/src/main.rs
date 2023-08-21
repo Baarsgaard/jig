@@ -1,16 +1,11 @@
 use clap::{command, Parser, Subcommand};
 use color_eyre::eyre::{Result, WrapErr};
-use commands::*;
-use config::Config;
+use commands::{shared::ExecCommand, *};
 
 mod commands;
 mod config;
 mod interactivity;
 mod repo;
-
-pub trait ExecCommand {
-    fn exec(self, cfg: &Config) -> Result<String>;
-}
 
 #[derive(Parser)]
 #[command(author, version, about = "A Jira CLI integration with Git", long_about = None)]

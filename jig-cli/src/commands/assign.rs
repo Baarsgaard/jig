@@ -1,6 +1,4 @@
-use crate::{
-    config::Config, interactivity::issue_from_branch_or_prompt, repo::Repository, ExecCommand,
-};
+use crate::{config::Config, interactivity::issue_from_branch_or_prompt, repo::Repository};
 use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::{autocompletion::Replacement, Autocomplete, Text};
@@ -13,16 +11,16 @@ use std::{
     rc::Rc,
 };
 
+use super::shared::{ExecCommand, UseFilter};
+
 #[derive(Args, Debug)]
 pub struct Assign {
     /// Skip querying Jira for Issue summary
     #[arg(value_name = "ISSUE_KEY")]
     issue_key_input: Option<String>,
 
-    /// Prompt for filter to use a default_query
-    #[arg(short = 'f', long = "filter")]
-    #[cfg(feature = "cloud")]
-    use_filter: bool,
+    #[command(flatten)]
+    use_filter: UseFilter,
 }
 
 impl ExecCommand for Assign {
@@ -38,11 +36,7 @@ impl ExecCommand for Assign {
         let issue_key = if self.issue_key_input.is_some() {
             IssueKey::try_from(self.issue_key_input.unwrap())?
         } else {
-            #[cfg(feature = "cloud")]
-            let issue_key = issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)?.key;
-            #[cfg(not(feature = "cloud"))]
-            let issue_key = issue_from_branch_or_prompt(&client, cfg, head)?.key;
-            issue_key
+            issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)?.key
         };
 
         let mut completer = AssignableUsersCompleter {

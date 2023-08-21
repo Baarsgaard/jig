@@ -9,6 +9,8 @@ mod transition;
 mod upgrade;
 mod worklog;
 
+pub mod shared;
+
 pub use assign::Assign;
 pub use branch::Branch;
 pub use comment::Comment;

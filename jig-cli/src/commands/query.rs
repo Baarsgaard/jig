@@ -1,14 +1,15 @@
-use crate::{config::Config, ExecCommand};
+use crate::config::Config;
 use clap::Args;
 use color_eyre::eyre::{eyre, Context, Result};
 use inquire::Autocomplete;
 use jira::JiraAPIClient;
 
+use super::shared::{ExecCommand, UseFilter};
+
 #[derive(Args, Debug)]
 pub struct Query {
-    /// Prompt for filter to use a default_query
-    #[arg(short = 'f', long = "filter")]
-    use_filter: bool,
+    #[command(flatten)]
+    use_filter: UseFilter,
 }
 
 impl ExecCommand for Query {

@@ -1,3 +1,4 @@
+use crate::commands::shared::UseFilter;
 use crate::config::Config;
 use chrono::{Utc, Weekday};
 use color_eyre::eyre::{eyre, Result, WrapErr};
@@ -10,55 +11,32 @@ use jira::{
 #[cfg(feature = "cloud")]
 mod filter;
 
-#[cfg(feature = "cloud")]
-mod cloud_switch {
-    use super::*;
-
-    pub fn issue_from_branch_or_prompt(
-        client: &JiraAPIClient,
-        cfg: &Config,
-        head_name: String,
-        use_filter: bool,
-    ) -> Result<Issue> {
-        if let Ok(issue_key) = IssueKey::try_from(head_name) {
-            return query_issue_details(client, issue_key);
-        }
-
-        let query = match use_filter {
-            true => filter::pick_filter(cfg, client.search_filters(None)?.filters)?,
-            false => cfg.issue_query.clone(),
-        };
-
-        let issues = query_issues_with_retry(client, cfg, query)?;
-
-        #[cfg(not(feature = "fuzzy"))]
-        let issue = prompt_user_with_issue_select(issues);
-        #[cfg(feature = "fuzzy")]
-        let issue = filter::prompt_user_with_issue_select(issues);
-        issue
+pub fn issue_from_branch_or_prompt(
+    client: &JiraAPIClient,
+    cfg: &Config,
+    head_name: String,
+    _use_filter: UseFilter,
+) -> Result<Issue> {
+    if let Ok(issue_key) = IssueKey::try_from(head_name) {
+        return query_issue_details(client, issue_key);
     }
+
+    #[cfg(not(feature = "cloud"))]
+    let query = cfg.issue_query.clone();
+    #[cfg(feature = "cloud")]
+    let query = match _use_filter.value {
+        true => filter::pick_filter(cfg, client.search_filters(None)?.filters)?,
+        false => cfg.issue_query.clone(),
+    };
+
+    let issues = query_issues_with_retry(client, cfg, query)?;
+
+    #[cfg(not(feature = "fuzzy"))]
+    let issue = prompt_user_with_issue_select(issues);
+    #[cfg(feature = "fuzzy")]
+    let issue = filter::prompt_user_with_issue_select(issues);
+    issue
 }
-
-#[cfg(not(feature = "cloud"))]
-mod cloud_switch {
-    use super::*;
-
-    pub fn issue_from_branch_or_prompt(
-        client: &JiraAPIClient,
-        cfg: &Config,
-        head_name: String,
-    ) -> Result<Issue> {
-        if let Ok(issue_key) = IssueKey::try_from(head_name) {
-            return query_issue_details(client, issue_key);
-        }
-
-        let issues = query_issues_with_retry(client, cfg, cfg.issue_query.clone())?;
-
-        prompt_user_with_issue_select(issues)
-    }
-}
-
-pub use cloud_switch::*;
 
 #[cfg(not(feature = "fuzzy"))]
 pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {

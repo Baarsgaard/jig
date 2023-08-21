@@ -2,12 +2,13 @@ use crate::{
     config::Config,
     interactivity::{issue_from_branch_or_prompt, query_issue_details},
     repo::Repository,
-    ExecCommand,
 };
 use clap::Args;
 use color_eyre::eyre::{Result, WrapErr};
 use jira::types::IssueKey;
 use jira::JiraAPIClient;
+
+use super::shared::{ExecCommand, UseFilter};
 
 #[derive(Args, Debug)]
 pub struct Branch {
@@ -20,10 +21,8 @@ pub struct Branch {
     #[arg(short = 's', long = "short")]
     toggle_short_name: bool,
 
-    /// Prompt for filter to use a default_query
-    #[arg(short = 'f', long = "filter")]
-    #[cfg(feature = "cloud")]
-    use_filter: bool,
+    #[command(flatten)]
+    use_filter: UseFilter,
 }
 
 impl ExecCommand for Branch {
@@ -36,13 +35,7 @@ impl ExecCommand for Branch {
 
             query_issue_details(&client, issue_key)?
         } else {
-            #[cfg(feature = "cloud")]
-            let issue =
-                issue_from_branch_or_prompt(&client, cfg, String::default(), self.use_filter)?;
-            #[cfg(not(feature = "cloud"))]
-            let issue = issue_from_branch_or_prompt(&client, cfg, String::default())?;
-
-            issue
+            issue_from_branch_or_prompt(&client, cfg, String::default(), self.use_filter)?
         };
 
         let mut use_short_name = cfg.always_short_branch_names.unwrap_or(false);
