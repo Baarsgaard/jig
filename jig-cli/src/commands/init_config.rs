@@ -72,7 +72,7 @@ impl InitConfig {
                 .prompt()?,
         );
         new_cfg.timeout = Some(
-            CustomType::new("Rest Timeout:")
+            CustomType::new("Rest Timeout (Seconds):")
                 .with_default(10u64)
                 .with_help_message("How long to wait on server to respond")
                 .prompt()?,
@@ -102,12 +102,16 @@ impl InitConfig {
                 .with_default(false)
                 .prompt()?,
         );
-        new_cfg.inclusive_filters = Some(
-            Confirm::new("Filters are joined using 'OR' instead of 'AND'")
-                .with_default(true)
-                .with_help_message("filter=10001 OR filter=10002")
-                .prompt()?,
-        );
+
+        #[cfg(feature = "cloud")]
+        {
+            new_cfg.inclusive_filters = Some(
+                Confirm::new("Filters are joined using 'OR' instead of 'AND'")
+                    .with_default(true)
+                    .with_help_message("filter=10001 OR filter=10002")
+                    .prompt()?,
+            );
+        }
 
         InitConfig::write_config(&new_cfg, config_file).wrap_err("Failed to write full config")
     }
