@@ -1,6 +1,6 @@
 [package]
 name = "jig"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Steffen Baarsgaard <sbaarsgaard@gmail.com>"]
 
@@ -16,6 +16,7 @@ inquire = { version = "0.6.2", features = ["date"] }
 jira = { path = "../jira", default-features = false }
 regex = { workspace = true, features = ["std"], default-features = false }
 reqwest = { workspace = true, default-features = false }
+self_update = { version = "0.37.0", default-features = false, features = ["rustls"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 toml = "0.7.5"

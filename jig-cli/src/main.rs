@@ -50,8 +50,7 @@ enum Commands {
     #[cfg(debug_assertions)]
     Query(Query),
     /// Download and install latest version
-    #[command(alias = "u")]
-    #[cfg(debug_assertions)]
+    #[command(aliases = ["u", "update"])]
     Upgrade(Upgrade),
 }
 
@@ -71,8 +70,7 @@ impl Commands {
             Commands::Open(open) => open.exec(&cfg?),
             #[cfg(debug_assertions)]
             Commands::Query(query) => query.exec(&cfg?),
-            #[cfg(debug_assertions)]
-            Commands::Upgrade(upgrade) => upgrade.exec(&cfg?),
+            Commands::Upgrade(upgrade) => upgrade.exec(),
         }
     }
 }
