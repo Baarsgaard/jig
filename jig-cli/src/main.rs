@@ -79,13 +79,7 @@ fn main() -> Result<()> {
     color_eyre::install()?;
     let args = Cli::parse();
 
-    match Commands::exec(args) {
-        Ok(msg) => println!("{}", msg),
-        Err(e) => {
-            eprintln!("{:?}", e);
-            std::process::exit(1);
-        }
-    }
+    println!("{}", Commands::exec(args)?);
 
     #[cfg(target_os = "windows")]
     println!("");
