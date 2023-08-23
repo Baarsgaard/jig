@@ -1,22 +1,34 @@
-name: "Test"
+name: "Integration"
 on:
   push:
-    branches: [ "master" ]
+    branches:
+      - "master"
     paths:
-      - src/**
+      - "**/src/**"
+      - "**/Cargo.toml"
       - .cargo/**
-      - .github/workflows/test-rs.yml
+      - .github/workflows/integration.yml
   pull_request:
-    branches: [ "master" ]
+    branches:
+      - master
     paths:
-      - src/**
+      - "**/src/**"
+      - "**/Cargo.toml"
       - .cargo/**
-      - .github/**
+      - .github/workflows/integration.yml
   workflow_dispatch:
 
 jobs:
   test:
     name: "Cargo test"
+    runs-on: [self-hosted] #, windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo test
+
+  lint:
+    name: "Cargo check/clippy"
     runs-on: self-hosted
     steps:
       - uses: actions/checkout@v3
@@ -26,7 +38,6 @@ jobs:
 
       - run: cargo check
       - run: cargo clippy -- -D warnings
-      - run: cargo test
 
   fmt:
     name: "Cargo format"
