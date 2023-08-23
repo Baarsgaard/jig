@@ -22,10 +22,43 @@ jobs:
   test:
     name: "Cargo test"
     runs-on: [self-hosted] #, windows-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - self-hosted
+          # - x86_64-linux
+          # - x86_64-windows
+        feature:
+          - "server"
+          - "cloud"
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            build: x86_64-linux
+            ext: ""
+
+          - target: x86_64-pc-windows-msvc
+            os: windows-latest
+            build: x86_64-windows
+            ext: .exe
     steps:
       - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        continue-on-error: false
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: cargo-test-${{ matrix.build }}-${{ matrix.feature }}-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: cargo-test-${{ matrix.build }}-${{ matrix.feature }}-
+
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo test
+      - run: cargo test --features ${{ matrix.feature }}
 
   lint:
     name: "Cargo check/clippy"
