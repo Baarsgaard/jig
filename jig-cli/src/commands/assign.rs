@@ -118,10 +118,7 @@ impl Autocomplete for AssignableUsersCompleter {
     ) -> std::result::Result<inquire::autocompletion::Replacement, inquire::CustomUserError> {
         Ok(match highlighted_suggestion {
             Some(suggestion) => Replacement::Some(suggestion),
-            None => match self.users.first() {
-                Some(user) => Replacement::Some(user.0.display_name.clone()),
-                None => Replacement::None,
-            },
+            None => self.users.first().map(|user| user.0.display_name.clone()),
         })
     }
 }
