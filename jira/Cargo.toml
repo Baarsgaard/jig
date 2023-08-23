@@ -6,10 +6,10 @@ authors = ["Steffen Baarsgaard <sbaarsgaard@gmail.com>"]
 
 [dependencies]
 base64 = "0.21.2"
-color-eyre = { workspace = true, default-features = false }
-regex = { workspace = true, features = ["std"], default-features = false }
-reqwest = { workspace = true, default-features = false, features = ["blocking", "json", "rustls-tls", "rustls-native-certs", "rustls-tls-native-roots"] }
-serde = { workspace = true, features = ["derive"] }
+color-eyre = { workspace = true }
+regex = { workspace = true }
+reqwest = { default-features = false, features = ["blocking", "json", "rustls-tls", "rustls-native-certs", "rustls-tls-native-roots"] }
+serde = { workspace = true }
 serde_json = { workspace = true }
 
 [features]

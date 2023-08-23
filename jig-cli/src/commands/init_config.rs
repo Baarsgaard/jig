@@ -2,10 +2,10 @@ use crate::config::{self, RawConfig};
 use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::{Confirm, CustomType, Password, Select, Text};
-use reqwest::Url;
 use std::fs;
 use std::path::PathBuf;
 use std::{env, process::Command};
+use url::Url;
 
 #[derive(Args, Debug)]
 pub struct InitConfig {

@@ -8,19 +8,18 @@ authors = ["Steffen Baarsgaard <sbaarsgaard@gmail.com>"]
 base64 = "0.21.2"
 chrono = "0.4.26"
 clap = { version = "4.3.0", features = ["derive"] }
-color-eyre = { workspace = true, default-features = false }
+color-eyre = { workspace = true }
 etcetera = "0.8.0"
 fuzzy-matcher = { version = "0.3.7", optional = true }
 gix = { version = "0.48.0", default-features = false }
 inquire = { version = "0.6.2", features = ["date"] }
 jira = { path = "../jira", default-features = false }
-regex = { workspace = true, features = ["std"], default-features = false }
-reqwest = { workspace = true, default-features = false }
+regex = { workspace = true }
 self_update = { version = "0.37.0", default-features = false, features = ["rustls"] }
-serde = { workspace = true, features = ["derive"] }
+serde = { workspace = true }
 serde_json = { workspace = true }
 toml = "0.7.5"
-#tui/ratatui
+url = { version = "2.4.0", default-features = false }
 
 [features]
 default = []
