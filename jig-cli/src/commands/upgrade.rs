@@ -39,7 +39,7 @@ impl Upgrade {
 
         let version = if self.select {
             let raw_releases = ReleaseList::configure()
-                .repo_owner("raunow")
+                .repo_owner("baarsgaard")
                 .repo_name("jig")
                 .build()?
                 .fetch()
@@ -61,7 +61,7 @@ impl Upgrade {
         };
 
         let _status = Update::configure()
-            .repo_owner("raunow")
+            .repo_owner("baarsgaard")
             .repo_name("jig")
             .bin_name("jig")
             .show_output(do_verbose)
