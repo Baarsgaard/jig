@@ -33,7 +33,7 @@ jobs:
           - "cloud"
         include:
           - target: x86_64-unknown-linux-gnu
-            os: ubuntu-latest
+            os: self-hosted
             build: x86_64-linux
             ext: ""
 
