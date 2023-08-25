@@ -9,7 +9,7 @@ pub trait ExecCommand {
 #[derive(Debug, Args)]
 #[group(required = false)]
 pub struct UseFilter {
-    /// Prompt for filter to use a default_query
+    /// Prompt for filter to use as default_query
     #[cfg(feature = "cloud")]
     #[arg(short = 'f', long = "filter")]
     pub value: bool,
