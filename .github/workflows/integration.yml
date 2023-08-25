@@ -21,7 +21,6 @@ on:
 jobs:
   test:
     name: "Cargo test"
-    runs-on: [self-hosted] #, windows-latest
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
