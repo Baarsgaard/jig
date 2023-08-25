@@ -40,6 +40,7 @@ jobs:
 
   build:
     name: "Build & Upload"
+    runs-on: ${{ matrix.os }}
     needs:
       - get-tag
     strategy:
@@ -61,8 +62,6 @@ jobs:
             os: windows-latest
             build: x86_64-windows
             ext: .exe
-
-    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
 
