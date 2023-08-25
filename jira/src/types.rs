@@ -129,7 +129,7 @@ impl Display for WorklogDuration {
     }
 }
 
-pub(self) static WORKLOG_RE: OnceLock<Regex> = OnceLock::new();
+static WORKLOG_RE: OnceLock<Regex> = OnceLock::new();
 
 impl TryFrom<String> for WorklogDuration {
     type Error = eyre::Error;
@@ -207,7 +207,7 @@ impl Display for IssueKey {
     }
 }
 
-pub(self) static ISSUE_RE: OnceLock<Regex> = OnceLock::new();
+static ISSUE_RE: OnceLock<Regex> = OnceLock::new();
 
 impl TryFrom<String> for IssueKey {
     type Error = eyre::Error;

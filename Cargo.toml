@@ -3,10 +3,10 @@ members = [
   "jira",
   "jig-cli",
 ]
-
 default-members = [
   "jig-cli"
 ]
+resolver = "2"
 
 [workspace.dependencies]
 color-eyre = { version = "0.6.2", default-features = false }
