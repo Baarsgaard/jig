@@ -5,9 +5,8 @@ edition = "2021"
 authors = ["Steffen Baarsgaard <sbaarsgaard@gmail.com>"]
 
 [dependencies]
-base64 = "0.21.2"
-chrono = "0.4.26"
-clap = { version = "4.3.0", features = ["derive"] }
+chrono = { version = "0.4.26", default-features = false, features = ["clock"]}
+clap = { version = "4.3.0", default-features = false, features = ["help", "std", "color", "derive"] }
 color-eyre = { workspace = true }
 etcetera = "0.8.0"
 fuzzy-matcher = { version = "0.3.7", optional = true }
