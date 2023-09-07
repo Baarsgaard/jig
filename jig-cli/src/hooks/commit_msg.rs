@@ -90,7 +90,7 @@ impl Hook for CommitMsg {
             }
             (Err(_), Ok(_cik)) => {
                 // Allow branches without issue key, off by default
-                if cfg.hooks_cfg.allow_branch_missing_issue_key {
+                if !cfg.hooks_cfg.allow_branch_missing_issue_key {
                     Err(eyre!(
                         "Branch is missing Issue key, cannot infer commit Issue key"
                     ))
@@ -100,7 +100,7 @@ impl Hook for CommitMsg {
             }
             (Err(_), Err(_)) => {
                 // TODO if config allows bik and cik is empty, prompt to select issue
-                if cfg.hooks_cfg.allow_branch_missing_issue_key {
+                if !cfg.hooks_cfg.allow_branch_missing_issue_key {
                     Err(eyre!(
                         "Branch is missing Issue key, cannot infer commit Issue key"
                     ))

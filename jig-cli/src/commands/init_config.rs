@@ -116,7 +116,10 @@ impl InitConfig {
             allow_branch_missing_issue_key: None,
         };
         new_git_hooks.allow_branch_missing_issue_key = Some(
-            Confirm::new("Skip transition select on one valid transition:")
+            Confirm::new("Githook: Skip 'branche contains Issue Key' checks")
+                .with_help_message(
+                    "Will prompt user with Issue select when branch is missing Issue key",
+                )
                 .with_default(false)
                 .prompt()?,
         );
