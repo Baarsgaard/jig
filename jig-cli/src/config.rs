@@ -11,7 +11,7 @@ use toml::from_str;
 // Proof of concept
 static CONFIG_FILE: OnceLock<PathBuf> = OnceLock::new();
 
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct RawConfig {
     pub jira_url: String,
@@ -20,13 +20,24 @@ pub struct RawConfig {
     pub user_login: Option<String>,
     pub api_token: Option<String>,
     pub pat_token: Option<String>,
+    pub jira_timeout_seconds: Option<u64>,
     pub always_confirm_date: Option<bool>,
     pub always_short_branch_names: Option<bool>,
     pub max_query_results: Option<u32>,
     pub enable_comment_prompts: Option<bool>,
     pub one_transition_auto_move: Option<bool>,
     pub inclusive_filters: Option<bool>,
-    pub timeout: Option<u64>,
+    pub git_hooks: Option<GitHooksRawConfig>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct GitHooksRawConfig {
+    pub allow_branch_missing_issue_key: Option<bool>,
+}
+
+#[derive(Debug, Clone)]
+pub struct GitHooksConfig {
+    pub allow_branch_missing_issue_key: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -39,6 +50,7 @@ pub struct Config {
     pub one_transition_auto_move: Option<bool>,
     pub inclusive_filters: Option<bool>,
     pub jira_cfg: JiraClientConfig,
+    pub hooks_cfg: GitHooksConfig,
 }
 
 impl Config {
@@ -89,6 +101,20 @@ impl Config {
     }
 }
 
+impl From<Option<GitHooksRawConfig>> for GitHooksConfig {
+    fn from(value: Option<GitHooksRawConfig>) -> Self {
+        if let Some(cfg) = value {
+            GitHooksConfig {
+                allow_branch_missing_issue_key: cfg.allow_branch_missing_issue_key.unwrap_or(false),
+            }
+        } else {
+            GitHooksConfig {
+                allow_branch_missing_issue_key: false,
+            }
+        }
+    }
+}
+
 impl From<RawConfig> for Config {
     fn from(cfg: RawConfig) -> Self {
         let credential = if let Some(pat) = cfg.pat_token {
@@ -114,8 +140,9 @@ impl From<RawConfig> for Config {
                 credential,
                 max_query_results: cfg.max_query_results.unwrap_or(50u32),
                 url: cfg.jira_url,
-                timeout: cfg.timeout.unwrap_or(10u64),
+                timeout: cfg.jira_timeout_seconds.unwrap_or(10u64),
             },
+            hooks_cfg: GitHooksConfig::from(cfg.git_hooks),
         }
     }
 }

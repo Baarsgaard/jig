@@ -1,4 +1,4 @@
-use crate::config::{self, RawConfig};
+use crate::config::{self, GitHooksRawConfig, RawConfig};
 use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::{Confirm, CustomType, Password, Select, Text};
@@ -37,6 +37,7 @@ impl InitConfig {
             user_login: None,
             api_token: None,
             pat_token: None,
+            jira_timeout_seconds: None,
             issue_query: String::from("assignee = currentUser() ORDER BY updated DESC"),
             retry_query: String::from("reporter = currentUser() ORDER BY updated DESC"),
             always_confirm_date: None,
@@ -45,7 +46,7 @@ impl InitConfig {
             enable_comment_prompts: None,
             one_transition_auto_move: None,
             inclusive_filters: None,
-            timeout: None,
+            git_hooks: None,
         };
 
         InitConfig::set_credentials(&mut new_cfg)?;
@@ -71,7 +72,7 @@ impl InitConfig {
                 .with_default(new_cfg.max_query_results.unwrap())
                 .prompt()?,
         );
-        new_cfg.timeout = Some(
+        new_cfg.jira_timeout_seconds = Some(
             CustomType::new("Rest Timeout (Seconds):")
                 .with_default(10u64)
                 .with_help_message("How long to wait on server to respond")
@@ -102,7 +103,6 @@ impl InitConfig {
                 .with_default(false)
                 .prompt()?,
         );
-
         #[cfg(feature = "cloud")]
         {
             new_cfg.inclusive_filters = Some(
@@ -112,6 +112,16 @@ impl InitConfig {
                     .prompt()?,
             );
         }
+        let mut new_git_hooks = GitHooksRawConfig {
+            allow_branch_missing_issue_key: None,
+        };
+        new_git_hooks.allow_branch_missing_issue_key = Some(
+            Confirm::new("Skip transition select on one valid transition:")
+                .with_default(false)
+                .prompt()?,
+        );
+
+        new_cfg.git_hooks = Some(new_git_hooks);
 
         InitConfig::write_config(&new_cfg, config_file).wrap_err("Failed to write full config")
     }

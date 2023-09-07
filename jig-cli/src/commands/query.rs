@@ -19,12 +19,12 @@ impl ExecCommand for Query {
         let query = String::default();
 
         let issues = match client
-            .query_issues(query)
+            .query_issues(&query)
             .wrap_err("First issue query failed")
         {
             Ok(issue_body) => issue_body.issues.unwrap(),
             Err(_) => client
-                .query_issues(cfg.retry_query.clone())
+                .query_issues(&cfg.retry_query)
                 .wrap_err(eyre!("Retry query failed"))?
                 .issues
                 .unwrap(),

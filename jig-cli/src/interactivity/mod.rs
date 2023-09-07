@@ -11,6 +11,27 @@ use jira::{
 #[cfg(feature = "cloud")]
 mod filter;
 
+// Might be useful one day
+#[allow(dead_code)]
+pub fn issue_key_from_branch_or_prompt(
+    client: &JiraAPIClient,
+    cfg: &Config,
+    head_name: String,
+) -> Result<IssueKey> {
+    if let Ok(issue_key) = IssueKey::try_from(head_name) {
+        return Ok(query_issue_details(client, issue_key)?.key);
+    }
+
+    let issues = query_issues_with_retry(client, cfg)?;
+
+    #[cfg(not(feature = "fuzzy"))]
+    let issue_key = prompt_user_with_issue_select(issues)?.key;
+    #[cfg(feature = "fuzzy")]
+    let issue_key = filter::prompt_user_with_issue_select(issues)?.key;
+
+    Ok(issue_key)
+}
+
 pub fn issue_from_branch_or_prompt(
     client: &JiraAPIClient,
     cfg: &Config,
@@ -29,7 +50,7 @@ pub fn issue_from_branch_or_prompt(
         false => cfg.issue_query.clone(),
     };
 
-    let issues = query_issues_with_retry(client, cfg, query)?;
+    let issues = override_query_issues_with_retry(client, &query, &cfg.retry_query)?;
 
     #[cfg(not(feature = "fuzzy"))]
     let issue = prompt_user_with_issue_select(issues);
@@ -76,7 +97,7 @@ pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> Result<String> {
 
 pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Result<Issue> {
     let issues = client
-        .query_issues(format!("issuekey = {}", issue_key))?
+        .query_issues(&format!("issuekey = {}", issue_key))?
         .issues
         .unwrap();
 
@@ -86,22 +107,26 @@ pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Resul
     }
 }
 
-pub fn query_issues_with_retry(
+pub fn override_query_issues_with_retry(
     client: &JiraAPIClient,
-    cfg: &Config,
-    query: String,
+    issue_query: &String,
+    retry_query: &String,
 ) -> Result<Vec<Issue>> {
     let issues = match client
-        .query_issues(query)
+        .query_issues(issue_query)
         .wrap_err("First issue query failed")
     {
         Ok(issue_body) => issue_body.issues.unwrap(),
         Err(_) => client
-            .query_issues(cfg.retry_query.clone())
+            .query_issues(retry_query)
             .wrap_err(eyre!("Retry query failed"))?
             .issues
             .unwrap(),
     };
 
     Ok(issues)
+}
+
+pub fn query_issues_with_retry(client: &JiraAPIClient, cfg: &Config) -> Result<Vec<Issue>> {
+    override_query_issues_with_retry(client, &cfg.issue_query, &cfg.retry_query)
 }

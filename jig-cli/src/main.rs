@@ -4,8 +4,12 @@ use commands::{shared::ExecCommand, *};
 
 mod commands;
 mod config;
+mod hooks;
 mod interactivity;
 mod repo;
+
+use config::Config;
+use hooks::{is_git_hook, Hook};
 
 #[derive(Parser)]
 #[command(author, version, about = "A Jira CLI integration with Git", long_about = None)]
@@ -50,9 +54,7 @@ enum Commands {
 }
 
 impl Commands {
-    fn exec(args: Cli) -> Result<String> {
-        let cfg = config::Config::load().wrap_err("Failed to load config");
-
+    fn exec(args: Cli, cfg: Result<Config>) -> Result<String> {
         match args.command {
             #[cfg(debug_assertions)]
             Commands::Assign(assign) => assign.exec(&cfg?),
@@ -72,9 +74,14 @@ impl Commands {
 
 fn main() -> Result<()> {
     color_eyre::install()?;
-    let args = Cli::parse();
+    let cfg = config::Config::load().wrap_err("Failed to load config");
 
-    println!("{}", Commands::exec(args)?);
+    if let Some(githook) = is_git_hook() {
+        githook.exec(&cfg?)?
+    } else {
+        let args = Cli::parse();
+        println!("{}", Commands::exec(args, cfg)?);
+    };
 
     #[cfg(target_os = "windows")]
     println!("");

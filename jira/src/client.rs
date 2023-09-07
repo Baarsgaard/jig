@@ -86,10 +86,10 @@ impl JiraAPIClient {
         })
     }
 
-    pub fn query_issues(&self, query: String) -> Result<PostIssueQueryResponseBody> {
+    pub fn query_issues(&self, query: &String) -> Result<PostIssueQueryResponseBody> {
         let search_url = format!("{}/rest/api/latest/search", self.url.clone());
         let body = PostIssueQueryBody {
-            jql: query,
+            jql: query.to_owned(),
             start_at: 0,
             max_results: self.max_results,
             fields: vec![String::from("summary")],
