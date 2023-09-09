@@ -1,5 +1,4 @@
 use crate::config::Config;
-use color_eyre::Result;
 
 mod commit_msg;
 mod lib;

@@ -76,7 +76,7 @@ fn main() -> Result<()> {
     color_eyre::install()?;
     let cfg = config::Config::load().wrap_err("Failed to load config");
 
-    if let Some(githook) = is_git_hook() {
+    if let Some(githook) = is_git_hook()? {
         githook.exec(&cfg?)?
     } else {
         let args = Cli::parse();

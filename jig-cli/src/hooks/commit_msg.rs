@@ -20,9 +20,6 @@ impl CommitMsg {
     fn write_commit(self, commit_msg: String) -> Result<()> {
         std::fs::write(self.commit_msg_file, commit_msg).wrap_err("Failed to write new commit_msg")
     }
-    // fn validate(commit_msg: &String) -> Result<()> {
-    //     Ok(())
-    // }
 }
 
 impl Hook for CommitMsg {
@@ -43,7 +40,7 @@ impl Hook for CommitMsg {
     }
 
     fn exec(self, cfg: &Config) -> Result<()> {
-        let mut commit_msg = std::fs::read_to_string(self.commit_msg_file.clone()).unwrap();
+        let commit_msg = std::fs::read_to_string(self.commit_msg_file.clone()).unwrap();
         let branch = self.repo.get_branch_name();
 
         // Pre-checks to verify commit should be processed
@@ -54,8 +51,8 @@ impl Hook for CommitMsg {
             // Allow rebasing
             return Ok(());
         }
-        let fixup_commit_re =
-            Regex::new(r"^(squash|fixup|amend)!.*").expect("Unable to compile fixup_commits_re");
+        let fixup_commit_re = Regex::new(r"^(squash|fixup|amend)!.*")
+            .wrap_err("Unable to compile fixup_commits_re")?;
         if fixup_commit_re.captures(&commit_msg).is_some() {
             // Allow fixup commits without messages
             return Ok(());
@@ -65,17 +62,9 @@ impl Hook for CommitMsg {
         let branch_issue_key = IssueKey::try_from(branch.clone());
         let commit_issue_key = IssueKey::try_from(commit_msg.clone());
 
-        let final_msg = match (branch_issue_key, commit_issue_key) {
+        let (issue_key, mut msg) = match (branch_issue_key, commit_issue_key) {
             // Most common case
-            (Ok(bik), Err(_)) => {
-                // Easy uppercase when commit does not contain valid issue key
-                let first_char = commit_msg.chars().next().unwrap();
-                if first_char.is_ascii_alphabetic() && first_char.is_lowercase() {
-                    commit_msg.replace_range(..1, &first_char.to_ascii_uppercase().to_string());
-                }
-
-                Ok(format!("{} {}", bik, commit_msg))
-            }
+            (Ok(bik), Err(_)) => Ok((bik.0, commit_msg)),
             (Ok(bik), Ok(cik)) => {
                 if (bik.to_string() != cik.to_string())
                     || !branch.starts_with(&bik.0)
@@ -83,23 +72,29 @@ impl Hook for CommitMsg {
                 {
                     Err(eyre!("Branch and commit 'Issue key' mismatch\nEnsure branch and commit message are *prefixed* with the same Issue key"))
                 } else if branch.starts_with(cik.to_string().as_str()) {
-                    Ok(commit_msg)
+                    let mut msg = commit_msg.clone();
+                    msg.replace_range(..cik.to_string().len(), "");
+                    if msg.starts_with(':') {
+                        msg = msg.trim().to_string();
+                    }
+                    Ok((bik.0, msg))
                 } else {
                     Err(eyre!("Issue "))
                 }
             }
-            (Err(_), Ok(_cik)) => {
+            (Err(_), Ok(cik)) => {
                 // Allow branches without issue key, off by default
                 if !cfg.hooks_cfg.allow_branch_missing_issue_key {
                     Err(eyre!(
                         "Branch is missing Issue key, cannot infer commit Issue key"
                     ))
                 } else {
-                    Ok(commit_msg)
+                    let mut msg = commit_msg.clone();
+                    msg.replace_range(..cik.to_string().len(), "");
+                    Ok((cik.0, msg.trim().to_string()))
                 }
             }
             (Err(_), Err(_)) => {
-                // TODO if config allows bik and cik is empty, prompt to select issue
                 if !cfg.hooks_cfg.allow_branch_missing_issue_key {
                     Err(eyre!(
                         "Branch is missing Issue key, cannot infer commit Issue key"
@@ -108,14 +103,29 @@ impl Hook for CommitMsg {
                     let client = JiraAPIClient::new(&cfg.jira_cfg)?;
                     let issues = query_issues_with_retry(&client, cfg)?;
                     let issue_key = prompt_user_with_issue_select(issues)?.key;
-                    Ok(format!("{} {}", issue_key, commit_msg))
+                    Ok((issue_key.0, commit_msg))
                 }
             }
         }?;
 
-        // TODO Check result against various regexes in a check function to ensure Conformity, if failing, attempt to fix and retry conformity checks
+        let first_char = msg.chars().next().unwrap();
+        if first_char.is_ascii_alphabetic() && first_char.is_lowercase() {
+            msg.replace_range(..1, &first_char.to_ascii_uppercase().to_string());
+        }
+
+        let final_msg = format!("{} {}", issue_key, msg);
+
+        // TODO Consider optional colons after issue key: ':?'
+        let commit_msg_re = Regex::new(r"^([A-Z]{2,}-[0-9]+) [A-Z0-9].*")
+            .wrap_err("Unable to compile commit_msg_re")?;
+        if !commit_msg_re.is_match(&final_msg) {
+            return Err(eyre!(format!(
+                "Commit message not conforming to regex: '{}'",
+                commit_msg_re.to_string()
+            )));
+        }
+
         // TODO Copy error from work script
-        // let res = CommitMsg::validate(&final_msg)?;
         CommitMsg::write_commit(self, final_msg)
     }
 }
