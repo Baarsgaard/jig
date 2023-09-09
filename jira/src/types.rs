@@ -219,7 +219,8 @@ impl TryFrom<String> for IssueKey {
         let issue_re = ISSUE_RE
             .get_or_init(|| Regex::new(r"([A-Z]{2,}-[0-9]+)").expect("Unable to compile ISSUE_RE"));
 
-        let issue_key = match issue_re.captures(&value) {
+        let upper = value.to_uppercase();
+        let issue_key = match issue_re.captures(&upper) {
             Some(c) => match c.get(0) {
                 Some(cap) => cap,
                 None => Err(eyre!("First capture is none: ISSUE_RE"))?,

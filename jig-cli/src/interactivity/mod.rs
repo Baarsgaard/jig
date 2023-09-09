@@ -96,10 +96,13 @@ pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> Result<String> {
 }
 
 pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Result<Issue> {
-    let issues = client
+    let issues = match client
         .query_issues(&format!("issuekey = {}", issue_key))?
         .issues
-        .unwrap();
+    {
+        Some(i) => i,
+        None => Err(eyre!("Issue query response object empty"))?,
+    };
 
     match issues.first() {
         Some(i) => Ok(i.to_owned()),

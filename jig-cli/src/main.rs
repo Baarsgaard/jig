@@ -83,6 +83,7 @@ fn main() -> Result<()> {
         println!("{}", Commands::exec(args, cfg)?);
     };
 
+    // Fix windows prompt overriding last line of output
     #[cfg(target_os = "windows")]
     println!("");
 

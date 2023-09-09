@@ -48,11 +48,9 @@ impl ExecCommand for Worklog {
             Err(_) => String::default(),
         };
 
-        // TODO Figure out if match or Option makes more sense
-        let issue_key = if self.issue_key_input.is_some() {
-            IssueKey::try_from(self.issue_key_input.unwrap())?
-        } else {
-            issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)?.key
+        let issue_key = match self.issue_key_input {
+            Some(issue_key_input) => IssueKey::try_from(issue_key_input)?,
+            None => issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)?.key,
         };
 
         let initial_comment = if let Some(cli_comment) = self.comment_input {
