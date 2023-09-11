@@ -9,9 +9,8 @@ chrono = { version = "0.4.26", default-features = false, features = ["clock"]}
 clap = { version = "4.3.0", default-features = false, features = ["help", "std", "color", "derive"] }
 color-eyre = { workspace = true }
 etcetera = "0.8.0"
-fuzzy-matcher = { version = "0.3.7", optional = true }
 gix = { version = "0.48.0", default-features = false }
-inquire = { version = "0.6.2", features = ["date"] }
+inquire = { git = "https://github.com/Baarsgaard/inquire.git", features = ["date"] }
 jira = { path = "../jira", default-features = false }
 regex = { workspace = true }
 self_update = { version = "0.37.0", default-features = false, features = ["rustls"] }
@@ -24,4 +23,3 @@ url = { version = "2.4.0", default-features = false }
 default = []
 server = [] # simplifies GH releases
 cloud = ["jira/cloud"]
-fuzzy = ["cloud", "dep:fuzzy-matcher"]
