@@ -2,7 +2,7 @@ use crate::config::find_workspace;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use gix::{Remote, Repository as Gix_Repository, ThreadSafeRepository};
 use jira::types::Issue;
-use std::process::Command;
+use std::{path::PathBuf, process::Command};
 
 #[derive(Debug, Clone)]
 pub struct Repository {
@@ -118,6 +118,24 @@ impl Repository {
             Ok(_) => Ok(String::default()),
             Err(e) => Err(e).wrap_err(eyre!("Failed to checkout branch: {}", branch_name)),
         }
+    }
+
+    pub fn get_hooks_path(&self) -> PathBuf {
+        let args = vec!["config", "--get", "core.hooksPath"];
+
+        match Command::new("git").args(args).output() {
+            Ok(o) => match String::from_utf8_lossy(&o.stdout) {
+                output if !output.is_empty() => PathBuf::from(output.to_string().trim()),
+                _ => self.default_hooks_path(),
+            },
+            Err(_e) => self.default_hooks_path(),
+        }
+    }
+    fn default_hooks_path(&self) -> PathBuf {
+        let mut hooks_path = PathBuf::from(self.repo.git_dir());
+        hooks_path.push(".git");
+        hooks_path.push("hooks");
+        hooks_path
     }
 }
 

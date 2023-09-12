@@ -33,6 +33,8 @@ enum Commands {
     Comment(Comment),
     /// List config file locations
     Configs(PrintConfigs),
+    /// Install git commit-msg hook
+    Hook(Hooks),
     /// Initialise config file(s)
     Init(InitConfig),
     /// Create a work log entry on a Jira issue
@@ -61,6 +63,7 @@ impl Commands {
             Commands::Branch(branch) => branch.exec(&cfg?),
             Commands::Comment(comment) => comment.exec(&cfg?),
             Commands::Configs(print_config) => print_config.exec(&cfg?),
+            Commands::Hook(hooks) => hooks.install(),
             Commands::Init(init) => init.init(),
             Commands::Log(worklog) => worklog.exec(&cfg?),
             Commands::Move(transition) => transition.exec(&cfg?),

@@ -1,19 +1,19 @@
-use color_eyre::eyre::{ContextCompat, Result};
-use std::path::PathBuf;
+use color_eyre::eyre::{eyre, Result};
+use std::{fmt::Display, path::PathBuf};
 
 use super::*;
 
-pub trait Hook {
+pub trait Hook: Display {
+    fn hook_name() -> String;
     fn new() -> Self;
     fn exec(self, cfg: &Config) -> Result<()>;
 }
 
 pub fn is_git_hook() -> Result<Option<impl Hook>> {
-    let bin_path = PathBuf::from(
-        std::env::args()
-            .next()
-            .wrap_err("First argument to be path to commit_msg_file")?,
-    );
+    let bin_path = match std::env::args().next() {
+        Some(p) => PathBuf::from(p),
+        None => Err(eyre!("Unable to get first arg: path of current executable"))?,
+    };
 
     Ok(match bin_path.file_name().unwrap().to_str() {
         Some("commit-msg") => Some(CommitMsg::new()),

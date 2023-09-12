@@ -1,3 +1,4 @@
+use super::lib::Hook;
 use crate::interactivity::{prompt_user_with_issue_select, query_issues_with_retry};
 use crate::{
     config::Config,
@@ -7,10 +8,10 @@ use color_eyre::{eyre::eyre, eyre::WrapErr, Result};
 use jira::types::IssueKey;
 use jira::JiraAPIClient;
 use regex::Regex;
+use std::fmt::Display;
 use std::path::PathBuf;
 
-use super::lib::Hook;
-
+#[derive(Debug)]
 pub struct CommitMsg {
     commit_msg_file: PathBuf,
     repo: Repository,
@@ -22,7 +23,16 @@ impl CommitMsg {
     }
 }
 
+impl Display for CommitMsg {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", Self::hook_name())
+    }
+}
+
 impl Hook for CommitMsg {
+    fn hook_name() -> String {
+        String::from("commit-msg")
+    }
     fn new() -> CommitMsg {
         let commit_msg_file = PathBuf::from(
             std::env::args()
