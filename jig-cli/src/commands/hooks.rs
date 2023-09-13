@@ -1,6 +1,8 @@
 use crate::repo::Repository;
 use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::Section;
+use inquire::Confirm;
 use std::env::{current_exe, var};
 use std::path::PathBuf;
 
@@ -10,7 +12,11 @@ use std::os::unix::fs;
 use std::os::windows::fs;
 
 #[derive(Args, Debug)]
-pub struct Hooks {}
+pub struct Hooks {
+    /// Skip confirmation
+    #[arg(short, long)]
+    force: bool,
+}
 
 impl Hooks {
     pub fn install(self) -> Result<String> {
@@ -27,8 +33,29 @@ impl Hooks {
             hooks_path = PathBuf::from(expanded_path);
         }
 
-        // TODO Add bin and hooks paths to error message
-        fs::symlink(bin_path, hooks_path).wrap_err("Unable to create symbolic link")?;
+        if hooks_path.exists() {
+            let replace = match self.force {
+                true => true,
+                false => Confirm::new(
+                    format!(
+                        "Hook already exists, replace: {}",
+                        hooks_path.clone().to_str().unwrap()
+                    )
+                    .as_str(),
+                )
+                .with_default(true)
+                .with_help_message("--force to skip this prompt")
+                .prompt()?,
+            };
+
+            if replace {
+                std::fs::remove_file(hooks_path.clone())?;
+            }
+        }
+
+        fs::symlink(bin_path, hooks_path.clone())
+            .wrap_err("Unable to create symbolic link")
+            .with_note(|| format!("target: {}", hooks_path.to_str().unwrap()))?;
 
         Ok(String::from("Installed 'commit-msg' hook"))
     }
