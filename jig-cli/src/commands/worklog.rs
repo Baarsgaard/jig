@@ -48,11 +48,17 @@ impl ExecCommand for Worklog {
             Err(_) => String::default(),
         };
 
+        // issue key
         let issue_key = match self.issue_key_input {
             Some(issue_key_input) => IssueKey::try_from(issue_key_input)?,
             None => issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)?.key,
         };
 
+        // worklog date
+        let worklog_date = get_date(cfg, self.date)
+            .wrap_err("Cannot create worklog request body: missing field=date")?;
+
+        // Parse comment input
         let initial_comment = if let Some(cli_comment) = self.comment_input {
             cli_comment
         } else if cfg.enable_comment_prompts.unwrap_or(false) {
@@ -61,6 +67,7 @@ impl ExecCommand for Worklog {
             String::default()
         };
 
+        // Prompt for comment if default
         let comment = if initial_comment.eq("#PROMPT_FOR_COMMENT#") {
             inquire::Text::new("Worklog comment:")
                 .prompt()
@@ -71,8 +78,7 @@ impl ExecCommand for Worklog {
 
         let wl = PostWorklogBody {
             comment,
-            started: get_date(cfg, self.date)
-                .wrap_err("Cannot create worklog request body: missing field=date")?,
+            started: worklog_date,
             time_spent: WorklogDuration::try_from(self.duration)
                 .wrap_err("Cannot create worklog request body: missing field=time_spent")?
                 .to_string(),
