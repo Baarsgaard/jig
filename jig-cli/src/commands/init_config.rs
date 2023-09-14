@@ -7,6 +7,8 @@ use std::path::PathBuf;
 use std::{env, process::Command};
 use url::Url;
 
+use super::Hooks;
+
 #[derive(Args, Debug)]
 pub struct InitConfig {
     #[arg(short, long)]
@@ -51,29 +53,39 @@ impl InitConfig {
 
         InitConfig::set_credentials(&mut new_cfg)?;
 
+        if Confirm::new("Install Git hook commit-msg")
+            .with_help_message(
+                "Auto prepends issue key in branch name to commit messages without it",
+            )
+            .with_default(true)
+            .prompt()?
+        {
+            Hooks::install(Hooks { force: false })?;
+        }
+
         if !self.all {
             return InitConfig::write_config(&new_cfg, config_file)
                 .wrap_err("Failed to write partial config");
         }
 
         // Text prompts
-        new_cfg.issue_query = Text::new("Issue query:")
+        new_cfg.issue_query = Text::new("Issue query")
             .with_default(&new_cfg.issue_query)
             .with_help_message(
                 "Suggestion: Use existing filters in Jira 'filter=<filterID> OR filter=<filterID>'",
             )
             .prompt()?;
-        new_cfg.retry_query = Text::new("Retry query:")
+        new_cfg.retry_query = Text::new("Retry query")
             .with_default(&new_cfg.retry_query)
             .prompt()?;
         new_cfg.max_query_results = Some(
-            CustomType::<u32>::new("Maximum query results:")
+            CustomType::<u32>::new("Maximum query results")
                 .with_help_message("Lower is faster in case of greedy queries")
                 .with_default(new_cfg.max_query_results.unwrap())
                 .prompt()?,
         );
         new_cfg.jira_timeout_seconds = Some(
-            CustomType::new("Rest Timeout (Seconds):")
+            CustomType::new("Rest Timeout (Seconds)")
                 .with_default(10u64)
                 .with_help_message("How long to wait on server to respond")
                 .prompt()?,
@@ -81,25 +93,25 @@ impl InitConfig {
 
         // Boolean prompts
         new_cfg.always_confirm_date = Some(
-            Confirm::new("Always ask date when posting worklog:")
+            Confirm::new("Always ask date when posting worklog")
                 .with_default(true)
                 .with_help_message("Invert setting with 'log --date'")
                 .prompt()?,
         );
         new_cfg.always_short_branch_names = Some(
-            Confirm::new("Use only issue key as branch name:")
+            Confirm::new("Use only issue key as branch name")
                 .with_default(false)
                 .with_help_message("Invert setting with 'branch --short'")
                 .prompt()?,
         );
         new_cfg.enable_comment_prompts = Some(
-            Confirm::new("Prompt for optional comments (Worklog):")
+            Confirm::new("Prompt for optional comments (Worklog)")
                 .with_default(false)
                 .with_help_message("Override with 'log -c \"\"'")
                 .prompt()?,
         );
         new_cfg.one_transition_auto_move = Some(
-            Confirm::new("Skip transition select on one valid transition:")
+            Confirm::new("Skip transition select on one valid transition")
                 .with_default(false)
                 .prompt()?,
         );

@@ -15,7 +15,7 @@ use std::os::windows::fs;
 pub struct Hooks {
     /// Skip confirmation
     #[arg(short, long)]
-    force: bool,
+    pub force: bool,
 }
 
 impl Hooks {
