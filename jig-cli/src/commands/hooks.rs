@@ -7,9 +7,9 @@ use std::env::{current_exe, var};
 use std::path::PathBuf;
 
 #[cfg(target_os = "linux")]
-use std::os::unix::fs;
+use std::os::unix::fs::symlink;
 #[cfg(target_os = "windows")]
-use std::os::windows::fs;
+use std::os::windows::fs::symlink_file;
 
 #[derive(Args, Debug)]
 pub struct Hooks {
@@ -53,8 +53,14 @@ impl Hooks {
             }
         }
 
-        fs::symlink(bin_path, hooks_path.clone())
+        #[cfg(target_os = "linux")]
+        symlink(bin_path, hooks_path.clone())
             .wrap_err("Unable to create symbolic link")
+            .with_note(|| format!("target: {}", hooks_path.to_str().unwrap()))?;
+
+        #[cfg(target_os = "windows")]
+        symlink_file(bin_path, hooks_path.clone())
+            .wrap_err("Unable to create symbolic link, try to run as administrator.")
             .with_note(|| format!("target: {}", hooks_path.to_str().unwrap()))?;
 
         Ok(String::from("Installed 'commit-msg' hook"))
