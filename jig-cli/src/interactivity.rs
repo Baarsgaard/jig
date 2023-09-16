@@ -1,8 +1,7 @@
 use crate::commands::shared::UseFilter;
 use crate::config::Config;
-use chrono::{Utc, Weekday};
+use chrono::Utc;
 use color_eyre::eyre::{eyre, Result, WrapErr};
-use inquire::DateSelect;
 use jira::{
     types::{Issue, IssueKey},
     JiraAPIClient,
@@ -87,27 +86,11 @@ pub fn prompt_user_with_issue_select(issues: Vec<Issue>) -> Result<Issue> {
         .wrap_err("No issue selected")
 }
 
-pub fn get_date(cfg: &Config, force_toggle_prompt: bool) -> Result<String> {
+/// Almost rfc3339 AKA Jira compatible
+pub fn now() -> String {
     // Jira sucks and can't parse correct rfc3339 due to the ':' in tz.. https://jira.atlassian.com/browse/JRASERVER-61378
     // Fix: https://docs.rs/chrono/latest/chrono/format/strftime/index.html
-    let now = Utc::now().format("%FT%X%.3f%z").to_string();
-    let mut do_prompt = cfg.always_confirm_date.unwrap_or(true);
-
-    if force_toggle_prompt {
-        do_prompt = !do_prompt;
-    }
-
-    if do_prompt {
-        let date = DateSelect::new("")
-            .with_week_start(Weekday::Mon)
-            .prompt()?
-            .to_string();
-
-        // A lot prettier than a complex of format!()
-        Ok(date + &now[10..])
-    } else {
-        Ok(now)
-    }
+    Utc::now().format("%FT%X%.3f%z").to_string()
 }
 
 pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Result<Issue> {

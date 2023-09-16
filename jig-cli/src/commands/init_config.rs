@@ -42,7 +42,6 @@ impl InitConfig {
             jira_timeout_seconds: None,
             issue_query: String::from("assignee = currentUser() ORDER BY updated DESC"),
             retry_query: String::from("reporter = currentUser() ORDER BY updated DESC"),
-            always_confirm_date: None,
             always_short_branch_names: None,
             max_query_results: Some(50),
             enable_comment_prompts: None,
@@ -92,12 +91,6 @@ impl InitConfig {
         );
 
         // Boolean prompts
-        new_cfg.always_confirm_date = Some(
-            Confirm::new("Always ask date when posting worklog")
-                .with_default(true)
-                .with_help_message("Invert setting with 'log --date'")
-                .prompt()?,
-        );
         new_cfg.always_short_branch_names = Some(
             Confirm::new("Use only issue key as branch name")
                 .with_default(false)

@@ -21,7 +21,6 @@ pub struct RawConfig {
     pub api_token: Option<String>,
     pub pat_token: Option<String>,
     pub jira_timeout_seconds: Option<u64>,
-    pub always_confirm_date: Option<bool>,
     pub always_short_branch_names: Option<bool>,
     pub max_query_results: Option<u32>,
     pub enable_comment_prompts: Option<bool>,
@@ -44,7 +43,6 @@ pub struct GitHooksConfig {
 pub struct Config {
     pub issue_query: String,
     pub retry_query: String,
-    pub always_confirm_date: Option<bool>,
     pub always_short_branch_names: Option<bool>,
     pub enable_comment_prompts: Option<bool>,
     pub one_transition_auto_move: Option<bool>,
@@ -131,7 +129,6 @@ impl From<RawConfig> for Config {
         Config {
             issue_query: cfg.issue_query,
             retry_query: cfg.retry_query,
-            always_confirm_date: cfg.always_confirm_date,
             always_short_branch_names: cfg.always_short_branch_names,
             enable_comment_prompts: cfg.enable_comment_prompts,
             one_transition_auto_move: cfg.one_transition_auto_move,

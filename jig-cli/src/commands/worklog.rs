@@ -1,10 +1,14 @@
+use std::fmt::Debug;
+
 use crate::{
     config::Config,
-    interactivity::{get_date, issue_from_branch_or_prompt},
+    interactivity::{issue_from_branch_or_prompt, now},
     repo::Repository,
 };
+use chrono::{NaiveDate, Weekday};
 use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
+use inquire::DateSelect;
 use jira::{
     types::{IssueKey, PostWorklogBody, WorklogDuration},
     JiraAPIClient,
@@ -14,9 +18,11 @@ use super::shared::{ExecCommand, UseFilter};
 
 #[derive(Args, Debug)]
 pub struct Worklog {
-    /// Inverts 'always_confirm_date' setting
+    /// Skip prompt by inputting date.
+    /// Format: %Y-%m-%d -> 2005-02-18
+    /// "now" and "today" is also valid input
     #[arg(short, long)]
-    date: bool,
+    date: Option<String>,
 
     #[arg(value_name = "DURATION")]
     duration: String,
@@ -55,8 +61,25 @@ impl ExecCommand for Worklog {
         };
 
         // worklog date
-        let worklog_date = get_date(cfg, self.date)
-            .wrap_err("Cannot create worklog request body: missing field=date")?;
+        let worklog_date = if let Some(date) = self.date {
+            match date.to_lowercase().as_str() {
+                "now" | "today" => now(),
+                _ => {
+                    let date_input =
+                        NaiveDate::parse_from_str(date.as_str(), "%Y-%m-%d")?.to_string();
+                    // Prettier than a complex of format!()
+                    date_input + &now()[10..]
+                }
+            }
+        } else {
+            let date_input = DateSelect::new("")
+                .with_week_start(Weekday::Mon)
+                .prompt()?
+                .to_string();
+
+            // Prettier than a complex of format!()
+            date_input + &now()[10..]
+        };
 
         // Parse comment input
         let initial_comment = if let Some(cli_comment) = self.comment_input {
