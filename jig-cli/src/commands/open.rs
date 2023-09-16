@@ -25,7 +25,7 @@ impl ExecCommand for Open {
 
         let maybe_repo = Repository::open().wrap_err("Failed to open repo");
         let head = match maybe_repo {
-            Ok(repo) => repo.get_branch_name(),
+            Ok(repo) => repo.get_branch_name()?,
             Err(_) => String::default(),
         };
 

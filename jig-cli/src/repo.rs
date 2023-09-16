@@ -18,13 +18,13 @@ impl Repository {
         Ok(Repository { repo })
     }
 
-    pub fn get_branch_name(&self) -> String {
-        let head_ref = self.repo.head_ref().unwrap();
-        let head_commit = self.repo.head_commit().unwrap();
+    pub fn get_branch_name(&self) -> Result<String> {
+        let head_ref = self.repo.head_ref()?;
+        let head_commit = self.repo.head_commit()?;
 
         match head_ref {
-            Some(reference) => reference.name().shorten().to_string(),
-            None => head_commit.id.to_hex_with_len(8).to_string(),
+            Some(reference) => Ok(reference.name().shorten().to_string()),
+            None => Ok(head_commit.id.to_hex_with_len(8).to_string()),
         }
     }
 

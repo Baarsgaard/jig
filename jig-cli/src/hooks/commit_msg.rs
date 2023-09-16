@@ -51,7 +51,7 @@ impl Hook for CommitMsg {
 
     fn exec(self, cfg: &Config) -> Result<()> {
         let commit_msg = std::fs::read_to_string(self.commit_msg_file.clone()).unwrap();
-        let branch = self.repo.get_branch_name();
+        let branch = self.repo.get_branch_name()?;
 
         // Pre-checks to verify commit should be processed
         if branch.is_empty() {
