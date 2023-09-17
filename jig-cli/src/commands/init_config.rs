@@ -1,6 +1,7 @@
 use crate::config::{self, GitHooksRawConfig, RawConfig};
 use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::owo_colors::OwoColorize;
 use inquire::{Confirm, CustomType, Password, Select, Text};
 use std::fs;
 use std::path::PathBuf;
@@ -34,20 +35,24 @@ impl InitConfig {
         };
 
         let jira_url = InitConfig::jira_url()?;
+        let mut new_git_hooks = GitHooksRawConfig {
+            allow_branch_missing_issue_key: Some(false),
+        };
         let mut new_cfg = RawConfig {
             jira_url,
             user_login: None,
             api_token: None,
             pat_token: None,
-            jira_timeout_seconds: None,
+            jira_timeout_seconds: Some(10),
             issue_query: String::from("assignee = currentUser() ORDER BY updated DESC"),
             retry_query: String::from("reporter = currentUser() ORDER BY updated DESC"),
-            always_short_branch_names: None,
-            max_query_results: Some(50),
-            enable_comment_prompts: None,
-            one_transition_auto_move: None,
-            inclusive_filters: None,
-            git_hooks: None,
+            always_short_branch_names: Some(false),
+            max_query_results: Some(100),
+            enable_comment_prompts: Some(false),
+            one_transition_auto_move: Some(false),
+            #[cfg(feature = "cloud")]
+            inclusive_filters: Some(true),
+            git_hooks: Some(new_git_hooks.clone()),
         };
 
         InitConfig::set_credentials(&mut new_cfg)?;
@@ -59,7 +64,13 @@ impl InitConfig {
             .with_default(true)
             .prompt()?
         {
-            Hooks::install(Hooks { force: false })?;
+            match Hooks::install(Hooks { force: false }) {
+                Ok(_) => (),
+                Err(e) => {
+                    eprintln!("{}", format!("Failed to install hook with error: {}\ncd to repository and install with:\njig hook\n", e).bright_red());
+                    println!()
+                }
+            }
         }
 
         if !self.all {
@@ -71,7 +82,7 @@ impl InitConfig {
         new_cfg.issue_query = Text::new("Issue query")
             .with_default(&new_cfg.issue_query)
             .with_help_message(
-                "Suggestion: Use existing filters in Jira 'filter=<filterID> OR filter=<filterID>'",
+                "Try using existing filters: 'filter=<filterID> OR filter=<filterID>'",
             )
             .prompt()?;
         new_cfg.retry_query = Text::new("Retry query")
@@ -79,7 +90,7 @@ impl InitConfig {
             .prompt()?;
         new_cfg.max_query_results = Some(
             CustomType::<u32>::new("Maximum query results")
-                .with_help_message("Lower is faster in case of greedy queries")
+                .with_help_message("Lower is faster in case of large queries (max 1500)")
                 .with_default(new_cfg.max_query_results.unwrap())
                 .prompt()?,
         );
@@ -92,39 +103,35 @@ impl InitConfig {
 
         // Boolean prompts
         new_cfg.always_short_branch_names = Some(
-            Confirm::new("Use only issue key as branch name")
-                .with_default(false)
+            Confirm::new("Always omit summary from branch names")
+                .with_default(new_cfg.always_short_branch_names.unwrap())
                 .with_help_message("Invert setting with 'branch --short'")
                 .prompt()?,
         );
         new_cfg.enable_comment_prompts = Some(
-            Confirm::new("Prompt for optional comments (Worklog)")
-                .with_default(false)
+            Confirm::new("Always prompt for comments (Worklog)")
+                .with_default(new_cfg.enable_comment_prompts.unwrap())
                 .with_help_message("Override with 'log -c \"\"'")
                 .prompt()?,
         );
         new_cfg.one_transition_auto_move = Some(
-            Confirm::new("Skip transition select on one valid transition")
-                .with_default(false)
+            Confirm::new("Automatically pick if there is only one option")
+                .with_default(new_cfg.one_transition_auto_move.unwrap())
                 .prompt()?,
         );
         #[cfg(feature = "cloud")]
         {
             new_cfg.inclusive_filters = Some(
-                Confirm::new("Filters are joined using 'OR' instead of 'AND'")
-                    .with_default(true)
+                Confirm::new("Join using 'OR' instead of 'AND'")
+                    .with_default(new_cfg.inclusive_filters.unwrap())
                     .with_help_message("filter=10001 OR filter=10002")
                     .prompt()?,
             );
         }
-        let mut new_git_hooks = GitHooksRawConfig {
-            allow_branch_missing_issue_key: None,
-        };
+
         new_git_hooks.allow_branch_missing_issue_key = Some(
             Confirm::new("Githook: Skip 'branche contains Issue Key' checks")
-                .with_help_message(
-                    "Will prompt user with Issue select when branch is missing Issue key",
-                )
+                .with_help_message("Prompts with issue select when branch is missing an Issue key")
                 .with_default(false)
                 .prompt()?,
         );

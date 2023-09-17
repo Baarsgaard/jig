@@ -14,18 +14,33 @@ static CONFIG_FILE: OnceLock<PathBuf> = OnceLock::new();
 #[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(deny_unknown_fields)]
 pub struct RawConfig {
+    /// server url or <domain>.atlassian.net
     pub jira_url: String,
+    /// Primary query to use when fetching issues.
     pub issue_query: String,
+    /// If normal issue_query is empty.
     pub retry_query: String,
+    /// email or username used as login.
     pub user_login: Option<String>,
+    /// API token for Cloud.
     pub api_token: Option<String>,
+    /// Personal access token for Server.
     pub pat_token: Option<String>,
+    /// How long to wait for a response.
     pub jira_timeout_seconds: Option<u64>,
+    /// Only use issue key as branch name.
     pub always_short_branch_names: Option<bool>,
+    /// Max number of issues to fetch.
+    /// max 1500.
     pub max_query_results: Option<u32>,
+    /// Prompt for comment if missing on worklogs.
     pub enable_comment_prompts: Option<bool>,
+    /// When moving issue, skip prompt if there is only one option.
     pub one_transition_auto_move: Option<bool>,
+    #[cfg(feature = "cloud")]
+    /// Comebine filters using `OR` instead of `AND`.
     pub inclusive_filters: Option<bool>,
+    /// Git hooks specific config section.
     pub git_hooks: Option<GitHooksRawConfig>,
 }
 
@@ -46,6 +61,7 @@ pub struct Config {
     pub always_short_branch_names: Option<bool>,
     pub enable_comment_prompts: Option<bool>,
     pub one_transition_auto_move: Option<bool>,
+    #[cfg(feature = "cloud")]
     pub inclusive_filters: Option<bool>,
     pub jira_cfg: JiraClientConfig,
     pub hooks_cfg: GitHooksConfig,
@@ -132,6 +148,7 @@ impl From<RawConfig> for Config {
             always_short_branch_names: cfg.always_short_branch_names,
             enable_comment_prompts: cfg.enable_comment_prompts,
             one_transition_auto_move: cfg.one_transition_auto_move,
+            #[cfg(feature = "cloud")]
             inclusive_filters: cfg.inclusive_filters,
             jira_cfg: JiraClientConfig {
                 credential,

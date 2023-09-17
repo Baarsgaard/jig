@@ -21,10 +21,9 @@ pub struct Hooks {
 impl Hooks {
     pub fn install(self) -> Result<String> {
         let bin_path = current_exe().wrap_err("Unable to obtain path of executable (jig)")?;
-
         let repo = Repository::open().wrap_err("Failed to open repo")?;
+
         let mut hooks_path = repo.get_hooks_path();
-        hooks_path.push("commit-msg");
         if hooks_path.starts_with("~") {
             let expanded_path = match hooks_path.to_str() {
                 Some(p) => p.replace('~', &var("HOME")?),
@@ -33,6 +32,7 @@ impl Hooks {
             hooks_path = PathBuf::from(expanded_path);
         }
 
+        hooks_path.push("commit-msg");
         if hooks_path.exists() {
             let replace = match self.force {
                 true => true,

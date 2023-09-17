@@ -1,10 +1,16 @@
 # Example configuration
-jira_url = ""
+jira_url = "https://example.atlassian.net"
 user_login = ""
 api_token = ""
-# This overrides the content of the retry query.
-# retry_query_override = "reporter = currentUser() ORDER BY updated"
-# always_confirm_date = false
-# always_short_branch_names = true
-# max_query_results = 50
-# skip_branch_confirmation = true
+# pat_token = "" # Auth for selfhosted instance
+issue_query = "assignee = currentUser() ORDER BY updated DESC"
+retry_query = "reporter = currentUser() ORDER BY updated DESC"
+jira_timeout_seconds = 10
+always_short_branch_names = false
+max_query_results = 100
+enable_comment_prompts = false
+one_transition_auto_move = false
+inclusive_filters = true
+
+[git_hooks]
+allow_branch_missing_issue_key = false
