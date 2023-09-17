@@ -1,6 +1,12 @@
-## Changes
+## Features
 -
 -
+
+## Fixes
+-
+-
+
+All changes: https://github.com/baarsgaard/jig/compare/v0.2.0...v${CRATE_VERSION}
 
 ### Upgrading:
 
