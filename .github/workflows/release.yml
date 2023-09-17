@@ -28,15 +28,21 @@ jobs:
 
       - name: Create draft release
         if: ${{ github.event.inputs.draft }}
-        run: gh release create 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --title 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --draft
+        run: >
+          envsubst < .github/release-notes.md |
+          gh release create 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --title 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --notes-file - --draft
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          CRATE_VERSION: "{{ steps.crate-version.outputs.CRATE_VERSION }}"
 
       - name: Create release
         if: ${{ !github.event.inputs.draft }}
-        run: gh release create 'v${{ steps.crate-version.outputs.CRATE_VERSION }}'
+        run: >
+          envsubst < .github/release-notes.md |
+          gh release create 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --notes-file -
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          CRATE_VERSION: "{{ steps.crate-version.outputs.CRATE_VERSION }}"
 
   build:
     name: "Build & Upload"
