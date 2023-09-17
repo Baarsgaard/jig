@@ -33,7 +33,7 @@ jobs:
           gh release create 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --title 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --notes-file - --draft
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          CRATE_VERSION: "{{ steps.crate-version.outputs.CRATE_VERSION }}"
+          CRATE_VERSION: "${{ steps.crate-version.outputs.CRATE_VERSION }}"
 
       - name: Create release
         if: ${{ !github.event.inputs.draft }}
@@ -42,7 +42,7 @@ jobs:
           gh release create 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --notes-file -
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          CRATE_VERSION: "{{ steps.crate-version.outputs.CRATE_VERSION }}"
+          CRATE_VERSION: "${{ steps.crate-version.outputs.CRATE_VERSION }}"
 
   build:
     name: "Build & Upload"
