@@ -1,5 +1,6 @@
 use clap::{command, Parser, Subcommand};
 use color_eyre::eyre::{Result, WrapErr};
+use color_eyre::owo_colors::OwoColorize;
 use commands::{shared::ExecCommand, *};
 
 mod commands;
@@ -80,7 +81,14 @@ fn main() -> Result<()> {
     let cfg = config::Config::load().wrap_err("Failed to load config");
 
     if let Some(githook) = is_git_hook()? {
-        githook.exec(&cfg?)?
+        match githook.exec(&cfg?) {
+            Ok(_) => (),
+            Err(e) => {
+                // Add better comments from old hook
+                eprintln!("{}", format!("Error:\n   {}", e).bright_red());
+                std::process::exit(1);
+            }
+        }
     } else {
         let args = Cli::parse();
         println!("{}", Commands::exec(args, cfg)?);

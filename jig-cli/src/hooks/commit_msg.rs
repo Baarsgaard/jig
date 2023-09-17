@@ -80,7 +80,10 @@ impl Hook for CommitMsg {
                     || !branch.starts_with(&bik.0)
                     || !commit_msg.starts_with(&cik.0)
                 {
-                    Err(eyre!("Branch and commit 'Issue key' mismatch\nEnsure branch and commit message are *prefixed* with the same Issue key"))
+                    Err(eyre!(
+                        "Jira issue key in message does not match '{}' in the branch name!",
+                        bik.0
+                    ))
                 } else if branch.starts_with(cik.to_string().as_str()) {
                     let mut msg = commit_msg.clone();
                     msg.replace_range(..cik.to_string().len(), "");
@@ -96,7 +99,7 @@ impl Hook for CommitMsg {
                 // Allow branches without issue key, off by default
                 if !cfg.hooks_cfg.allow_branch_missing_issue_key {
                     Err(eyre!(
-                        "Branch is missing Issue key, cannot infer commit Issue key"
+                        "Branch is missing Issue key, create branch from issue with:\njig branch"
                     ))
                 } else {
                     let mut msg = commit_msg.clone();
@@ -107,7 +110,7 @@ impl Hook for CommitMsg {
             (Err(_), Err(_)) => {
                 if !cfg.hooks_cfg.allow_branch_missing_issue_key {
                     Err(eyre!(
-                        "Branch is missing Issue key, cannot infer commit Issue key"
+                        "Branch is missing Issue key, create branch from issue with:\njig branch"
                     ))
                 } else {
                     let client = JiraAPIClient::new(&cfg.jira_cfg)?;
