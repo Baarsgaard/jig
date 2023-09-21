@@ -2,6 +2,10 @@
 -
 -
 
+## Changes
+-
+-
+
 ## Fixes
 -
 -
@@ -25,9 +29,9 @@ Pick between cloud and server (APIs differ)
 
 ```bash
 # Cloud
-wget --output-document=~/.local/bin/jig "https://github.com/Raunow/jig/releases/download/v${CRATE_VERSION}/jig-cloud-x86_64-unknown-linux-gnu"
+wget -O ~/.local/bin/jig "https://github.com/Raunow/jig/releases/download/v${CRATE_VERSION}/jig-cloud-x86_64-unknown-linux-gnu"
 # Server
-wget --output-document=~/.local/bin/jig "https://github.com/Raunow/jig/releases/download/v${CRATE_VERSION}/jig-server-x86_64-unknown-linux-gnu"
+wget -O ~/.local/bin/jig "https://github.com/Raunow/jig/releases/download/v${CRATE_VERSION}/jig-server-x86_64-unknown-linux-gnu"
 
 chmod +x ~/.local/bin/jig
 ```
