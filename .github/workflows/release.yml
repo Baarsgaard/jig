@@ -83,12 +83,14 @@ jobs:
           key: cargo-release-${{ matrix.build }}-${{ matrix.feature }}-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: cargo-release-${{ matrix.build }}-${{ matrix.feature }}-
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@nightly
         with:
           targets: "${{ matrix.target }}"
 
       - name: "Build ${{ matrix.build }} features: ${{ matrix.feature }}"
-        run: cargo build --release --features ${{ matrix.feature }} --target ${{ matrix.target }}
+        run: cargo +nightly build --release --features ${{ matrix.feature }} --target ${{ matrix.target }}
+        env:
+          RUSTFLAGS: "-Zlocation-detail=none"
 
       - run: mkdir dist
       - run: mv target/${{ matrix.target }}/release/jig${{ matrix.ext }}     dist/jig-${{ matrix.feature }}-${{ matrix.target }}${{ matrix.ext }}
