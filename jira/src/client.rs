@@ -87,13 +87,14 @@ impl JiraAPIClient {
     }
 
     pub fn query_issues(&self, query: &String) -> Result<PostIssueQueryResponseBody> {
-        let search_url = format!("{}/rest/api/latest/search", self.url.clone());
+        let search_url = self.url.join("/rest/api/latest/search")?;
         let body = PostIssueQueryBody {
             jql: query.to_owned(),
             start_at: 0,
             max_results: self.max_results,
             fields: vec![String::from("summary")],
         };
+
         let response = self
             .client
             .post(search_url)
@@ -115,11 +116,9 @@ impl JiraAPIClient {
     }
 
     pub fn post_worklog(&self, issue_key: &IssueKey, body: PostWorklogBody) -> Result<Response> {
-        let worklog_url = format!(
-            "{}/rest/api/latest/issue/{}/worklog",
-            self.url.clone(),
-            issue_key
-        );
+        let worklog_url = self
+            .url
+            .join(format!("/rest/api/latest/issue/{}/worklog", issue_key).as_str())?;
 
         let response = self
             .client
@@ -131,11 +130,9 @@ impl JiraAPIClient {
     }
 
     pub fn post_comment(&self, issue_key: &IssueKey, body: PostCommentBody) -> Result<Response> {
-        let comment_url = format!(
-            "{}/rest/api/latest/issue/{}/comment",
-            self.url.clone(),
-            issue_key
-        );
+        let comment_url = self
+            .url
+            .join(format!("/rest/api/latest/issue/{}/comment", issue_key).as_str())?;
 
         let response = self
             .client
@@ -147,11 +144,13 @@ impl JiraAPIClient {
     }
 
     pub fn get_transitions(&self, issue_key: &IssueKey) -> Result<Vec<Transition>> {
-        let transitions_url = format!(
-            "{}/rest/api/latest/issue/{}/transitions?expand=transitions.fields",
-            self.url.clone(),
-            issue_key
-        );
+        let transitions_url = self.url.join(
+            format!(
+                "/rest/api/latest/issue/{}/transitions?expand=transitions.fields",
+                issue_key
+            )
+            .as_str(),
+        )?;
 
         let response = self
             .client
@@ -175,11 +174,9 @@ impl JiraAPIClient {
         issue_key: &IssueKey,
         transition: Transition,
     ) -> Result<Response> {
-        let transition_url = format!(
-            "{}/rest/api/latest/issue/{}/transitions",
-            self.url.clone(),
-            issue_key
-        );
+        let transition_url = self
+            .url
+            .join(format!("/rest/api/latest/issue/{}/transitions", issue_key).as_str())?;
 
         let body = PostTransitionBody { transition };
 
@@ -239,15 +236,17 @@ impl JiraAPIClient {
 
     #[cfg(feature = "cloud")]
     pub fn search_filters(&self, filter: Option<String>) -> Result<GetFilterResponseBody> {
-        let mut search_url = format!(
-            "{}/rest/api/latest/filter/search?expand=jql&maxResults={}",
-            self.url.clone(),
-            self.max_results
-        );
+        let mut search_url = self.url.join("/rest/api/latest/filter/search")?;
+        let query = if let Some(filter) = filter {
+            format!(
+                "expand=jql&maxResults={}&filterName={}",
+                self.max_results, filter
+            )
+        } else {
+            format!("expand=jql&maxResults={}", self.max_results)
+        };
 
-        if let Some(filter) = filter {
-            search_url.push_str(&format!("&filterName={}", filter));
-        }
+        search_url.set_query(Some(query.as_str()));
 
         let response = self
             .client
