@@ -1,14 +1,13 @@
-use clap::{command, Parser, Subcommand};
-use color_eyre::eyre::{Result, WrapErr};
-use color_eyre::owo_colors::OwoColorize;
-use commands::{shared::ExecCommand, *};
-
 mod commands;
 mod config;
 mod hooks;
 mod interactivity;
 mod repo;
 
+use clap::{command, Parser, Subcommand};
+use color_eyre::eyre::{Result, WrapErr};
+use color_eyre::owo_colors::OwoColorize;
+use commands::{shared::ExecCommand, *};
 use config::Config;
 use hooks::{is_git_hook, Hook};
 
