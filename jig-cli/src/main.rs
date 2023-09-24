@@ -24,7 +24,6 @@ struct Cli {
 enum Commands {
     /// Assign user to issue
     #[command(alias = "a")]
-    #[cfg(debug_assertions)]
     Assign(Assign),
     /// Create and checkout branch using issue key with(out) summary as branch name
     #[command(alias = "b")]
@@ -59,7 +58,6 @@ enum Commands {
 impl Commands {
     fn exec(args: Cli, cfg: Result<Config>) -> Result<String> {
         match args.command {
-            #[cfg(debug_assertions)]
             Commands::Assign(assign) => assign.exec(&cfg?),
             Commands::Branch(branch) => branch.exec(&cfg?),
             Commands::Comment(comment) => comment.exec(&cfg?),

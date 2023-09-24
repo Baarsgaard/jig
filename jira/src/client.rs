@@ -193,21 +193,23 @@ impl JiraAPIClient {
     }
 
     pub fn get_assignable_users(&self, params: &GetAssignableUserParams) -> Result<Vec<User>> {
-        let mut users_url = format!(
-            "{}/rest/api/latest/user/assignable/search",
-            self.url.clone()
-        );
+        let mut users_url = self.url.join("/rest/api/latest/user/assignable/search")?;
+        let mut query: String = format!("maxResults={}", params.max_results.unwrap_or(1000));
 
-        users_url.push_str(format!("?maxResults={}", params.max_results.unwrap_or(1000)).as_str());
         if let Some(issue_key) = params.issue_key.clone() {
-            users_url.push_str(format!("&issueKey={}", issue_key).as_str());
+            query.push_str(format!("&issueKey={}", issue_key).as_str());
         }
         if let Some(username) = params.username.clone() {
-            users_url.push_str(format!("&username={}", username).as_str());
+            #[cfg(feature = "cloud")]
+            query.push_str(format!("&query={}", username).as_str());
+            #[cfg(not(feature = "cloud"))]
+            query.push_str(format!("&username={}", username).as_str());
         }
         if let Some(project) = params.project.clone() {
-            users_url.push_str(format!("&project={}", project).as_str());
+            query.push_str(format!("&project={}", project).as_str());
         }
+
+        users_url.set_query(Some(query.as_str()));
 
         let response = self.client.get(users_url).send().wrap_err(format!(
             "Unable to fetch assignable users for issue: {:?}",
@@ -220,17 +222,15 @@ impl JiraAPIClient {
     }
 
     pub fn post_assign_user(&self, issue_key: &IssueKey, user: &User) -> Result<Response> {
-        let assign_url = format!(
-            "{}/rest/api/latest/issue/{}/assignee",
-            self.url.clone(),
-            issue_key
-        );
+        let assign_url = self
+            .url
+            .join(format!("/rest/api/latest/issue/{}/assignee", issue_key).as_str())?;
 
         let body = PostAssignBody::from(user.clone());
 
         let response = self
             .client
-            .post(assign_url)
+            .put(assign_url)
             .json(&body)
             .send()
             .wrap_err("Post transition request failed")?;
