@@ -100,7 +100,7 @@ impl JiraAPIClient {
             .post(search_url)
             .json(&body)
             .send()
-            .wrap_err("Post issue query failed")?;
+            .wrap_err("POST issue query failed")?;
 
         let query_response_body = response
             .json::<PostIssueQueryResponseBody>()
@@ -125,7 +125,7 @@ impl JiraAPIClient {
             .post(worklog_url)
             .json(&body)
             .send()
-            .wrap_err("Post worklog request failed")?;
+            .wrap_err("POST worklog request failed")?;
         Ok(response)
     }
 
@@ -139,7 +139,7 @@ impl JiraAPIClient {
             .post(comment_url)
             .json(&body)
             .send()
-            .wrap_err("Post comment request failed")?;
+            .wrap_err("POST comment request failed")?;
         Ok(response)
     }
 
@@ -185,13 +185,19 @@ impl JiraAPIClient {
             .post(transition_url)
             .json(&body)
             .send()
-            .wrap_err("Post transition request failed")?;
+            .wrap_err("POST transition request failed")?;
         Ok(response)
     }
 
     pub fn get_assignable_users(&self, params: &GetAssignableUserParams) -> Result<Vec<User>> {
         let mut users_url = self.url.join("/rest/api/latest/user/assignable/search")?;
         let mut query: String = format!("maxResults={}", params.max_results.unwrap_or(1000));
+
+        if params.project.is_none() && params.issue_key.is_none() {
+            Err(eyre!(
+                "Both project and issue_key are None, define either to query for assignable users."
+            ))?
+        }
 
         if let Some(issue_key) = params.issue_key.clone() {
             query.push_str(format!("&issueKey={}", issue_key).as_str());
@@ -230,8 +236,28 @@ impl JiraAPIClient {
             .put(assign_url)
             .json(&body)
             .send()
-            .wrap_err("Post transition request failed")?;
+            .wrap_err("PUT assign user request failed")?;
         Ok(response)
+    }
+
+    /// cloud:  user.account_id
+    /// server: user.name
+    pub fn get_user(&self, user: String) -> Result<User> {
+        let user_url = self.url.join("/rest/api/latest/user")?;
+
+        let key = match cfg!(feature = "cloud") {
+            true => "accountId",
+            false => "username",
+        };
+
+        let response = self
+            .client
+            .get(user_url)
+            .query(&[(key, user)])
+            .send()
+            .wrap_err("GET User request failed")?;
+
+        Ok(response.json::<User>()?)
     }
 
     #[cfg(feature = "cloud")]

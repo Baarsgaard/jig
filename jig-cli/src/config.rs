@@ -38,7 +38,7 @@ pub struct RawConfig {
     /// When moving issue, skip prompt if there is only one option.
     pub one_transition_auto_move: Option<bool>,
     #[cfg(feature = "cloud")]
-    /// Comebine filters using `OR` instead of `AND`.
+    /// Combine filters using `OR` instead of `AND`.
     pub inclusive_filters: Option<bool>,
     /// Git hooks specific config section.
     pub git_hooks: Option<GitHooksRawConfig>,

@@ -17,8 +17,8 @@ pub struct Assign {
     #[arg(value_name = "ISSUE_KEY")]
     issue_key_input: Option<String>,
 
-    /// User name or email
-    #[arg(short, long, value_name = "USER")]
+    /// Skip user selection prompt
+    #[arg(short, long, value_name = if cfg!(feature = "cloud") {"ACCOUNT_ID"} else {"NAME"})]
     user: Option<String>,
 
     #[command(flatten)]
@@ -47,55 +47,55 @@ impl ExecCommand for Assign {
             .key
         };
 
-        let username = if let Some(user) = self.user {
-            user
+        // Disable query and prompt if --user is supplied
+        let user = if let Some(user) = self.user {
+            client.get_user(user)?
         } else {
-            Text::new("User search:")
+            let username = Text::new("User search:")
                 .prompt()
-                .wrap_err("No user selected")?
+                .wrap_err("No user selected")?;
+
+            let users = client.get_assignable_users(&GetAssignableUserParams {
+                username: Some(username),
+                project: None,
+                issue_key: Some(issue_key.clone()),
+                max_results: None,
+            })?;
+
+            if users.is_empty() {
+                Err(eyre!("No users found in search"))
+            } else if users.len() == 1 {
+                match users.get(0) {
+                    Some(user) => Ok(user.to_owned()),
+                    None => Err(eyre!("List of one user had unwrapped to None?")),
+                }
+            } else {
+                Ok(Select::new(
+                    "Pick user",
+                    users.iter().map(|u| JiraUser(u.to_owned())).collect(),
+                )
+                .prompt()
+                .wrap_err("Select prompt interrupted")?
+                .0)
+            }?
         };
 
-        let users = client.get_assignable_users(&GetAssignableUserParams {
-            username: Some(username),
-            project: None,
-            issue_key: Some(issue_key.clone()),
-            max_results: None,
-        })?;
-
-        let user = if users.is_empty() {
-            Err(eyre!("No users found in search"))
-        } else if users.len() == 1 {
-            match users.get(0) {
-                Some(user) => Ok(user.to_owned()),
-                None => Err(eyre!("List of one user had unwrapped to None?")),
-            }
-        } else {
-            Ok(Select::new(
-                "Pick user",
-                users.iter().map(|u| JiraUser(u.to_owned())).collect(),
-            )
-            .prompt()
-            .wrap_err("Select prompt interrupted")?
-            .0)
-        }?;
-
         client.post_assign_user(&issue_key, &user)?;
-        Ok(format!("Assigned {} to {}", user.display_name, issue_key))
+
+        Ok(format!("Assigned {} to {}", issue_key, JiraUser(user)))
     }
 }
 
 // Necessary to allow also searching server:name and cloud:email
 struct JiraUser(User);
-#[cfg(not(feature = "cloud"))]
-impl Display for JiraUser {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}", self.0.name, self.0.display_name)
-    }
-}
 
-#[cfg(feature = "cloud")]
 impl Display for JiraUser {
+    #[cfg(feature = "cloud")]
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} {}", self.0.display_name, self.0.email_address)
+        write!(f, "{}: {}", self.0.display_name, self.0.account_id)
+    }
+    #[cfg(not(feature = "cloud"))]
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.0.display_name, self.0.name)
     }
 }
