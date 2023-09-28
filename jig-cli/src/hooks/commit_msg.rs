@@ -61,7 +61,7 @@ impl Hook for CommitMsg {
             // Allow rebasing
             return Ok(());
         }
-        let fixup_commit_re = Regex::new(r"^(squash|fixup|amend)!.*")
+        let fixup_commit_re = Regex::new(r"^(squash|fixup|amend|Revert)!?.*")
             .wrap_err("Unable to compile fixup_commits_re")?;
         if fixup_commit_re.captures(&commit_msg).is_some() {
             // Allow fixup commits without messages
