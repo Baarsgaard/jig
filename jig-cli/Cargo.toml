@@ -10,7 +10,7 @@ clap = { version = "4.3.0", default-features = false, features = ["help", "std",
 color-eyre = { workspace = true }
 etcetera = "0.8.0"
 gix = { version = "0.48.0", default-features = false }
-inquire = { git = "https://github.com/Baarsgaard/inquire.git", features = ["date"] }
+inquire = { git = "https://github.com/mikaelmello/inquire.git", features = ["date"] }
 jira = { path = "../jira", default-features = false }
 regex = { workspace = true }
 self_update = { version = "0.37.0", default-features = false, features = ["rustls"] }
