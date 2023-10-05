@@ -168,7 +168,7 @@ pub fn config_file() -> PathBuf {
 }
 
 pub fn workspace_config_file() -> PathBuf {
-    find_workspace().join(".jig.toml")
+    find_workspace().0.join(".jig.toml")
 }
 
 fn config_dir() -> PathBuf {
@@ -186,16 +186,17 @@ pub fn cache_dir() -> PathBuf {
     path
 }
 
-/// Search parent folders from PWD
-/// and returns the first directory that contains `.git`.
-pub fn find_workspace() -> PathBuf {
+/// Search parent folders from PWD and returns the first directory that
+/// contains `.git`. If no directory is found, return current location.
+/// the boolan is true if the workspace dir is a repository.
+pub fn find_workspace() -> (PathBuf, bool) {
     let current_dir = std::env::current_dir().expect("unable to determine current directory");
     for ancestor in current_dir.ancestors() {
         if ancestor.join(".git").exists() {
-            return ancestor.to_owned();
+            return (ancestor.to_owned(), true);
         }
     }
-    current_dir
+    (current_dir, false)
 }
 
 pub fn merge_toml_values(left: toml::Value, right: toml::Value, merge_depth: usize) -> toml::Value {

@@ -1,5 +1,6 @@
 use crate::config::find_workspace;
 use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::Section;
 use gix::{Remote, Repository as Gix_Repository, ThreadSafeRepository};
 use jira::types::Issue;
 use std::{path::PathBuf, process::Command};
@@ -11,11 +12,10 @@ pub struct Repository {
 
 impl Repository {
     pub fn open() -> Result<Self> {
-        let repo = ThreadSafeRepository::open(find_workspace())
-            .wrap_err("Repository load error")?
-            .to_thread_local();
-
-        Ok(Repository { repo })
+        let (path, _is_repo) = find_workspace();
+        Ok(Repository {
+            repo: ThreadSafeRepository::open(path)?.to_thread_local(),
+        })
     }
 
     pub fn get_branch_name(&self) -> Result<String> {
@@ -120,22 +120,31 @@ impl Repository {
         }
     }
 
-    pub fn get_hooks_path(&self) -> PathBuf {
+    pub fn get_hooks_path() -> Result<PathBuf> {
         let args = vec!["config", "--get", "core.hooksPath"];
 
         match Command::new("git").args(args).output() {
             Ok(o) => match String::from_utf8_lossy(&o.stdout) {
-                output if !output.is_empty() => PathBuf::from(output.to_string().trim()),
-                _ => self.default_hooks_path(),
+                output if !output.is_empty() => Ok(PathBuf::from(output.to_string().trim())),
+                _ => Repository::default_hooks_path(),
             },
-            Err(_e) => self.default_hooks_path(),
+            Err(_e) => Repository::default_hooks_path(),
         }
     }
-    fn default_hooks_path(&self) -> PathBuf {
-        let mut hooks_path = PathBuf::from(self.repo.git_dir());
-        hooks_path.push(".git");
-        hooks_path.push("hooks");
-        hooks_path
+
+    fn default_hooks_path() -> Result<PathBuf> {
+        let (workspace_path, is_repo) = find_workspace();
+
+        if is_repo {
+            let mut hooks_path = workspace_path;
+            hooks_path.push(".git");
+            hooks_path.push("hooks");
+            Ok(hooks_path)
+        } else {
+            Err(eyre!("Unable to decide on install location")).wrap_err(
+                "Current directory is not a Git repository and global core.hooksPath is undefined",
+            ).with_suggestion(|| "Try configuring a global core.hooksPath: git config --global set core.hooksPath <directory>")
+        }
     }
 }
 
