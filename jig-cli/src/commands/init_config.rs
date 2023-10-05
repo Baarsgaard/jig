@@ -185,17 +185,18 @@ impl InitConfig {
             url
         };
 
-        match env::var("BROWSER") {
-            Ok(browser) => {
-                let _ = Command::new(browser).args([auth_url]).spawn();
-            }
-            Err(_) => {
-                println!(
-                    "Unable to find BROWSER env var, get token here:\n{}",
-                    auth_url
-                );
-            }
+        let (browser, args) = match cfg!(target_os = "windows") {
+            false => (
+                env::var("BROWSER").wrap_err("Unable to find 'BROWSER' env var")?,
+                vec![auth_url.to_string()],
+            ),
+            true => (
+                String::from("powershell.exe"),
+                vec![String::from("-c"), format!("start('{}')", auth_url)],
+            ),
         };
+
+        let _ = Command::new(browser).args(args).spawn();
 
         let token = Password::new("Auth token")
             .without_confirmation()

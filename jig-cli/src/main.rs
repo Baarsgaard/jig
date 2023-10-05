@@ -42,7 +42,7 @@ enum Commands {
     /// Move ticket through transitions
     #[command(alias = "m")]
     Move(Transition),
-    /// Open issue using BROWSER var
+    /// Open issue in your browser
     #[command(alias = "o")]
     Open(Open),
     /// Interactively send JQL queries to Jira when tab is pressed

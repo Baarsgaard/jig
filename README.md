@@ -64,7 +64,7 @@ Commands:
   init     Initialise config file(s)
   log      Create a work log entry on a Jira issue
   move     Move ticket through transitions
-  open     Open issue using BROWSER var
+  open     Open issue in your browser
   upgrade  Download and install latest version
   help     Print this message or the help of the given subcommand(s)
 

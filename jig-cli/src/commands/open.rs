@@ -18,9 +18,29 @@ pub struct Open {
     use_filter: UseFilter,
 }
 
+impl Open {
+    pub fn open_issue(client: &JiraAPIClient, issue_key: IssueKey) -> Result<String> {
+        let url = client.url.join(format!("/browse/{}", issue_key).as_str())?;
+        let (browser, args) = match cfg!(target_os = "windows") {
+            false => (
+                env::var("BROWSER").wrap_err("Failed to open, missing 'BROWSER' env var")?,
+                vec![url.to_string()],
+            ),
+            true => (
+                String::from("powershell.exe"),
+                vec![String::from("-c"), format!("start('{}')", url.to_string())],
+            ),
+        };
+
+        match Command::new(browser.clone()).args(args).spawn() {
+            Ok(_) => Ok(String::default()),
+            Err(e) => Err(e).wrap_err(format!("Failed to open {} using {}", issue_key, browser)),
+        }
+    }
+}
+
 impl ExecCommand for Open {
     fn exec(self, cfg: &Config) -> Result<String> {
-        let browser = env::var("BROWSER").wrap_err("Failed to open, missing 'BROWSER' env var")?;
         let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
         let maybe_repo = Repository::open().wrap_err("Failed to open repo");
@@ -35,12 +55,6 @@ impl ExecCommand for Open {
             issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)?.key
         };
 
-        let result = Command::new(browser.clone())
-            .args([format!("{}/browse/{}", client.url, issue_key)])
-            .spawn();
-        match result {
-            Ok(_) => Ok(String::default()),
-            Err(e) => Err(e).wrap_err(format!("Failed to open {} using {}", issue_key, browser)),
-        }
+        Self::open_issue(&client, issue_key)
     }
 }
