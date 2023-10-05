@@ -12,6 +12,11 @@ use super::shared::{ExecCommand, UseFilter};
 
 #[derive(Args, Debug)]
 pub struct Branch {
+    /// Add string to the end of branch name.
+    /// SUFFIX is subject to Git sanitization rules
+    #[arg(short, long, value_name = "SUFFIX")]
+    append: Option<String>,
+
     /// Skip querying Jira for Issue summary
     #[arg(value_name = "ISSUE_KEY")]
     issue_key_input: Option<String>,
@@ -43,10 +48,11 @@ impl ExecCommand for Branch {
             use_short_name = !use_short_name;
         }
 
-        if let Ok(branch_name) = repo.issue_branch_exists(&issue) {
+        if let Ok(branch_name) = repo.issue_branch_exists(&issue, self.append.clone()) {
             repo.checkout_branch(&branch_name, false)
         } else {
-            let branch_name = Repository::branch_name_from_issue(&issue, use_short_name);
+            let branch_name =
+                Repository::branch_name_from_issue(&issue, use_short_name, self.append);
             repo.checkout_branch(&branch_name, true)
         }
     }
