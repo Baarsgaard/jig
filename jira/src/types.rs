@@ -139,18 +139,34 @@ impl TryFrom<String> for WorklogDuration {
         eyre::Error: From<std::fmt::Error>,
     {
         let worklog_re = WORKLOG_RE.get_or_init(|| {
-            Regex::new(r"([0-9](?:\.[0-9]+)?)[wdh]").expect("Unable to compile WORKLOG_RE")
+            Regex::new(r"([0-9]+(?:\.[0-9]+)?)[wdhm]?").expect("Unable to compile WORKLOG_RE")
         });
 
         let worklog = match worklog_re.captures(&value) {
             Some(c) => match c.get(0) {
-                Some(cap) => cap,
+                Some(cap) => {
+                    let mut worklog = cap.as_str().to_string();
+                    if let Some(unit) = worklog.clone().pop() {
+                        if !unit.is_alphabetic() {
+                            worklog.push('h');
+                        } else if unit == 'm' && cfg!(not(feature = "cloud")) {
+                            worklog.pop();
+                            let initial_duration = worklog.parse::<u16>()?;
+                            // lhs / 60 and rounded to nearest half
+                            let duration = (f32::from(initial_duration) * 0.016666666f32 * 2f32)
+                                .round()
+                                * 0.5f32;
+                            worklog = format!("{:.1}h", duration);
+                        }
+                    }
+                    worklog
+                }
                 None => Err(eyre!("First capture is none: WORKLOG_RE"))?,
             },
             None => Err(eyre!("Malformed worklog duration: {}", value))?,
         };
 
-        Ok(WorklogDuration(worklog.as_str().to_string()))
+        Ok(WorklogDuration(worklog))
     }
 }
 
