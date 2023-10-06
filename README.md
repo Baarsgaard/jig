@@ -57,6 +57,7 @@ A Jira CLI integration with Git
 Usage: 
 
 Commands:
+  assign   Assign user to issue
   branch   Create and checkout branch using issue key with(out) summary as branch name
   comment  Create comment on a Jira Issue
   configs  List config file locations
