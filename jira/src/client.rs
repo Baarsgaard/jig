@@ -14,6 +14,7 @@ pub struct JiraClientConfig {
     pub max_query_results: u32,
     pub url: String,
     pub timeout: u64,
+    pub tls_accept_invalid_certs: bool,
 }
 
 /// Supported Authentication methods
@@ -74,6 +75,7 @@ impl JiraAPIClient {
     pub fn new(cfg: &JiraClientConfig) -> Result<JiraAPIClient> {
         let client = ClientBuilder::new()
             .default_headers(JiraAPIClient::build_headers(&cfg.credential))
+            .danger_accept_invalid_certs(cfg.tls_accept_invalid_certs)
             .https_only(true)
             .timeout(Some(Duration::from_secs(cfg.timeout)))
             .build()?;

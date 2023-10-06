@@ -28,6 +28,8 @@ pub struct RawConfig {
     pub pat_token: Option<String>,
     /// How long to wait for a response.
     pub jira_timeout_seconds: Option<u64>,
+    /// Accept invalid TLS certificates.
+    pub tls_accept_invalid_certs: Option<bool>,
     /// Only use issue key as branch name.
     pub always_short_branch_names: Option<bool>,
     /// Max number of issues to fetch.
@@ -155,6 +157,7 @@ impl From<RawConfig> for Config {
                 max_query_results: cfg.max_query_results.unwrap_or(50u32),
                 url: cfg.jira_url,
                 timeout: cfg.jira_timeout_seconds.unwrap_or(10u64),
+                tls_accept_invalid_certs: cfg.tls_accept_invalid_certs.unwrap_or(false),
             },
             hooks_cfg: GitHooksConfig::from(cfg.git_hooks),
         }

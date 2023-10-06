@@ -44,6 +44,7 @@ impl InitConfig {
             api_token: None,
             pat_token: None,
             jira_timeout_seconds: Some(10),
+            tls_accept_invalid_certs: Some(false),
             issue_query: String::from("assignee = currentUser() ORDER BY updated DESC"),
             retry_query: String::from("reporter = currentUser() ORDER BY updated DESC"),
             always_short_branch_names: Some(false),
