@@ -114,7 +114,8 @@ impl Repository {
     }
 
     pub fn sanitize_branch_name(branch: &str) -> String {
-        let mut branch_name = branch.replace([' ', ':', '~', '^', '?', '*', '[', '\\'], "_");
+        let mut branch_name =
+            branch.replace([' ', ':', '~', '^', '?', '*', '[', '\\', '\'', '"'], "_");
         while branch_name.contains("..") {
             // .... -> .. -> .
             branch_name = branch_name.replace("..", ".");

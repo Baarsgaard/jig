@@ -1,9 +1,14 @@
+use std::collections::HashMap;
+
 use crate::{config::Config, interactivity::issue_from_branch_or_prompt, repo::Repository};
 use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::Select;
 use jira::{
-    types::{IssueKey, PostTransitionBody, PostTransitionIdBody},
+    types::{
+        IssueKey, PostTransitionBody, PostTransitionFieldBody, PostTransitionIdBody,
+        PostTransitionUpdateField,
+    },
     JiraAPIClient,
 };
 
@@ -14,6 +19,11 @@ pub struct Transition {
     /// Skip querying Jira for Issue summary
     #[arg(value_name = "ISSUE_KEY")]
     issue_key_input: Option<String>,
+
+    /// Iterate all fields and prompt for input.
+    /// Default: Skip optional
+    #[arg(short = 'a', long = "all")]
+    iterate_optional_fields: bool,
 
     #[command(flatten)]
     use_filter: UseFilter,
@@ -53,6 +63,7 @@ impl ExecCommand for Transition {
             };
 
         if selected_transition
+            .clone()
             .fields
             .into_iter()
             .any(|(_, t)| t.required && t.has_default_value.is_some_and(|v| v))
@@ -60,15 +71,36 @@ impl ExecCommand for Transition {
             return Err(eyre!("Issue cannot be moved with Jig due to required fields.\n Open issue with `jig open {0}`", issue_key));
         }
 
-        let transition = PostTransitionBody {
+        let fields: Option<HashMap<String, PostTransitionFieldBody>> = None;
+        let update: Option<PostTransitionUpdateField> = None;
+        // TODO check returned structure and deduct all types of
+        // items in a scheme and implement dynamic hashmap of fields and
+        // build it with (m)selects and text prompts
+
+        let _transition = selected_transition
+            .fields
+            .into_iter()
+            .filter(|(_, f)| self.iterate_optional_fields || f.required)
+            .for_each(|(key, field)| {
+                let schema_type = field.schema.schema_type.clone();
+                let operations = field.operations.clone();
+
+                match schema_type.as_str() {
+                    "User" => todo!(),
+                    "Array" => todo!(),
+                    _ => todo!(),
+                };
+            });
+
+        let transitionBody = PostTransitionBody {
             transition: PostTransitionIdBody {
                 id: selected_transition.id,
             },
-            fields: None,
-            update: None,
+            fields,
+            update,
         };
 
-        client.post_transition(&issue_key, &transition).await?;
+        client.post_transition(&issue_key, &transitionBody).await?;
         Ok(String::default())
     }
 }
