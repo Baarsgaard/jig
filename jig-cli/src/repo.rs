@@ -2,7 +2,7 @@ use crate::config::find_workspace;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use color_eyre::Section;
 use gix::{Remote, Repository as Gix_Repository, ThreadSafeRepository};
-use jira::types::Issue;
+use jira::types::{Issue, IssueKey};
 use std::{path::PathBuf, process::Command};
 
 #[derive(Debug, Clone)]
@@ -80,28 +80,33 @@ impl Repository {
         } else {
             // Sanitize before cut to potentially produce a longer branch name
             // Sanitize after cut ensure branch didn't become invalid (ending with a . or similar)
-            let initial_branch_name = Self::sanitize_branch_name(&issue.to_string());
-            let branch_name = match initial_branch_name.len() {
-                n if n > 50 => initial_branch_name.split_at(51).0.to_owned(),
-                _ => initial_branch_name,
-            };
+            let mut initial_branch_name = Self::sanitize_branch_name(&issue.to_string());
+            initial_branch_name.truncate(50);
+
             Self::sanitize_branch_name(&if let Some(suffix_val) = suffix {
-                Self::overwriting_suffixer(branch_name, suffix_val)
+                Self::overwriting_suffixer(initial_branch_name, &issue.key, suffix_val)
             } else {
-                branch_name
+                initial_branch_name
             })
         }
     }
 
-    pub fn overwriting_suffixer(branch_name: String, suffix: String) -> String {
-        let mut prepared_branch_name = if branch_name.len() + suffix.len() > 50 {
-            branch_name.split_at(51 - suffix.len()).0.to_string()
-        } else {
-            branch_name
-        };
+    pub fn overwriting_suffixer(
+        mut branch_name: String,
+        issue_key: &IssueKey,
+        mut suffix: String,
+    ) -> String {
+        // If suffix plus issue_key_ is longer than 50, discard extra characters to now overwrite issue_key
+        if issue_key.0.len() + "_".len() + suffix.len() > 50 {
+            let _ = suffix.split_off(51 - (issue_key.0.len() + "_".len()));
+        }
 
-        prepared_branch_name.push_str(&suffix);
-        prepared_branch_name
+        if branch_name.len() + suffix.len() > 50 {
+            let _ = branch_name.split_off(51 - suffix.len());
+        }
+
+        branch_name.push_str(&suffix);
+        branch_name
     }
 
     pub fn sanitize_branch_name(branch: &str) -> String {
@@ -122,7 +127,7 @@ impl Repository {
         // /.. will never happen due to .. removal above
         branch_name = branch_name.replace("/.", "/");
 
-        while branch_name.ends_with(['.', '/']) {
+        while branch_name.ends_with(['.', '/', '_']) {
             // ././ ->
             branch_name.pop();
         }
@@ -194,6 +199,50 @@ mod test {
     }
 
     #[test]
+    fn suffix_branch_name() {
+        let branch_name = Repository::branch_name_from_issue(
+            &test_issue(None, None),
+            false,
+            Some(String::from("short suffix")),
+        );
+        assert_eq!(
+            String::from("JB-1_Example_summaryshort_suffix"),
+            branch_name
+        );
+    }
+
+    #[test]
+    fn too_long_suffix_branch_name() {
+        let branch_name = Repository::branch_name_from_issue(
+            &test_issue(None, None),
+            false,
+            Some(String::from(
+                "Clearly too long suffix causing no issues what so ever",
+            )),
+        );
+        assert_eq!(
+            String::from("JB-1_Clearly_too_long_suffix_causing_no_issues_what"),
+            branch_name
+        );
+    }
+
+    #[test]
+    fn tricky_dot_before_cut_branch_name() {
+        let branch_name = Repository::branch_name_from_issue(
+            &test_issue(
+                None,
+                Some("Example summary with a dot at the cut point . which used to cause trouble"),
+            ),
+            false,
+            None,
+        );
+        assert_eq!(
+            String::from("JB-1_Example_summary_with_a_dot_at_the_cut_point"),
+            branch_name
+        );
+    }
+
+    #[test]
     fn long_issue_branch_name() {
         let branch_name = Repository::branch_name_from_issue(
             &test_issue(
@@ -204,7 +253,7 @@ mod test {
             None,
         );
         assert_eq!(
-            String::from("JB-1_Example_summary_that_is_really_long_not_really"),
+            String::from("JB-1_Example_summary_that_is_really_long_not_reall"),
             branch_name
         );
     }
