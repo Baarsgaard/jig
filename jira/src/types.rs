@@ -270,12 +270,57 @@ pub struct TransitionExpandedFields {
     pub required: bool,
     pub name: String,
     pub operations: Vec<String>,
-    pub allowed_values: Option<Vec<String>>,
+    pub schema: TransitionExpandedFieldsSchema,
+    pub allowed_values: Option<Vec<TransitionFieldAllowedValue>>,
+    pub has_default_value: Option<bool>,
+    pub default_value: Option<String>,
+}
+
+#[cfg(not(feature = "cloud"))]
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct TransitionFieldAllowedValue {
+    #[serde(alias = "self")]
+    pub self_reference: String,
+    pub value: String,
+    pub id: String,
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone)]
+pub struct TransitionExpandedFieldsSchema {
+    #[serde(alias = "type")]
+    pub schema_type: String,
+    pub items: String,
+    pub custom: String,
+    pub custom_id: u32,
+    #[cfg(not(feature = "cloud"))]
+    pub system: String,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct PostTransitionIdBody {
+    pub id: String,
+}
+
+#[derive(Serialize, Debug, Clone)]
+pub struct PostTransitionFieldBody {
+    pub name: String,
 }
 
 #[derive(Serialize, Debug, Clone)]
 pub struct PostTransitionBody {
-    pub transition: Transition,
+    pub transition: PostTransitionIdBody,
+    pub fields: Option<HashMap<String, PostTransitionFieldBody>>,
+    pub update: Option<PostTransitionUpdateField>,
+}
+
+/// Server
+#[derive(Serialize, Debug, Clone)]
+pub struct PostTransitionUpdateField {
+    pub add: Option<HashMap<String, Vec<String>>>,
+    pub copy: Option<HashMap<String, Vec<String>>>,
+    pub edit: Option<HashMap<String, Vec<String>>>,
+    pub remove: Option<HashMap<String, Vec<String>>>,
+    pub set: Option<HashMap<String, Vec<String>>>,
 }
 
 impl Display for Transition {

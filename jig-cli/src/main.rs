@@ -42,7 +42,7 @@ enum Commands {
     #[command(alias = "l")]
     Log(Worklog),
     /// Move ticket through transitions
-    #[command(alias = "m")]
+    #[command(aliases = ["m", "transition", "t"])]
     Move(Transition),
     /// Open issue in your browser
     #[command(alias = "o")]

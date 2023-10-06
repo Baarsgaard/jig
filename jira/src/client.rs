@@ -180,14 +180,14 @@ impl JiraAPIClient {
         Ok(response)
     }
 
-    pub fn get_transitions(&self, issue_key: &IssueKey) -> Result<Vec<Transition>> {
-        let transitions_url = self.url.join(
-            format!(
-                "/rest/api/latest/issue/{}/transitions?expand=transitions.fields",
-                issue_key
-            )
-            .as_str(),
-        )?;
+    pub fn get_transitions(&self, issue_key: &IssueKey, expand: bool) -> Result<Vec<Transition>> {
+        let mut transitions_url = self
+            .url
+            .join(format!("/rest/api/latest/issue/{}/transitions", issue_key).as_str())?;
+
+        if expand {
+            transitions_url.set_query(Some("expand=transitions.fields"))
+        }
 
         let response = self
             .client
@@ -209,20 +209,19 @@ impl JiraAPIClient {
     pub fn post_transition(
         &self,
         issue_key: &IssueKey,
-        transition: Transition,
+        transition: &PostTransitionBody,
     ) -> Result<Response> {
         let transition_url = self
             .url
             .join(format!("/rest/api/latest/issue/{}/transitions", issue_key).as_str())?;
 
-        let body = PostTransitionBody { transition };
-
         let response = self
             .client
             .post(transition_url)
-            .json(&body)
+            .json(transition)
             .send()
             .wrap_err("POST transition request failed")?;
+
         Ok(response)
     }
 
