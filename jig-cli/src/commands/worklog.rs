@@ -104,9 +104,12 @@ impl ExecCommand for Worklog {
         let wl = PostWorklogBody {
             comment,
             started: worklog_date,
-            time_spent: WorklogDuration::try_from(self.duration)
-                .wrap_err("Cannot create worklog request body: missing field=time_spent")?
-                .to_string(),
+            time_spent: None,
+            time_spent_seconds: Some(
+                WorklogDuration::try_from(self.duration)
+                    .wrap_err("Cannot create worklog request body: missing field=time_spent")?
+                    .to_string(),
+            ),
         };
 
         match client.post_worklog(&issue_key, wl.clone()) {

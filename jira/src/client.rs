@@ -122,6 +122,16 @@ impl JiraAPIClient {
             .url
             .join(format!("/rest/api/latest/issue/{}/worklog", issue_key).as_str())?;
 
+        // If any pattern matches, do not prompt.
+        if matches!(
+            (body.time_spent.is_some(), body.time_spent_seconds.is_some()),
+            (false, false) | (true, true)
+        ) {
+            return Err(eyre!(
+                "Malfored body: time_spent and time_spent_seconds are botn 'Some()' or 'None'"
+            ));
+        }
+
         let response = self
             .client
             .post(worklog_url)

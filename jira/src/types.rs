@@ -1,5 +1,5 @@
 use color_eyre::eyre;
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{eyre, Result, WrapErr};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::{
@@ -116,11 +116,13 @@ pub struct PostCommentBody {
 pub struct PostWorklogBody {
     pub comment: String,
     pub started: String,
-    pub time_spent: String,
+    pub time_spent: Option<String>,
+    pub time_spent_seconds: Option<String>,
 }
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
+/// If duration unit is unspecififed, default to hours.
 pub struct WorklogDuration(String);
 
 impl Display for WorklogDuration {
@@ -142,31 +144,40 @@ impl TryFrom<String> for WorklogDuration {
             Regex::new(r"([0-9]+(?:\.[0-9]+)?)[wdhm]?").expect("Unable to compile WORKLOG_RE")
         });
 
-        let worklog = match worklog_re.captures(&value) {
+        match worklog_re.captures(&value) {
             Some(c) => match c.get(0) {
-                Some(cap) => {
-                    let mut worklog = cap.as_str().to_string();
-                    if let Some(unit) = worklog.clone().pop() {
-                        if !unit.is_alphabetic() {
-                            worklog.push('h');
-                        } else if unit == 'm' && cfg!(not(feature = "cloud")) {
+                Some(worklog_match) => {
+                    let mut worklog = worklog_match.as_str().to_lowercase();
+
+                    let multiplier = if let Some(unit) = worklog.clone().pop() {
+                        let multiplier: Option<u32> = match unit {
+                            'm' => Some(60),
+                            'h' => Some(3600),
+                            'd' => Some(3600 * 8), // 8 Hours is default for cloud.
+                            'w' => Some(3600 * 8 * 5), // 5 days of work in a week.
+                            _ => None,             // Unit omitted.
+                        };
+
+                        if multiplier.is_some() {
                             worklog.pop();
-                            let initial_duration = worklog.parse::<u16>()?;
-                            // lhs / 60 and rounded to nearest half
-                            let duration = (f32::from(initial_duration) * 0.016666666f32 * 2f32)
-                                .round()
-                                * 0.5f32;
-                            worklog = format!("{:.1}h", duration);
                         }
-                    }
-                    worklog
+
+                        multiplier.unwrap_or(3600)
+                    } else {
+                        3600
+                    };
+
+                    let seconds = worklog
+                        .parse::<f64>()
+                        .wrap_err("Unexpected worklog duration input")?
+                        * f64::from(multiplier);
+
+                    Ok(WorklogDuration(format!("{:.0}", seconds)))
                 }
                 None => Err(eyre!("First capture is none: WORKLOG_RE"))?,
             },
             None => Err(eyre!("Malformed worklog duration: {}", value))?,
-        };
-
-        Ok(WorklogDuration(worklog))
+        }
     }
 }
 
@@ -286,6 +297,32 @@ mod tests {
     use super::*;
 
     #[test]
+    fn worklog_try_from_all_inputs() {
+        let worklogs = vec![
+            (60, "1m"),
+            (3600, "1h"),
+            (3600 * 8, "1d"),
+            (3600 * 8 * 5, "1w"),
+        ];
+
+        for (expected_seconds, input) in worklogs {
+            let seconds = WorklogDuration::try_from(input.to_string()).unwrap().0;
+            assert_eq!(expected_seconds.to_string(), seconds);
+        }
+    }
+
+    #[test]
+    fn lowercase_worklog_duration() {
+        let wl = WorklogDuration::try_from(String::from("1h")).unwrap().0;
+        assert_eq!(String::from("3600"), wl);
+    }
+    #[test]
+    fn uppercase_worklog_duration() {
+        let wl = WorklogDuration::try_from(String::from("1H")).unwrap().0;
+        assert_eq!(String::from("3600"), wl);
+    }
+
+    #[test]
     fn issue_key_try_from() {
         let key = String::from("JB-1");
         let issue = IssueKey::try_from(key.clone());
@@ -294,9 +331,9 @@ mod tests {
     }
 
     #[test]
-    fn lowercase_issue_key_try_from_err() {
+    fn lowercase_issue_key() {
         let issue = IssueKey::try_from(String::from("jb-1"));
-        assert!(issue.is_err());
+        assert!(issue.is_ok());
     }
 
     #[test]
