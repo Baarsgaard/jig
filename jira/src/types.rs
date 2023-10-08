@@ -141,7 +141,7 @@ impl TryFrom<String> for WorklogDuration {
         eyre::Error: From<std::fmt::Error>,
     {
         let worklog_re = WORKLOG_RE.get_or_init(|| {
-            Regex::new(r"([0-9]+(?:\.[0-9]+)?)[wdhm]?").expect("Unable to compile WORKLOG_RE")
+            Regex::new(r"([0-9]+(?:\.[0-9]+)?)[WwDdHhMm]?").expect("Unable to compile WORKLOG_RE")
         });
 
         match worklog_re.captures(&value) {
@@ -164,7 +164,7 @@ impl TryFrom<String> for WorklogDuration {
 
                         multiplier.unwrap_or(60) // Default to minutes
                     } else {
-                        60 // Default to minutes
+                        60 // Unit omitted default to minutes
                     };
 
                     let seconds = worklog
@@ -299,6 +299,7 @@ mod tests {
     #[test]
     fn worklog_try_from_all_inputs() {
         let worklogs = vec![
+            (60, "1"),
             (60, "1m"),
             (3600, "1h"),
             (3600 * 8, "1d"),
@@ -318,8 +319,8 @@ mod tests {
     }
     #[test]
     fn uppercase_worklog_duration() {
-        let wl = WorklogDuration::try_from(String::from("1H")).unwrap().0;
-        assert_eq!(String::from("3600"), wl);
+        let wl = WorklogDuration::try_from(String::from("2H")).unwrap().0;
+        assert_eq!(String::from("7200"), wl);
     }
 
     #[test]
