@@ -128,7 +128,7 @@ impl JiraAPIClient {
             (false, false) | (true, true)
         ) {
             return Err(eyre!(
-                "Malfored body: time_spent and time_spent_seconds are botn 'Some()' or 'None'"
+                "Malformed body: time_spent and time_spent_seconds are botn 'Some()' or 'None'"
             ));
         }
 
