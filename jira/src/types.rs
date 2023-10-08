@@ -122,7 +122,7 @@ pub struct PostWorklogBody {
 
 #[derive(Serialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
-/// If duration unit is unspecififed, default to hours.
+/// If duration unit is unspecififed, defaults to minutes.
 pub struct WorklogDuration(String);
 
 impl Display for WorklogDuration {
@@ -162,9 +162,9 @@ impl TryFrom<String> for WorklogDuration {
                             worklog.pop();
                         }
 
-                        multiplier.unwrap_or(3600)
+                        multiplier.unwrap_or(60) // Default to minutes
                     } else {
-                        3600
+                        60 // Default to minutes
                     };
 
                     let seconds = worklog
