@@ -25,7 +25,7 @@ pub struct Worklog {
     date: Option<String>,
 
     /// Formats: 30m, 1.5h, 2d, 1w
-    /// Default unit is hours
+    /// Default unit, if omitted, is minutes.
     #[arg(value_name = "DURATION")]
     duration: String,
 
