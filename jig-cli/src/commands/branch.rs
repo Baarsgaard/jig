@@ -52,7 +52,7 @@ impl ExecCommand for Branch {
             repo.checkout_branch(&branch_name, false)
         } else {
             let branch_name =
-                Repository::branch_name_from_issue(&issue, use_short_name, self.append);
+                Repository::branch_name_from_issue(&issue, use_short_name, self.append)?;
             repo.checkout_branch(&branch_name, true)
         }
     }

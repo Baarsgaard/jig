@@ -29,7 +29,7 @@ impl Repository {
     }
 
     pub fn issue_branch_exists(&self, issue: &Issue, suffix: Option<String>) -> Result<String> {
-        let full_name = Repository::branch_name_from_issue(issue, false, suffix);
+        let full_name = Repository::branch_name_from_issue(issue, false, suffix)?;
         if self.branch_exists(full_name.clone()) {
             Ok(full_name)
         } else if self.branch_exists(issue.key.to_string()) {
@@ -74,8 +74,8 @@ impl Repository {
         issue: &Issue,
         use_short: bool,
         suffix: Option<String>,
-    ) -> String {
-        if use_short {
+    ) -> Result<String> {
+        let branch_name = if use_short {
             issue.key.to_string()
         } else {
             // Sanitize before cut to potentially produce a longer branch name
@@ -88,7 +88,11 @@ impl Repository {
             } else {
                 initial_branch_name
             })
-        }
+        };
+
+        // Test branch name is valid by retrieving Issue key from it.
+        let _ = IssueKey::try_from(branch_name.clone())?;
+        Ok(branch_name)
     }
 
     pub fn overwriting_suffixer(
@@ -192,19 +196,53 @@ mod test {
         }
     }
 
+    fn empty_test_issue() -> Issue {
+        Issue {
+            fields: PostIssueQueryResponseBodyFields {
+                summary: String::from(""),
+            },
+            id: String::from(""),
+            key: IssueKey(String::from("")),
+            self_reference: String::from("https://ddd.ddd.com/"),
+            expand: String::from(""),
+        }
+    }
+
     #[test]
-    fn issue_branch_name() {
-        let branch_name = Repository::branch_name_from_issue(&test_issue(None, None), false, None);
+    fn branch_name_from_issue() {
+        let branch_name =
+            Repository::branch_name_from_issue(&test_issue(None, None), false, None).unwrap();
         assert_eq!(String::from("JB-1_Example_summary"), branch_name);
     }
 
     #[test]
-    fn suffix_branch_name() {
+    fn branch_name_from_empty_issue() {
+        let branch_name = Repository::branch_name_from_issue(&empty_test_issue(), false, None);
+        assert!(branch_name.is_err());
+    }
+    #[test]
+    fn short_branch_name_from_empty_issue() {
+        let branch_name = Repository::branch_name_from_issue(&empty_test_issue(), true, None);
+        assert!(branch_name.is_err());
+    }
+    #[test]
+    fn branch_name_with_suffix_from_empty_issue() {
+        let branch_name = Repository::branch_name_from_issue(
+            &empty_test_issue(),
+            false,
+            Some(String::from("some suffix")),
+        );
+        assert!(branch_name.is_err());
+    }
+
+    #[test]
+    fn branch_name_from_issue_with_suffix() {
         let branch_name = Repository::branch_name_from_issue(
             &test_issue(None, None),
             false,
             Some(String::from("short suffix")),
-        );
+        )
+        .unwrap();
         assert_eq!(
             String::from("JB-1_Example_summaryshort_suffix"),
             branch_name
@@ -212,14 +250,15 @@ mod test {
     }
 
     #[test]
-    fn too_long_suffix_branch_name() {
+    fn branch_name_from_issue_with_too_long_suffix() {
         let branch_name = Repository::branch_name_from_issue(
             &test_issue(None, None),
             false,
             Some(String::from(
                 "Clearly too long suffix causing no issues what so ever",
             )),
-        );
+        )
+        .unwrap();
         assert_eq!(
             String::from("JB-1_Clearly_too_long_suffix_causing_no_issues_what"),
             branch_name
@@ -227,7 +266,7 @@ mod test {
     }
 
     #[test]
-    fn tricky_dot_before_cut_branch_name() {
+    fn sanitize_branch_names_ending_with_dot_after_splitoff() {
         let branch_name = Repository::branch_name_from_issue(
             &test_issue(
                 None,
@@ -235,7 +274,8 @@ mod test {
             ),
             false,
             None,
-        );
+        )
+        .unwrap();
         assert_eq!(
             String::from("JB-1_Example_summary_with_a_dot_at_the_cut_point"),
             branch_name
@@ -243,7 +283,7 @@ mod test {
     }
 
     #[test]
-    fn long_issue_branch_name() {
+    fn sanitize_branch_long_name() {
         let branch_name = Repository::branch_name_from_issue(
             &test_issue(
                 None,
@@ -251,7 +291,8 @@ mod test {
             ),
             false,
             None,
-        );
+        )
+        .unwrap();
         assert_eq!(
             String::from("JB-1_Example_summary_that_is_really_long_not_reall"),
             branch_name
@@ -259,16 +300,18 @@ mod test {
     }
 
     #[test]
-    fn short_issue_branch_name() {
-        let branch_name = Repository::branch_name_from_issue(&test_issue(None, None), true, None);
+    fn branch_name_short_true() {
+        let branch_name =
+            Repository::branch_name_from_issue(&test_issue(None, None), true, None).unwrap();
         assert_eq!(String::from("JB-1"), branch_name);
     }
 
     #[test]
-    fn sanitize_problematic_branch_name() {
+    fn branch_name_from_challenging_shit_summary() {
         let shit_summary = "ter rible/..bra nch.lock.lock/name$${{....causing/. issues/././";
         let branch_name =
-            Repository::branch_name_from_issue(&test_issue(None, Some(shit_summary)), false, None);
+            Repository::branch_name_from_issue(&test_issue(None, Some(shit_summary)), false, None)
+                .unwrap();
         assert_eq!("JB-1_ter_rible/bra_nch/name.causing/_issues", branch_name);
     }
 }

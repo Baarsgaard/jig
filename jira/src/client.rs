@@ -72,6 +72,31 @@ impl JiraAPIClient {
         headers
     }
 
+    /// Instantiate a reusable API client.
+    ///
+    /// ```rust
+    /// use jira::types::*;
+    /// use jira::{Credential, JiraClientConfig, JiraAPIClient};
+    ///
+    /// let anon = Credential::Anonymous;
+    ///
+    /// // let credential = Credential::PersonalAccessToken("xxxxxxx".to_string())
+    ///
+    /// // let api_token = Credential::ApiToken {
+    /// //     login: "user@example.com".to_string(),
+    /// //     token: "xxxxxxx".to_string(),
+    /// // };
+    ///
+    /// let jira_cfg = JiraClientConfig {
+    ///     credential: anon,
+    ///     max_query_results: 50u32,
+    ///     url: "https://domain.atlassian.net".to_string(),
+    ///     timeout: 10u64,
+    ///     tls_accept_invalid_certs: false,
+    /// };
+    ///
+    /// let client = JiraAPIClient::new(&jira_cfg).unwrap();
+    /// ```
     pub fn new(cfg: &JiraClientConfig) -> Result<JiraAPIClient> {
         let client = ClientBuilder::new()
             .default_headers(JiraAPIClient::build_headers(&cfg.credential))

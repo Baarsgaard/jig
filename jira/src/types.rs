@@ -297,13 +297,17 @@ mod tests {
     use super::*;
 
     #[test]
-    fn worklog_try_from_all_inputs() {
+    fn worklog_tryfrom_all_units_returns_duration_in_seconds() {
         let worklogs = vec![
             (60, "1"),
             (60, "1m"),
+            (60, "1M"),
             (3600, "1h"),
+            (3600, "1H"),
             (3600 * 8, "1d"),
+            (3600 * 8, "1D"),
             (3600 * 8 * 5, "1w"),
+            (3600 * 8 * 5, "1W"),
         ];
 
         for (expected_seconds, input) in worklogs {
@@ -313,18 +317,25 @@ mod tests {
     }
 
     #[test]
-    fn lowercase_worklog_duration() {
+    fn worklog_tryfrom_lowercase_unit() {
         let wl = WorklogDuration::try_from(String::from("1h")).unwrap().0;
         assert_eq!(String::from("3600"), wl);
     }
     #[test]
-    fn uppercase_worklog_duration() {
+    fn worklog_tryfrom_uppercase_unit() {
         let wl = WorklogDuration::try_from(String::from("2H")).unwrap().0;
         assert_eq!(String::from("7200"), wl);
     }
 
     #[test]
-    fn issue_key_try_from() {
+    fn worklog_tostring() {
+        let wl = WorklogDuration::try_from(String::from("1h")).unwrap();
+        let expected = String::from("3600");
+        assert_eq!(expected, wl.to_string());
+    }
+
+    #[test]
+    fn issuekey_tryfrom_uppercase_id() {
         let key = String::from("JB-1");
         let issue = IssueKey::try_from(key.clone());
         assert!(issue.is_ok());
@@ -332,13 +343,13 @@ mod tests {
     }
 
     #[test]
-    fn lowercase_issue_key() {
+    fn issuekey_tryfrom_lowercase_id() {
         let issue = IssueKey::try_from(String::from("jb-1"));
         assert!(issue.is_ok());
     }
 
     #[test]
-    fn display_issue_key() {
+    fn issuekey_tostring() {
         let key = String::from("JB-1");
         let issue = IssueKey(key.clone());
         assert_eq!(key, issue.to_string());
