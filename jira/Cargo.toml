@@ -14,5 +14,4 @@ serde_json = { workspace = true }
 
 [features]
 default = []
-cloud = ["filters"]
-filters = []
+cloud = []
