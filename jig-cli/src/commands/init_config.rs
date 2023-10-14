@@ -201,6 +201,7 @@ impl InitConfig {
 
         let token = Password::new("Auth token")
             .without_confirmation()
+            .with_display_mode(inquire::PasswordDisplayMode::Masked)
             .prompt()
             .wrap_err("Missing authentication token input")?;
 
