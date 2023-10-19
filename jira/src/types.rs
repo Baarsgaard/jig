@@ -144,40 +144,32 @@ impl TryFrom<String> for WorklogDuration {
             Regex::new(r"([0-9]+(?:\.[0-9]+)?)[WwDdHhMm]?").expect("Unable to compile WORKLOG_RE")
         });
 
-        match worklog_re.captures(&value) {
+        let mut worklog = match worklog_re.captures(&value) {
             Some(c) => match c.get(0) {
-                Some(worklog_match) => {
-                    let mut worklog = worklog_match.as_str().to_lowercase();
-
-                    let multiplier = if let Some(unit) = worklog.clone().pop() {
-                        let multiplier: Option<u32> = match unit {
-                            'm' => Some(60),
-                            'h' => Some(3600),
-                            'd' => Some(3600 * 8), // 8 Hours is default for cloud.
-                            'w' => Some(3600 * 8 * 5), // 5 days of work in a week.
-                            _ => None,             // Unit omitted.
-                        };
-
-                        if multiplier.is_some() {
-                            worklog.pop();
-                        }
-
-                        multiplier.unwrap_or(60) // Default to minutes
-                    } else {
-                        60 // Unit omitted default to minutes
-                    };
-
-                    let seconds = worklog
-                        .parse::<f64>()
-                        .wrap_err("Unexpected worklog duration input")?
-                        * f64::from(multiplier);
-
-                    Ok(WorklogDuration(format!("{:.0}", seconds)))
-                }
+                Some(worklog_match) => worklog_match.as_str().to_lowercase(),
                 None => Err(eyre!("First capture is none: WORKLOG_RE"))?,
             },
             None => Err(eyre!("Malformed worklog duration: {}", value))?,
-        }
+        };
+
+        let multiplier = match worklog.pop() {
+            Some('m') => 60,
+            Some('h') => 3600,
+            Some('d') => 3600 * 8,     // 8 Hours is default for cloud.
+            Some('w') => 3600 * 8 * 5, // 5 days of work in a week.
+            Some(maybe_digit) if maybe_digit.is_ascii_digit() => {
+                worklog.push(maybe_digit); // Unit was omitted
+                60
+            }
+            _ => 60, // Should never reach this due to the Regex Match, but try parsing input anyways.
+        };
+
+        let seconds = worklog
+            .parse::<f64>()
+            .wrap_err("Unexpected worklog duration input")?
+            * f64::from(multiplier);
+
+        Ok(WorklogDuration(format!("{:.0}", seconds)))
     }
 }
 
