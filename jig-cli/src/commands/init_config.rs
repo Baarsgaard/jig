@@ -3,6 +3,7 @@ use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use color_eyre::owo_colors::OwoColorize;
 use inquire::{Confirm, CustomType, Password, Select, Text};
+use std::fmt::Display;
 use std::fs;
 use std::path::PathBuf;
 use std::{env, process::Command};
@@ -16,6 +17,17 @@ pub struct InitConfig {
     all: bool,
 }
 
+struct PathPrompt {
+    path: PathBuf,
+    name: String,
+}
+
+impl Display for PathPrompt {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}: {}", self.name, self.path.to_string_lossy())
+    }
+}
+
 impl InitConfig {
     pub fn init(&self) -> Result<String> {
         let global_config = config::config_file();
@@ -23,12 +35,18 @@ impl InitConfig {
         let config_file_input = Select::new(
             "Where to save config",
             vec![
-                global_config.to_string_lossy(),
-                local_config.to_string_lossy(),
+                PathPrompt {
+                    name: String::from("Global"),
+                    path: global_config,
+                },
+                PathPrompt {
+                    name: String::from("Local"),
+                    path: local_config,
+                },
             ],
         )
         .prompt()?;
-        let config_file = if config_file_input == global_config.to_string_lossy() {
+        let config_file = if config_file_input.to_string().starts_with("Global") {
             config::config_file()
         } else {
             config::workspace_config_file()
