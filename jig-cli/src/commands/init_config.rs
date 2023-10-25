@@ -187,17 +187,30 @@ impl InitConfig {
         };
 
         let (browser, args) = match cfg!(target_os = "windows") {
-            false => (
-                env::var("BROWSER").wrap_err("Unable to find 'BROWSER' env var")?,
-                vec![auth_url.to_string()],
-            ),
+            false => (env::var("BROWSER"), vec![auth_url.to_string()]),
             true => (
-                String::from("powershell.exe"),
+                Ok(String::from("powershell.exe")),
                 vec![String::from("-c"), format!("start('{}')", auth_url)],
             ),
         };
 
-        let _ = Command::new(browser).args(args).spawn();
+        match browser {
+            Err(_) => {
+                eprintln!("Default $BROWSER variable unset, unable to open browser automatically.");
+                println!("Please visit: {auth_url}");
+            }
+            Ok(browser) => {
+                let _ = Command::new(browser).args(args).spawn();
+                println!(
+                    "Opening your browser, please create a new {}.",
+                    if cfg!(feature = "cloud") {
+                        "API-Token"
+                    } else {
+                        "Personal Access token"
+                    }
+                );
+            }
+        }
 
         let token = Password::new("Auth token")
             .without_confirmation()
