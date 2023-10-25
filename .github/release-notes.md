@@ -10,7 +10,7 @@
 -
 -
 
-All changes: https://github.com/baarsgaard/jig/compare/v0.2.0...v${CRATE_VERSION}
+All changes: https://github.com/baarsgaard/jig/compare/v0.4.2...v${CRATE_VERSION}
 
 ### Upgrading:
 

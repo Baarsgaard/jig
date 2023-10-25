@@ -12,7 +12,7 @@ on:
 jobs:
   get-tag:
     name: "Create tagged release"
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     outputs:
       crate-version: ${{ steps.crate-version.outputs.CRATE_VERSION }}
     steps:
@@ -30,7 +30,7 @@ jobs:
         if: ${{ github.event.inputs.draft }}
         run: >
           envsubst < .github/release-notes.md |
-          gh release create 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --title 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --notes-file - --draft
+          gh release create "v$CRATE_VERSION" --title "v$CRATE_VERSION" --notes-file - --draft
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CRATE_VERSION: "${{ steps.crate-version.outputs.CRATE_VERSION }}"
@@ -39,7 +39,7 @@ jobs:
         if: ${{ !github.event.inputs.draft }}
         run: >
           envsubst < .github/release-notes.md |
-          gh release create 'v${{ steps.crate-version.outputs.CRATE_VERSION }}' --notes-file -
+          gh release create "v$CRATE_VERSION" --notes-file -
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CRATE_VERSION: "${{ steps.crate-version.outputs.CRATE_VERSION }}"
