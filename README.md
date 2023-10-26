@@ -1,5 +1,7 @@
 # Jig
 
+[![Build Status](https://github.com/baarsgaard/jig/actions/workflows/integration.yml/badge.svg)](https://github.com/baarsgaard/jig/actions)
+
 (Ji)ra (G)it  
 Most if not all my work at $day_job is coordinated through and logged in Jira.  
 additionally I'm not a fan of doing simple tasks in the Jira UI..
