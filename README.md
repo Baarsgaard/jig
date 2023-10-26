@@ -1,44 +1,49 @@
-# Jig
-
 [![Build Status](https://github.com/baarsgaard/jig/actions/workflows/integration.yml/badge.svg)](https://github.com/baarsgaard/jig/actions)
 
-(Ji)ra (G)it  
+# Jig
+
+Jira Integration with Git CLI
+
+## Why?
+
 Most if not all my work at $day_job is coordinated through and logged in Jira.  
 additionally I'm not a fan of doing simple tasks in the Jira UI..
 
-I looked at existing Jira CLI tools, but none solve my exact use case.  
-Hence, [Jig](https://www.youtube.com/watch?v=3JcmQONgXJM)!
+I always know the issue I am currently working on, I am on the branch already.  
+Why could I not log my time or comment more easily? Maybe directly from the terminal even?
 
-Jig is opinionated towards working with a healthy "Per issue" branching model, also known as "My workflow".  
-It therefore includes options and features I need to support that.
+Looking at the existing CLI tools that interacted with Jira, none solved my exact problem.  
+Hence, **[Jig](https://www.youtube.com/watch?v=3JcmQONgXJM)!**
+
+Jig is designed to simplify working with a "Per issue" branching model.  
+It therefore includes options and features I needed to support that.
 
 Primarily:  
-Creating new branches from Jira issues with(out) summaries.  
-Quickly logging time and Commenting on the issue found in the branch name.  
-Moving issues from one status to the next.  
+- Creating or checking out branches from existing Jira issues with(out) summaries.
+- Quickly logging time and Commenting on the issue found in the branch name.
+- Moving issues from one status to the next.
+- Scriptable, I live for automation.
 
 ## Installation
 
 See releases for installation instructions: [releases](https://github.com/Baarsgaard/jig/releases)
 
+
 ### Compile from source
 
-Install [Rust-lang](https://www.rust-lang.org/tools/install) to compile from source.
+Compile from source with [Rust-lang](https://www.rust-lang.org/tools/install) and:=
 
 ```bash
 cargo install --locked --git https://github.com/raunow/jig
+# Optionally add `--features cloud` to enable ApiV3/Cloud only features.
 ```
 
-add `--features cloud` to enable just `cloud` only filters selections
-
-> Requirements:
-> 'cc' linker for compilation
-> `sudo apt update && sudo apt install build-essential`
 
 ## Configuration
 
-Supports global and local repository config files.  
-If both exist, they are merged with the local taking priority.
+Supports Global and Local config files.  
+`~/.config/jig/config.toml` and `.jig.toml` respectively ([XDG](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)).  
+If both exist, they are merged with the Local config taking priority.
 
 See [example_config.toml](./example_config.toml)
 
@@ -91,5 +96,3 @@ jig log 1h --comment "Bug squashed"
 # Transition ticket according to you workflow
 jig move
 ```
-
-More Jira actions might come in the future.
