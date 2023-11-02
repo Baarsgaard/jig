@@ -13,7 +13,7 @@ gix = { version = "0.48.0", default-features = false }
 inquire = { git = "https://github.com/mikaelmello/inquire.git", features = ["date"] }
 jira = { path = "../jira", default-features = false }
 regex = { workspace = true }
-self_update = { version = "0.37.0", default-features = false, features = ["rustls"] }
+self_update = { version = "0.39.0", default-features = false, features = ["rustls"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
 toml = "0.8.6"
