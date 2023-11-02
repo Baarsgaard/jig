@@ -12,7 +12,7 @@ Specifically:
   - Creating Worklogs.
   - Transitioning issues.
   - Assigning to others.
-  - Scripting Jira actions.
+  - Bonus: [Scripting](./scripts/weekly_worklogs.sh) Jira interactions.
 
 
 <details>
@@ -85,7 +85,7 @@ Primarily:
 - Creating or checking out branches from existing Jira issues with(out) summaries.
 - Quickly logging time and Commenting on the issue found in the branch name.
 - Moving issues from one status to the next.
-- Scriptable, I live for automation.
+- [Scripting](./scripts/weekly_worklogs.sh), I live for automation.
 
 ## Installation
 
