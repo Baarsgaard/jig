@@ -6,19 +6,17 @@ Jira Integration with Git CLI.
 
 Jig is an attempt at making it easier for me and my colleagues to collaborate on jira issues.  
 Specifically:
-- Making is easier to create branches with distinct names.
-- Commits that always link to an issue.
+- Making it simpler to create branches with descriptive names.
+- Automatically include issue key in commits.
 - Simplifying issue administration and workflow
-  - Worklogs.
-  - transitioning issues.
-  - assigning to others.
-  - Scripting Jira actions
+  - Creating Worklogs.
+  - Transitioning issues.
+  - Assigning to others.
+  - Scripting Jira actions.
 
 
 <details>
 <summary>Usage</summary>
-
-[![asciicast](https://asciinema.org/a/609019.svg)](https://asciinema.org/a/609019)
 
 ```bash
 $ jig help
@@ -46,20 +44,22 @@ Options:
 ```
 
 ```bash
-# Create a branch from an issue
+# Create or checkout branch named after an issue.
 jig branch
+# Work on that branch and commit as usual. git add/commit/push.
 
-# Work on that branch and commit as normal.
-# Log work/Comment progress as you work normally.
-# Optionally comment progress as you work.
+# Make comments as you progress with your work.
 jig comment "Note: Changed impl due to X"
 
-# Create worklog as you finish up current session
+# Create worklogs as you finish up a session or at the end of the day.
 jig log 1h --comment "Bug squashed"
 
-# Transition ticket according to you workflow
+# Transition issue according to your workflow.
 jig move
 ```
+
+[![asciicast](https://asciinema.org/a/609019.svg)](https://asciinema.org/a/609019)
+
 
 </details>
 
