@@ -16,7 +16,7 @@ regex = { workspace = true }
 self_update = { version = "0.37.0", default-features = false, features = ["rustls"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
-toml = "0.7.5"
+toml = "0.8.6"
 url = { version = "2.4.0", default-features = false }
 
 [features]
