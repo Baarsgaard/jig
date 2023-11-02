@@ -16,7 +16,7 @@ jobs:
     outputs:
       crate-version: ${{ steps.crate-version.outputs.CRATE_VERSION }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Get tag
         id: "crate-version"
@@ -69,7 +69,7 @@ jobs:
             build: x86_64-windows
             ext: .exe
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: actions/cache@v3
         continue-on-error: false
