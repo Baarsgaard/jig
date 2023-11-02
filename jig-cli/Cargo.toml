@@ -9,7 +9,7 @@ chrono = { version = "0.4.26", default-features = false, features = ["clock"]}
 clap = { version = "4.3.0", default-features = false, features = ["help", "std", "color", "derive"] }
 color-eyre = { workspace = true }
 etcetera = "0.8.0"
-gix = { version = "0.48.0", default-features = false }
+gix = { version = "0.55.2", default-features = false }
 inquire = { git = "https://github.com/mikaelmello/inquire.git", features = ["date"] }
 jira = { path = "../jira", default-features = false }
 regex = { workspace = true }
