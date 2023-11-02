@@ -2,10 +2,73 @@
 
 # Jig
 
-Jira Integration with Git CLI
+Jira Integration with Git CLI.
+
+Jig is an attempt at making it easier for me and my colleagues to collaborate on jira issues.  
+Specifically:
+- Making is easier to create branches with distinct names.
+- Commits that always link to an issue.
+- Simplifying issue administration and workflow
+  - Worklogs.
+  - transitioning issues.
+  - assigning to others.
+  - Scripting Jira actions
+
+
+<details>
+<summary>Usage</summary>
+
+[![asciicast](https://asciinema.org/a/609019.svg)](https://asciinema.org/a/609019)
+
+```bash
+$ jig help
+
+A Jira CLI integration with Git
+
+Usage: 
+
+Commands:
+  assign   Assign user to issue
+  branch   Create and checkout branch using issue key with(out) summary as branch name
+  comment  Create comment on a Jira Issue
+  configs  List config file locations
+  hook     Install git commit-msg hook
+  init     Initialise config file(s)
+  log      Create a work log entry on a Jira issue
+  move     Move ticket through transitions
+  open     Open issue in your browser
+  upgrade  Download and install latest version
+  help     Print this message or the help of the given subcommand(s)
+
+Options:
+  -h, --help     Print help
+  -V, --version  Print version
+```
+
+```bash
+# Create a branch from an issue
+jig branch
+
+# Work on that branch and commit as normal.
+# Log work/Comment progress as you work normally.
+# Optionally comment progress as you work.
+jig comment "Note: Changed impl due to X"
+
+# Create worklog as you finish up current session
+jig log 1h --comment "Bug squashed"
+
+# Transition ticket according to you workflow
+jig move
+```
+
+</details>
 
 ## Why?
 
+I personally love a strict Git workflow with well designed PRs and every commit being attributed to an issue.  
+But convincing others to adopt this can be a challenge without obvious benefits.
+
+An obvious use case being my own workflow:  
 Most if not all my work at $day_job is coordinated through and logged in Jira.  
 additionally I'm not a fan of doing simple tasks in the Jira UI..
 
@@ -52,47 +115,3 @@ Generate your configuration using:
 jig init [--all]
 ```
 
-## Usage
-
-[![asciicast](https://asciinema.org/a/609019.svg)](https://asciinema.org/a/609019)
-
-```bash
-$ jig help
-
-A Jira CLI integration with Git
-
-Usage: 
-
-Commands:
-  assign   Assign user to issue
-  branch   Create and checkout branch using issue key with(out) summary as branch name
-  comment  Create comment on a Jira Issue
-  configs  List config file locations
-  hook     Install git commit-msg hook
-  init     Initialise config file(s)
-  log      Create a work log entry on a Jira issue
-  move     Move ticket through transitions
-  open     Open issue in your browser
-  upgrade  Download and install latest version
-  help     Print this message or the help of the given subcommand(s)
-
-Options:
-  -h, --help     Print help
-  -V, --version  Print version
-```
-
-```bash
-# Create a branch from an issue
-jig branch
-
-# Work on that branch and commit as normal.
-# Log work/Comment progress as you work normally.
-# Optionally comment progress as you work.
-jig comment "Note: Changed impl due to X"
-
-# Create worklog as you finish up current session
-jig log 1h --comment "Bug squashed"
-
-# Transition ticket according to you workflow
-jig move
-```
