@@ -7,6 +7,7 @@ authors = ["Steffen Baarsgaard <sbaarsgaard@gmail.com>"]
 [dependencies]
 chrono = { version = "0.4.26", default-features = false, features = ["clock"]}
 clap = { version = "4.3.0", default-features = false, features = ["help", "std", "color", "derive"] }
+clap_complete = "4.4.4"
 color-eyre = { workspace = true }
 etcetera = "0.8.0"
 gix = { version = "0.55.2", default-features = false }

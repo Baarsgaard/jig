@@ -6,7 +6,7 @@ use crate::{
     repo::Repository,
 };
 use chrono::{NaiveDate, Weekday};
-use clap::Args;
+use clap::{Args, ValueHint};
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::DateSelect;
 use jira::{
@@ -18,17 +18,6 @@ use super::shared::{ExecCommand, UseFilter};
 
 #[derive(Args, Debug)]
 pub struct Worklog {
-    /// Skip prompt by inputting date.
-    /// Format: %Y-%m-%d -> 2005-02-18
-    /// "now" and "today" is also valid input
-    #[arg(short, long)]
-    date: Option<String>,
-
-    /// Formats: 30m, 1.5h, 2d, 1w
-    /// Default unit, if omitted, is minutes.
-    #[arg(value_name = "DURATION")]
-    duration: String,
-
     /// Include Worklog comment, specifying flag with no value opens prompt
     #[arg(
         short,
@@ -39,6 +28,17 @@ pub struct Worklog {
         default_missing_value = Some("#PROMPT_FOR_COMMENT#")
     )]
     comment_input: Option<String>,
+
+    /// Skip prompt by inputting date.
+    /// Format: %Y-%m-%d -> 2005-02-18
+    /// "now" and "today" is also valid input
+    #[arg(short, long, value_hint = ValueHint::Unknown)]
+    date: Option<String>,
+
+    /// Formats: 30m, 1.5h, 2d, 1w
+    /// Default unit, if omitted, is minutes.
+    #[arg(value_name = "DURATION", value_hint = ValueHint::Unknown)]
+    duration: String,
 
     #[arg(value_name = "ISSUE_KEY")]
     issue_key_input: Option<String>,

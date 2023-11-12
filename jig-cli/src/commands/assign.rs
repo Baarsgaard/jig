@@ -1,7 +1,7 @@
 use std::fmt::{Display, Formatter};
 
 use crate::{config::Config, interactivity::issue_from_branch_or_prompt, repo::Repository};
-use clap::Args;
+use clap::{Args, ValueHint};
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::{Select, Text};
 use jira::{
@@ -18,7 +18,7 @@ pub struct Assign {
     issue_key_input: Option<String>,
 
     /// Skip user selection prompt
-    #[arg(short, long, value_name = if cfg!(feature = "cloud") {"ACCOUNT_ID"} else {"NAME"})]
+    #[arg(short, long, value_name = if cfg!(feature = "cloud") {"ACCOUNT_ID"} else {"NAME"}, value_hint = ValueHint::Unknown)]
     user: Option<String>,
 
     #[command(flatten)]

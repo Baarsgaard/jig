@@ -1,6 +1,7 @@
 mod assign;
 mod branch;
 mod comment;
+mod completion;
 mod hooks;
 mod init_config;
 mod open;
@@ -15,6 +16,7 @@ pub mod shared;
 pub use assign::Assign;
 pub use branch::Branch;
 pub use comment::Comment;
+pub use completion::Completion;
 pub use hooks::Hooks;
 pub use init_config::InitConfig;
 pub use open::Open;

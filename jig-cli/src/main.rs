@@ -4,7 +4,7 @@ mod hooks;
 mod interactivity;
 mod repo;
 
-use clap::{command, Parser, Subcommand};
+use clap::{command, CommandFactory, Parser, Subcommand};
 use color_eyre::eyre::{Result, WrapErr};
 use color_eyre::owo_colors::OwoColorize;
 use commands::{shared::ExecCommand, *};
@@ -30,6 +30,8 @@ enum Commands {
     /// Create comment on a Jira Issue
     #[command(alias = "c")]
     Comment(Comment),
+    /// Generate completion script
+    Completion(Completion),
     /// List config file locations
     Configs(PrintConfigs),
     /// Install git commit-msg hook
@@ -55,11 +57,14 @@ enum Commands {
 }
 
 impl Commands {
-    fn exec(args: Cli, cfg: Result<Config>) -> Result<String> {
+    fn exec(cfg: Result<Config>) -> Result<String> {
+        let args = Cli::parse();
+
         match args.command {
             Commands::Assign(assign) => assign.exec(&cfg?),
             Commands::Branch(branch) => branch.exec(&cfg?),
             Commands::Comment(comment) => comment.exec(&cfg?),
+            Commands::Completion(completion) => completion.exec(&mut Cli::command()),
             Commands::Configs(print_config) => print_config.exec(&cfg?),
             Commands::Hook(hooks) => hooks.install(),
             Commands::Init(init) => init.init(),
@@ -87,8 +92,7 @@ fn main() -> Result<()> {
             }
         }
     } else {
-        let args = Cli::parse();
-        println!("{}", Commands::exec(args, cfg)?);
+        println!("{}", Commands::exec(cfg)?);
     };
 
     // Fix windows prompt overriding last line of output

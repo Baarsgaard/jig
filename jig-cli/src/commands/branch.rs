@@ -3,7 +3,7 @@ use crate::{
     interactivity::{issue_from_branch_or_prompt, query_issue_details},
     repo::Repository,
 };
-use clap::Args;
+use clap::{Args, ValueHint};
 use color_eyre::eyre::{Result, WrapErr};
 use jira::types::IssueKey;
 use jira::JiraAPIClient;
@@ -14,7 +14,7 @@ use super::shared::{ExecCommand, UseFilter};
 pub struct Branch {
     /// Add string to the end of branch name.
     /// SUFFIX is subject to Git sanitization rules
-    #[arg(short, long, value_name = "SUFFIX")]
+    #[arg(short, long, value_name = "SUFFIX", value_hint = ValueHint::Unknown)]
     append: Option<String>,
 
     /// Skip querying Jira for Issue summary
