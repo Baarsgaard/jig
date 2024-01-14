@@ -65,7 +65,7 @@ impl ExecCommand for Assign {
             if users.is_empty() {
                 Err(eyre!("No users found in search"))
             } else if users.len() == 1 {
-                match users.get(0) {
+                match users.first() {
                     Some(user) => Ok(user.to_owned()),
                     None => Err(eyre!("List of one user had unwrapped to None?")),
                 }
