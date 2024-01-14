@@ -10,6 +10,7 @@ use color_eyre::owo_colors::OwoColorize;
 use commands::{shared::ExecCommand, *};
 use config::Config;
 use hooks::{is_git_hook, Hook};
+use inquire::InquireError;
 
 #[derive(Parser)]
 #[command(author, version, about = "A Jira CLI integration with Git", long_about = None)]
@@ -86,13 +87,27 @@ fn main() -> Result<()> {
         match githook.exec(&cfg?) {
             Ok(_) => (),
             Err(e) => {
-                // Add better comments from old hook
-                eprintln!("{}", format!("Error:\n   {}", e).bright_red());
-                std::process::exit(1);
+                match e.root_cause().downcast_ref::<InquireError>() {
+                    Some(InquireError::OperationInterrupted)
+                    | Some(InquireError::OperationCanceled) => std::process::exit(1),
+                    _ => {
+                        // Add better comments from old hook
+                        eprintln!("{}", format!("Error:\n   {}", e).bright_red());
+                        std::process::exit(1);
+                    }
+                }
             }
         }
     } else {
-        println!("{}", Commands::exec(cfg)?);
+        let res = Commands::exec(cfg);
+        match res {
+            Ok(msg) => println!("{}", msg),
+            Err(e) => match e.root_cause().downcast_ref::<InquireError>() {
+                Some(InquireError::OperationInterrupted)
+                | Some(InquireError::OperationCanceled) => std::process::exit(1),
+                _ => Err(e)?,
+            },
+        }
     };
 
     // Fix windows prompt overriding last line of output
