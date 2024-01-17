@@ -12,7 +12,7 @@ color-eyre = { workspace = true }
 etcetera = "0.8.0"
 gix = { version = "0.57.1", default-features = false }
 inquire = { git = "https://github.com/mikaelmello/inquire.git", features = ["date"] }
-jira = { path = "../jira", default-features = false }
+jira = { git = "https://github.com/baarsgaard/jira-api.git", default-features = false }
 regex = { workspace = true }
 self_update = { version = "0.39.0", default-features = false, features = ["rustls"] }
 serde = { workspace = true }

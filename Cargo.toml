@@ -2,7 +2,6 @@
 resolver = "2"
 members = [
   "jig-cli",
-  "jira",
 ]
 default-members = [
   "jig-cli"
