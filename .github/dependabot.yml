@@ -9,14 +9,6 @@ updates:
     directory: /
     schedule:
       interval: "monthly"
-  - package-ecosystem: cargo
-    directory: /jig-cli
-    schedule:
-      interval: "monthly"
-  - package-ecosystem: cargo
-    directory: /jira
-    schedule:
-      interval: "monthly"
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

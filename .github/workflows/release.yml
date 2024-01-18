@@ -22,7 +22,7 @@ jobs:
         id: "crate-version"
         shell: "bash"
         run: |
-          echo CRATE_VERSION=$(awk -F ' = ' '$1 ~ /version/ { gsub(/["]/, "", $2); printf("%s",$2) }' jig-cli/Cargo.toml) >> $GITHUB_OUTPUT
+          echo CRATE_VERSION=$(awk -F ' = ' '$1 ~ /version/ { gsub(/["]/, "", $2); printf("%s",$2) }' Cargo.toml) >> $GITHUB_OUTPUT
 
       - run: "echo '::notice:: Tag = v${{ steps.crate-version.outputs.CRATE_VERSION }}'"
 
