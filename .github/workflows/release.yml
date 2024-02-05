@@ -63,7 +63,10 @@ jobs:
             os: ubuntu-latest
             build: x86_64-linux
             ext: ""
-
+          - target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+            build: x86_64-musl
+            ext: ""
           - target: x86_64-pc-windows-msvc
             os: windows-latest
             build: x86_64-windows
