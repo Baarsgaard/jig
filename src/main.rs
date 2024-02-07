@@ -43,8 +43,8 @@ enum Commands {
     #[command(aliases = ["w", "wl", "l", "log"], arg_required_else_help(true))]
     Worklog(Worklog),
     /// Move ticket through transitions
-    #[command(alias = "m")]
-    Move(Transition),
+    #[command(aliases = ["t"])]
+    Transition(Transition),
     /// Open issue in your browser
     #[command(alias = "o")]
     Open(Open),
@@ -70,7 +70,7 @@ impl Commands {
             Commands::Hook(hooks) => hooks.install(),
             Commands::Init(init) => init.init(),
             Commands::Worklog(worklog) => worklog.exec(&cfg?).await,
-            Commands::Move(transition) => transition.exec(&cfg?).await,
+            Commands::Transition(transition) => transition.exec(&cfg?).await,
             Commands::Open(open) => open.exec(&cfg?).await,
             #[cfg(debug_assertions)]
             Commands::Query(query) => query.exec(&cfg?).await,
