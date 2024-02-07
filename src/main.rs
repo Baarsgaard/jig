@@ -31,6 +31,7 @@ enum Commands {
     #[command(alias = "c")]
     Comment(Comment),
     /// Generate completion script
+    #[command(arg_required_else_help(true))]
     Completion(Completion),
     /// List config file locations
     Configs(PrintConfigs),
