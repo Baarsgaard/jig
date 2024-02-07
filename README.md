@@ -23,20 +23,22 @@ $ jig help
 
 A Jira CLI integration with Git
 
-Usage: 
+Usage: jig <COMMAND>
 
 Commands:
-  assign   Assign user to issue
-  branch   Create and checkout branch using issue key with(out) summary as branch name
-  comment  Create comment on a Jira Issue
-  configs  List config file locations
-  hook     Install git commit-msg hook
-  init     Initialise config file(s)
-  log      Create a work log entry on a Jira issue
-  move     Move ticket through transitions
-  open     Open issue in your browser
-  upgrade  Download and install latest version
-  help     Print this message or the help of the given subcommand(s)
+  assign      Assign user to issue
+  branch      Create and checkout branch using issue key with(out) summary as branch name
+  comment     Create comment on a Jira Issue
+  completion  Generate completion script
+  configs     List config file locations
+  hook        Install git commit-msg hook
+  init        Initialise config file(s)
+  worklog     Create a work log entry on a Jira issue
+  transition  Move ticket through transitions
+  open        Open issue in your browser
+  query       Interactively send JQL queries to Jira when tab is pressed
+  upgrade     Download and install latest version
+  help        Print this message or the help of the given subcommand(s)
 
 Options:
   -h, --help     Print help

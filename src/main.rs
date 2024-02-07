@@ -14,7 +14,6 @@ use inquire::InquireError;
 
 #[derive(Parser)]
 #[command(author, version, about = "A Jira CLI integration with Git", long_about = None)]
-#[command(args_conflicts_with_subcommands = true)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
