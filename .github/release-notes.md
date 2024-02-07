@@ -10,7 +10,7 @@
 -
 -
 
-All changes: https://github.com/baarsgaard/jig/compare/v0.4.2...v${CRATE_VERSION}
+All changes: https://github.com/baarsgaard/jig/compare/v0.5.0...v${CRATE_VERSION}
 
 ### Upgrading:
 
@@ -29,11 +29,19 @@ Pick between cloud and server (APIs differ)
 
 ```bash
 # Cloud
-wget -O ~/.local/bin/jig "https://github.com/Raunow/jig/releases/download/v${CRATE_VERSION}/jig-cloud-x86_64-unknown-linux-gnu"
+wget -O ~/.local/bin/jig "https://github.com/Raunow/jig/releases/download/v${CRATE_VERSION}/jig-cloud-x86_64-unknown-linux-gnu && chmod +x ~/.local/bin/jig"
 # Server
-wget -O ~/.local/bin/jig "https://github.com/Raunow/jig/releases/download/v${CRATE_VERSION}/jig-server-x86_64-unknown-linux-gnu"
+wget -O ~/.local/bin/jig "https://github.com/Raunow/jig/releases/download/v${CRATE_VERSION}/jig-server-x86_64-unknown-linux-gnu && chmod +x ~/.local/bin/jig"
+```
 
-chmod +x ~/.local/bin/jig
+
+### Linux musl
+
+```bash
+# Cloud
+wget -O ~/.local/bin/jig "https://github.com/Raunow/jig/releases/download/v${CRATE_VERSION}/jig-cloud-x86_64-unknown-linux-musl && chmod +x ~/.local/bin/jig"
+# Server
+wget -O ~/.local/bin/jig "https://github.com/Raunow/jig/releases/download/v${CRATE_VERSION}/jig-server-x86_64-unknown-linux-musl && chmod +x ~/.local/bin/jig"
 ```
 
 ### Windows
