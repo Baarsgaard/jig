@@ -87,6 +87,9 @@ jobs:
           key: cargo-release-${{ matrix.build }}-${{ matrix.feature }}-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: cargo-release-${{ matrix.build }}-${{ matrix.feature }}-
 
+      - if: ${{ contains(matrix.target, '-musl')}}
+        run: sudo apt install musl-tools
+
       - uses: dtolnay/rust-toolchain@nightly
         with:
           targets: "${{ matrix.target }}"
