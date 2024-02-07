@@ -7,7 +7,7 @@ repository = "https://github.com/baarsgaard/jig"
 
 [dependencies]
 chrono = { version = "0.4.26", default-features = false, features = ["clock"]}
-clap = { version = "4.3.0", default-features = false, features = ["help", "std", "color", "derive"] }
+clap = { version = "4.3.0", default-features = false, features = ["help", "std", "color", "derive", "usage"] }
 clap_complete = "4.4.4"
 color-eyre = { version = "0.6.2", default-features = false }
 etcetera = "0.8.0"

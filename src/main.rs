@@ -14,7 +14,7 @@ use inquire::InquireError;
 
 #[derive(Parser)]
 #[command(author, version, about = "A Jira CLI integration with Git", long_about = None)]
-#[command(args_conflicts_with_subcommands = true, arg_required_else_help(true))]
+#[command(args_conflicts_with_subcommands = true)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -40,8 +40,8 @@ enum Commands {
     /// Initialise config file(s)
     Init(InitConfig),
     /// Create a work log entry on a Jira issue
-    #[command(alias = "l")]
-    Log(Worklog),
+    #[command(aliases = ["w", "wl", "l", "log"], arg_required_else_help(true))]
+    Worklog(Worklog),
     /// Move ticket through transitions
     #[command(alias = "m")]
     Move(Transition),
@@ -69,7 +69,7 @@ impl Commands {
             Commands::Configs(print_config) => print_config.exec(&cfg?).await,
             Commands::Hook(hooks) => hooks.install(),
             Commands::Init(init) => init.init(),
-            Commands::Log(worklog) => worklog.exec(&cfg?).await,
+            Commands::Worklog(worklog) => worklog.exec(&cfg?).await,
             Commands::Move(transition) => transition.exec(&cfg?).await,
             Commands::Open(open) => open.exec(&cfg?).await,
             #[cfg(debug_assertions)]

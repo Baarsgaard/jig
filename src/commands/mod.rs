@@ -6,6 +6,7 @@ mod hooks;
 mod init_config;
 mod open;
 mod print_configs;
+#[cfg(debug_assertions)]
 mod query;
 mod transition;
 mod upgrade;
@@ -21,6 +22,7 @@ pub use hooks::Hooks;
 pub use init_config::InitConfig;
 pub use open::Open;
 pub use print_configs::PrintConfigs;
+#[cfg(debug_assertions)]
 pub use query::Query;
 pub use transition::Transition;
 pub use upgrade::Upgrade;
