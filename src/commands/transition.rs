@@ -55,7 +55,7 @@ impl ExecCommand for Transition {
         if selected_transition
             .fields
             .into_iter()
-            .any(|(_, t)| t.required && t.has_default_value.is_some_and(|v| v == true))
+            .any(|(_, t)| t.required && t.has_default_value.is_some_and(|v| v))
         {
             return Err(eyre!("Issue cannot be moved with Jig due to required fields.\n Open issue with `jig open {0}`", issue_key));
         }
