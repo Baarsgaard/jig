@@ -8,7 +8,7 @@ use super::shared::ExecCommand;
 pub struct PrintConfigs {}
 
 impl ExecCommand for PrintConfigs {
-    fn exec(self, _cfg: &Config) -> Result<String> {
+    async fn exec(self, _cfg: &Config) -> Result<String> {
         if config::config_file().exists() {
             println!("Global: {:?}", config::config_file());
         }

@@ -31,16 +31,16 @@ pub struct Branch {
 }
 
 impl ExecCommand for Branch {
-    fn exec(self, cfg: &Config) -> Result<String> {
+    async fn exec(self, cfg: &Config) -> Result<String> {
         let repo = Repository::open().wrap_err("Failed to open repo")?;
         let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
         let issue = if let Some(maybe_issue_key) = self.issue_key_input {
             let issue_key = IssueKey::try_from(maybe_issue_key)?;
 
-            query_issue_details(&client, issue_key)?
+            query_issue_details(&client, issue_key).await?
         } else {
-            issue_from_branch_or_prompt(&client, cfg, String::default(), self.use_filter)?
+            issue_from_branch_or_prompt(&client, cfg, String::default(), self.use_filter).await?
         };
 
         let mut use_short_name = cfg.always_short_branch_names.unwrap_or(false);

@@ -6,7 +6,7 @@ use super::*;
 pub trait Hook: Display {
     fn hook_name() -> String;
     fn new() -> Self;
-    fn exec(self, cfg: &Config) -> Result<()>;
+    async fn exec(self, cfg: &Config) -> Result<()>;
 }
 
 pub fn is_git_hook() -> Result<Option<impl Hook>> {

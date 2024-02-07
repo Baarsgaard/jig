@@ -3,7 +3,7 @@ use clap::Args;
 use color_eyre::eyre::Result;
 
 pub trait ExecCommand {
-    fn exec(self, cfg: &Config) -> Result<String>;
+    async fn exec(self, cfg: &Config) -> Result<String>;
 }
 
 #[derive(Debug, Args)]

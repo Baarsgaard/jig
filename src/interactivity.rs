@@ -15,7 +15,7 @@ mod filter {
     use jira::types::Filter;
     pub fn pick_filter(cfg: &Config, filters: Vec<Filter>) -> Result<String> {
         if filters.is_empty() {
-            return Err(eyre!("List of filters is empty"))?;
+            return Err(eyre!("List of filters is empty"));
         }
 
         let selected_filters = MultiSelect::new("Saved issue filter:", filters)
@@ -38,39 +38,39 @@ mod filter {
 
 // Might be useful one day
 #[allow(dead_code)]
-pub fn issue_key_from_branch_or_prompt(
+pub async fn issue_key_from_branch_or_prompt(
     client: &JiraAPIClient,
     cfg: &Config,
     head_name: String,
 ) -> Result<IssueKey> {
     if let Ok(issue_key) = IssueKey::try_from(head_name) {
-        return Ok(query_issue_details(client, issue_key)?.key);
+        return Ok(query_issue_details(client, issue_key).await?.key);
     }
 
-    let issues = query_issues_with_retry(client, cfg)?;
+    let issues = query_issues_with_retry(client, cfg).await?;
 
     Ok(prompt_user_with_issue_select(issues)?.key)
 }
 
-pub fn issue_from_branch_or_prompt(
+pub async fn issue_from_branch_or_prompt(
     client: &JiraAPIClient,
     cfg: &Config,
     head_name: String,
     _use_filter: UseFilter,
 ) -> Result<Issue> {
     if let Ok(issue_key) = IssueKey::try_from(head_name) {
-        return query_issue_details(client, issue_key);
+        return query_issue_details(client, issue_key).await;
     }
 
     #[cfg(not(feature = "cloud"))]
     let query = cfg.issue_query.clone();
     #[cfg(feature = "cloud")]
     let query = match _use_filter.value {
-        true => filter::pick_filter(cfg, client.search_filters(None)?.filters)?,
+        true => filter::pick_filter(cfg, client.search_filters(None).await?.filters)?,
         false => cfg.issue_query.clone(),
     };
 
-    let issues = override_query_issues_with_retry(client, &query, &cfg.retry_query)?;
+    let issues = override_query_issues_with_retry(client, &query, &cfg.retry_query).await?;
     prompt_user_with_issue_select(issues)
 }
 
@@ -93,9 +93,10 @@ pub fn now() -> String {
     Utc::now().format("%FT%X%.3f%z").to_string()
 }
 
-pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Result<Issue> {
+pub async fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Result<Issue> {
     let issues = match client
-        .query_issues(&format!("issuekey = {}", issue_key))?
+        .query_issues(&format!("issuekey = {}", issue_key))
+        .await?
         .issues
     {
         Some(i) => i,
@@ -108,18 +109,20 @@ pub fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Resul
     }
 }
 
-pub fn override_query_issues_with_retry(
+pub async fn override_query_issues_with_retry(
     client: &JiraAPIClient,
     issue_query: &String,
     retry_query: &String,
 ) -> Result<Vec<Issue>> {
     let issues = match client
         .query_issues(issue_query)
+        .await
         .wrap_err("First issue query failed")
     {
         Ok(issue_body) => issue_body.issues.unwrap(),
         Err(_) => client
             .query_issues(retry_query)
+            .await
             .wrap_err(eyre!("Retry query failed"))?
             .issues
             .unwrap(),
@@ -128,6 +131,6 @@ pub fn override_query_issues_with_retry(
     Ok(issues)
 }
 
-pub fn query_issues_with_retry(client: &JiraAPIClient, cfg: &Config) -> Result<Vec<Issue>> {
-    override_query_issues_with_retry(client, &cfg.issue_query, &cfg.retry_query)
+pub async fn query_issues_with_retry(client: &JiraAPIClient, cfg: &Config) -> Result<Vec<Issue>> {
+    override_query_issues_with_retry(client, &cfg.issue_query, &cfg.retry_query).await
 }

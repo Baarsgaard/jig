@@ -26,7 +26,7 @@ pub struct Assign {
 }
 
 impl ExecCommand for Assign {
-    fn exec(self, cfg: &Config) -> Result<String> {
+    async fn exec(self, cfg: &Config) -> Result<String> {
         let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
         let maybe_repo = Repository::open().wrap_err("Failed to open repo");
@@ -43,24 +43,27 @@ impl ExecCommand for Assign {
                 cfg,
                 head.unwrap_or(String::default()),
                 self.use_filter,
-            )?
+            )
+            .await?
             .key
         };
 
         // Disable query and prompt if --user is supplied
         let user = if let Some(user) = self.user {
-            client.get_user(user)?
+            client.get_user(user).await?
         } else {
             let username = Text::new("User search:")
                 .prompt()
                 .wrap_err("No user selected")?;
 
-            let users = client.get_assignable_users(&GetAssignableUserParams {
-                username: Some(username),
-                project: None,
-                issue_key: Some(issue_key.clone()),
-                max_results: None,
-            })?;
+            let users = client
+                .get_assignable_users(&GetAssignableUserParams {
+                    username: Some(username),
+                    project: None,
+                    issue_key: Some(issue_key.clone()),
+                    max_results: None,
+                })
+                .await?;
 
             if users.is_empty() {
                 Err(eyre!("No users found in search"))
@@ -80,7 +83,7 @@ impl ExecCommand for Assign {
             }?
         };
 
-        client.post_assign_user(&issue_key, &user)?;
+        client.post_assign_user(&issue_key, &user).await?;
 
         Ok(format!("Assigned {} to {}", issue_key, JiraUser(user)))
     }

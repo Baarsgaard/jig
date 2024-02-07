@@ -49,7 +49,7 @@ impl Hook for CommitMsg {
         }
     }
 
-    fn exec(self, cfg: &Config) -> Result<()> {
+    async fn exec(self, cfg: &Config) -> Result<()> {
         let commit_msg = std::fs::read_to_string(self.commit_msg_file.clone()).unwrap();
         let branch = self.repo.get_branch_name()?;
 
@@ -114,7 +114,7 @@ impl Hook for CommitMsg {
                     ))
                 } else {
                     let client = JiraAPIClient::new(&cfg.jira_cfg)?;
-                    let issues = query_issues_with_retry(&client, cfg)?;
+                    let issues = query_issues_with_retry(&client, cfg).await?;
                     let issue_key = prompt_user_with_issue_select(issues)?.key;
                     Ok((issue_key.0, commit_msg))
                 }

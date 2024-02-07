@@ -48,7 +48,7 @@ pub struct Worklog {
 }
 
 impl ExecCommand for Worklog {
-    fn exec(self, cfg: &Config) -> Result<String> {
+    async fn exec(self, cfg: &Config) -> Result<String> {
         let client = JiraAPIClient::new(&cfg.jira_cfg)?;
         let maybe_repo = Repository::open().wrap_err("Failed to open repo");
         let head = match maybe_repo {
@@ -59,7 +59,11 @@ impl ExecCommand for Worklog {
         // issue key
         let issue_key = match self.issue_key_input {
             Some(issue_key_input) => IssueKey::try_from(issue_key_input)?,
-            None => issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)?.key,
+            None => {
+                issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)
+                    .await?
+                    .key
+            }
         };
 
         // worklog date
@@ -112,7 +116,7 @@ impl ExecCommand for Worklog {
             ),
         };
 
-        match client.post_worklog(&issue_key, wl.clone()) {
+        match client.post_worklog(&issue_key, wl.clone()).await {
             Ok(r) if r.status().is_success() => Ok("Worklog created!".to_string()),
             Ok(r) => Err(eyre!(
                 "Worklog creation failed!\n{:?}",

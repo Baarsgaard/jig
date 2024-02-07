@@ -13,18 +13,20 @@ pub struct Query {
 }
 
 impl ExecCommand for Query {
-    fn exec(self, cfg: &Config) -> Result<String> {
+    async fn exec(self, cfg: &Config) -> Result<String> {
         let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
         let query = String::default();
 
         let issues = match client
             .query_issues(&query)
+            .await
             .wrap_err("First issue query failed")
         {
             Ok(issue_body) => issue_body.issues.unwrap(),
             Err(_) => client
                 .query_issues(&cfg.retry_query)
+                .await
                 .wrap_err(eyre!("Retry query failed"))?
                 .issues
                 .unwrap(),

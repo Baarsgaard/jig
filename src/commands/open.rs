@@ -40,7 +40,7 @@ impl Open {
 }
 
 impl ExecCommand for Open {
-    fn exec(self, cfg: &Config) -> Result<String> {
+    async fn exec(self, cfg: &Config) -> Result<String> {
         let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
         let maybe_repo = Repository::open().wrap_err("Failed to open repo");
@@ -52,7 +52,9 @@ impl ExecCommand for Open {
         let issue_key = if self.issue_key_input.is_some() {
             IssueKey::try_from(self.issue_key_input.unwrap())?
         } else {
-            issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)?.key
+            issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)
+                .await?
+                .key
         };
 
         Self::open_issue(&client, issue_key)

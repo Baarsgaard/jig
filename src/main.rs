@@ -58,33 +58,34 @@ enum Commands {
 }
 
 impl Commands {
-    fn exec(cfg: Result<Config>) -> Result<String> {
+    async fn exec(cfg: Result<Config>) -> Result<String> {
         let args = Cli::parse();
 
         match args.command {
-            Commands::Assign(assign) => assign.exec(&cfg?),
-            Commands::Branch(branch) => branch.exec(&cfg?),
-            Commands::Comment(comment) => comment.exec(&cfg?),
+            Commands::Assign(assign) => assign.exec(&cfg?).await,
+            Commands::Branch(branch) => branch.exec(&cfg?).await,
+            Commands::Comment(comment) => comment.exec(&cfg?).await,
             Commands::Completion(completion) => completion.exec(&mut Cli::command()),
-            Commands::Configs(print_config) => print_config.exec(&cfg?),
+            Commands::Configs(print_config) => print_config.exec(&cfg?).await,
             Commands::Hook(hooks) => hooks.install(),
             Commands::Init(init) => init.init(),
-            Commands::Log(worklog) => worklog.exec(&cfg?),
-            Commands::Move(transition) => transition.exec(&cfg?),
-            Commands::Open(open) => open.exec(&cfg?),
+            Commands::Log(worklog) => worklog.exec(&cfg?).await,
+            Commands::Move(transition) => transition.exec(&cfg?).await,
+            Commands::Open(open) => open.exec(&cfg?).await,
             #[cfg(debug_assertions)]
-            Commands::Query(query) => query.exec(&cfg?),
+            Commands::Query(query) => query.exec(&cfg?).await,
             Commands::Upgrade(upgrade) => upgrade.exec(),
         }
     }
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     color_eyre::install()?;
     let cfg = config::Config::load().wrap_err("Failed to load config");
 
     if let Some(githook) = is_git_hook()? {
-        match githook.exec(&cfg?) {
+        match githook.exec(&cfg?).await {
             Ok(_) => (),
             Err(e) => {
                 match e.root_cause().downcast_ref::<InquireError>() {
@@ -99,7 +100,7 @@ fn main() -> Result<()> {
             }
         }
     } else {
-        let res = Commands::exec(cfg);
+        let res = Commands::exec(cfg).await;
         match res {
             Ok(msg) => println!("{}", msg),
             Err(e) => match e.root_cause().downcast_ref::<InquireError>() {
