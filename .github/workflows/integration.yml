@@ -33,7 +33,7 @@ jobs:
           - "cloud"
         include:
           - target: x86_64-unknown-linux-gnu
-            os: self-hosted
+            os: ubuntu-latest
             build: x86_64-linux
             ext: ""
 
@@ -60,7 +60,7 @@ jobs:
 
   lint:
     name: "Cargo check/clippy"
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
@@ -72,7 +72,7 @@ jobs:
 
   fmt:
     name: "Cargo format"
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
