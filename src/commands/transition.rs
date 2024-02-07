@@ -52,6 +52,14 @@ impl ExecCommand for Transition {
                     .wrap_err("No transition selected")?
             };
 
+        if selected_transition
+            .fields
+            .into_iter()
+            .any(|(_, t)| t.required && t.has_default_value.is_some_and(|v| v == true))
+        {
+            return Err(eyre!("Issue cannot be moved with Jig due to required fields.\n Open issue with `jig open {0}`", issue_key));
+        }
+
         let transition = PostTransitionBody {
             transition: PostTransitionIdBody {
                 id: selected_transition.id,
