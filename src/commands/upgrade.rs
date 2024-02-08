@@ -5,15 +5,10 @@ use self_update::{
     backends::github::{ReleaseList, Update},
     update::Release,
 };
-use std::fmt::Display;
-use std::io::{stdout, IsTerminal};
+use std::{env, fmt::Display, thread};
 
 #[derive(Args, Debug)]
 pub struct Upgrade {
-    /// Skip confirmation
-    #[arg(short, long)]
-    force: bool,
-
     /// Suppress all output
     /// Quiet implies force and disables verbose
     #[arg(short, long)]
@@ -26,48 +21,57 @@ pub struct Upgrade {
 
 impl Upgrade {
     pub fn exec(self) -> Result<String> {
-        // If any pattern matches, do not prompt.
-        let do_confirm = !matches!(
-            (stdout().is_terminal(), self.quiet, self.force),
-            (false, _, _) | (true, true, _) | (true, _, true)
-        );
+        thread::spawn(move || {
+            let token = env::var("GITHUB_TOKEN").unwrap_or_default();
+            let target_ver = if self.select {
+                let mut builder = ReleaseList::configure();
+                let mut releases_cfg = builder.repo_owner("baarsgaard").repo_name("jig");
+                if !token.is_empty() {
+                    releases_cfg = releases_cfg.auth_token(&token);
+                }
 
-        let version = if self.select {
-            let raw_releases = ReleaseList::configure()
+                let raw_releases = releases_cfg
+                    .build()?
+                    .fetch()
+                    .wrap_err("Unable to fetch list of releases")?;
+
+                let releases = raw_releases
+                    .iter()
+                    .map(|r| JigRelease(r.to_owned()))
+                    .collect();
+
+                Select::new("Release: ", releases).prompt()?.0.version
+            } else {
+                String::default()
+            };
+
+            let current_ver = if cfg!(debug_assertions) {
+                "0.0.0"
+            } else {
+                self_update::cargo_crate_version!()
+            };
+
+            let mut builder = Update::configure();
+            let mut cfg = builder
                 .repo_owner("baarsgaard")
                 .repo_name("jig")
-                .build()?
-                .fetch()
-                .wrap_err("Unable to fetch list of releases")?;
+                .bin_name("jig")
+                .show_output(!self.quiet)
+                .current_version(current_ver)
+                .show_download_progress(!self.quiet)
+                .no_confirm(true);
+            if !target_ver.is_empty() {
+                cfg = cfg.target_version_tag(&format!("v{0}", target_ver));
+            }
+            if !token.is_empty() {
+                cfg = cfg.auth_token(&token);
+            }
 
-            let releases = raw_releases
-                .iter()
-                .map(|r| JigRelease(r.to_owned()))
-                .collect();
-
-            Select::new("Release: ", releases).prompt()?.0.version
-        } else {
-            #[cfg(debug_assertions)]
-            let version = "0.0.0";
-            #[cfg(not(debug_assertions))]
-            let version = self_update::cargo_crate_version!();
-
-            version.to_string()
-        };
-
-        let _status = Update::configure()
-            .repo_owner("baarsgaard")
-            .repo_name("jig")
-            .bin_name("jig")
-            .show_output(!self.quiet)
-            .current_version(version.as_str())
-            .show_download_progress(!self.quiet)
-            .no_confirm(do_confirm)
-            .build()?
-            .update()
-            .wrap_err("Unable to replace binary")?;
-
-        Ok(String::default())
+            let _ = cfg.build()?.update()?;
+            Ok(String::default())
+        })
+        .join()
+        .expect("Self update wrapper thread panicked")
     }
 }
 
