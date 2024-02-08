@@ -22,13 +22,13 @@ struct Cli {
 #[derive(Subcommand)]
 enum Commands {
     /// Assign user to issue
-    #[command(alias = "a")]
+    #[command(visible_alias = "a")]
     Assign(Assign),
     /// Create and checkout branch using issue key with(out) summary as branch name
-    #[command(alias = "b")]
+    #[command(visible_alias = "b")]
     Branch(Branch),
     /// Create comment on a Jira Issue
-    #[command(alias = "c")]
+    #[command(visible_alias = "c")]
     Comment(Comment),
     /// Generate completion script
     #[command(arg_required_else_help(true))]
@@ -40,20 +40,24 @@ enum Commands {
     /// Initialise config file(s)
     Init(InitConfig),
     /// Create a work log entry on a Jira issue
-    #[command(aliases = ["w", "wl", "l", "log"], arg_required_else_help(true))]
+    #[command(visible_aliases = ["w", "wl", "l", "log"], arg_required_else_help(true))]
     Worklog(Worklog),
     /// Move ticket through transitions
-    #[command(aliases = ["t"])]
+    #[command(visible_alias = "t")]
     Transition(Transition),
     /// Open issue in your browser
-    #[command(alias = "o")]
+    #[command(visible_alias = "o")]
     Open(Open),
     /// Interactively send JQL queries to Jira when tab is pressed
-    #[command(alias = "q")]
+    #[command(visible_alias = "q")]
     #[cfg(debug_assertions)]
     Query(Query),
     /// Download and install latest version
-    #[command(aliases = ["u", "update"])]
+    #[command(
+        visible_alias = "u",
+        alias = "update",
+        after_help = "Ratelimit fix: export GITHUB_TOKEN='insert token here'"
+    )]
     Upgrade(Upgrade),
 }
 
