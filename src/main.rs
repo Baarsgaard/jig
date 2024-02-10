@@ -53,11 +53,7 @@ enum Commands {
     #[cfg(debug_assertions)]
     Query(Query),
     /// Download and install latest version
-    #[command(
-        visible_alias = "u",
-        alias = "update",
-        after_help = "Ratelimit fix: export GITHUB_TOKEN='insert token here'"
-    )]
+    #[command(visible_alias = "u", alias = "update")]
     Upgrade(Upgrade),
 }
 

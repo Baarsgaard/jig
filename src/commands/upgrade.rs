@@ -1,5 +1,6 @@
 use clap::Args;
 use color_eyre::eyre::{Result, WrapErr};
+use color_eyre::Section;
 use inquire::Select;
 use self_update::{
     backends::github::{ReleaseList, Update},
@@ -33,7 +34,10 @@ impl Upgrade {
                 let raw_releases = releases_cfg
                     .build()?
                     .fetch()
-                    .wrap_err("Unable to fetch list of releases")?;
+                    .wrap_err("Unable to fetch list of releases")
+                    .with_suggestion(|| {
+                        "If ratelimited: export GITHUB_TOKEN='insert_token_here'"
+                    })?;
 
                 let releases = raw_releases
                     .iter()
@@ -67,7 +71,11 @@ impl Upgrade {
                 cfg = cfg.auth_token(&token);
             }
 
-            let _ = cfg.build()?.update()?;
+            let _ = cfg
+                .build()?
+                .update()
+                .with_suggestion(|| "If ratelimited: export GITHUB_TOKEN='insert_token_here'");
+
             Ok(String::default())
         })
         .join()
