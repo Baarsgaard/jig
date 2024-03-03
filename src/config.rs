@@ -137,7 +137,7 @@ impl From<RawConfig> for Config {
             Credential::PersonalAccessToken(pat)
         } else if let Some(api_token) = cfg.api_token {
             Credential::ApiToken {
-                login: cfg.user_login.unwrap(),
+                login: cfg.user_login.expect("user_login is unset."),
                 token: api_token,
             }
         } else {

@@ -109,26 +109,32 @@ pub async fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) ->
     }
 }
 
+// This exists to allow overriding the default configured retry query
 pub async fn override_query_issues_with_retry(
     client: &JiraAPIClient,
     issue_query: &String,
     retry_query: &String,
 ) -> Result<Vec<Issue>> {
-    let issues = match client
+    let maybe_issues = match client
         .query_issues(issue_query)
         .await
-        .wrap_err("First issue query failed")
+        .wrap_err("Initial issue query failed")
     {
-        Ok(issue_body) => issue_body.issues.unwrap(),
-        Err(_) => client
-            .query_issues(retry_query)
-            .await
-            .wrap_err(eyre!("Retry query failed"))?
-            .issues
-            .unwrap(),
+        Ok(issue_body) => issue_body.issues,
+        Err(e) => {
+            client
+                .query_issues(retry_query)
+                .await
+                .wrap_err(e)
+                .wrap_err(eyre!("Retry query failed"))?
+                .issues
+        }
     };
 
-    Ok(issues)
+    match maybe_issues {
+        Some(i) => Ok(i),
+        None => Err(eyre!("Issue list is empty"))?,
+    }
 }
 
 pub async fn query_issues_with_retry(client: &JiraAPIClient, cfg: &Config) -> Result<Vec<Issue>> {
