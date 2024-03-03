@@ -119,8 +119,16 @@ impl Repository {
             "_",
         );
         while branch_name.contains("..") {
-            // .... -> .. -> .
+            // ... -> .. -> .
             branch_name = branch_name.replace("..", ".");
+        }
+        while branch_name.contains("__") {
+            // ___ -> __ -> _
+            branch_name = branch_name.replace("__", "_");
+        }
+        while branch_name.contains("--") {
+            // --- -> -- -> -
+            branch_name = branch_name.replace("--", "-");
         }
         while branch_name.contains("${") {
             // $${{ -> $( ->
