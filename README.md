@@ -61,6 +61,34 @@ jig move
 
 [![asciicast](https://asciinema.org/a/609019.svg)](https://asciinema.org/a/609019)
 
+## Installation
+
+See releases for installation instructions: [releases](https://github.com/Baarsgaard/jig/releases)
+
+
+### Compile from source
+
+Compile from source with [Rust-lang](https://www.rust-lang.org/tools/install) with
+
+```bash
+cargo install --locked --git https://github.com/baarsgaard/jig
+# Optionally add `--features cloud` to enable ApiV3/Cloud only features.
+```
+
+
+## Configuration
+
+Supports Global and Local config files.  
+`~/.config/jig/config.toml` and `.jig.toml` respectively ([XDG](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)).  
+If both exist, they are merged with the Local config taking priority.
+
+See [example_config.toml](./example_config.toml)
+
+Generate your configuration using:
+```bash
+jig init [--all]
+```
+
 
 <details>
 <summary>Why?</summary>
@@ -88,32 +116,4 @@ Primarily:
 - [Scripting](./scripts/weekly_worklogs.sh), I live for automation.
 
 </details>
-
-## Installation
-
-See releases for installation instructions: [releases](https://github.com/Baarsgaard/jig/releases)
-
-
-### Compile from source
-
-Compile from source with [Rust-lang](https://www.rust-lang.org/tools/install) and:=
-
-```bash
-cargo install --locked --git https://github.com/baarsgaard/jig
-# Optionally add `--features cloud` to enable ApiV3/Cloud only features.
-```
-
-
-## Configuration
-
-Supports Global and Local config files.  
-`~/.config/jig/config.toml` and `.jig.toml` respectively ([XDG](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)).  
-If both exist, they are merged with the Local config taking priority.
-
-See [example_config.toml](./example_config.toml)
-
-Generate your configuration using:
-```bash
-jig init [--all]
-```
 
