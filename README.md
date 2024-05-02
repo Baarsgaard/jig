@@ -15,8 +15,7 @@ Specifically:
   - Bonus: [Scripting](./scripts/weekly_worklogs.sh) Jira interactions.
 
 
-<details>
-<summary>Usage</summary>
+## Usage
 
 ```bash
 $ jig help
@@ -63,9 +62,8 @@ jig move
 [![asciicast](https://asciinema.org/a/609019.svg)](https://asciinema.org/a/609019)
 
 
-</details>
-
-## Why?
+<details>
+<summary>Why?</summary>
 
 I personally love a strict Git workflow with well designed PRs and every commit being attributed to an issue.  
 But convincing others to adopt this can be a challenge without obvious benefits.
@@ -89,6 +87,8 @@ Primarily:
 - Moving issues from one status to the next.
 - [Scripting](./scripts/weekly_worklogs.sh), I live for automation.
 
+</details>
+
 ## Installation
 
 See releases for installation instructions: [releases](https://github.com/Baarsgaard/jig/releases)
@@ -99,7 +99,7 @@ See releases for installation instructions: [releases](https://github.com/Baarsg
 Compile from source with [Rust-lang](https://www.rust-lang.org/tools/install) and:=
 
 ```bash
-cargo install --locked --git https://github.com/raunow/jig
+cargo install --locked --git https://github.com/baarsgaard/jig
 # Optionally add `--features cloud` to enable ApiV3/Cloud only features.
 ```
 
