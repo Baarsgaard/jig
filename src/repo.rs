@@ -205,6 +205,7 @@ mod test {
             key: issue_key.unwrap_or(IssueKey(String::from("JB-1"))),
             self_reference: String::from("https://ddd.ddd.com/"),
             expand: String::from("Don't remember"),
+            names: None,
         }
     }
 
@@ -218,6 +219,7 @@ mod test {
             key: IssueKey(String::default()),
             self_reference: String::from("https://ddd.ddd.com/"),
             expand: String::from(""),
+            names: None,
         }
     }
 
