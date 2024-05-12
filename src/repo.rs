@@ -193,12 +193,13 @@ impl Repository {
 #[cfg(test)]
 mod test {
     use super::*;
-    use jira::types::{IssueKey, PostIssueQueryResponseBodyFields};
+    use jira::types::{IssueFields, IssueKey};
 
     fn test_issue(issue_key: Option<IssueKey>, summary: Option<&str>) -> Issue {
         Issue {
-            fields: PostIssueQueryResponseBodyFields {
-                summary: String::from(summary.unwrap_or("Example summary")),
+            fields: IssueFields {
+                summary: Some(String::from(summary.unwrap_or("Example summary"))),
+                ..IssueFields::default()
             },
             id: String::from("10001"),
             key: issue_key.unwrap_or(IssueKey(String::from("JB-1"))),
@@ -209,11 +210,12 @@ mod test {
 
     fn empty_test_issue() -> Issue {
         Issue {
-            fields: PostIssueQueryResponseBodyFields {
-                summary: String::from(""),
+            fields: IssueFields {
+                summary: Some(String::default()),
+                ..IssueFields::default()
             },
             id: String::from(""),
-            key: IssueKey(String::from("")),
+            key: IssueKey(String::default()),
             self_reference: String::from("https://ddd.ddd.com/"),
             expand: String::from(""),
         }

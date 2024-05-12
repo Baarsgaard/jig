@@ -37,7 +37,7 @@ impl ExecCommand for Transition {
                 .key
         };
 
-        let transitions_response = client.get_transitions(&issue_key, true).await?;
+        let transitions_response = client.get_transitions(&issue_key, None).await?;
         if transitions_response.transitions.is_empty() {
             return Err(eyre!("No valid transitions"));
         }

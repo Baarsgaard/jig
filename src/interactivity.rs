@@ -95,7 +95,11 @@ pub fn now() -> String {
 
 pub async fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Result<Issue> {
     let issues = match client
-        .query_issues(&format!("issuekey = {}", issue_key))
+        .query_issues(
+            &format!("issuekey = {}", issue_key),
+            Some(vec!["summary".to_string()]),
+            None,
+        )
         .await?
         .issues
     {
@@ -116,14 +120,14 @@ pub async fn override_query_issues_with_retry(
     retry_query: &String,
 ) -> Result<Vec<Issue>> {
     let maybe_issues = match client
-        .query_issues(issue_query)
+        .query_issues(issue_query, Some(vec!["summary".to_string()]), None)
         .await
         .wrap_err("Initial issue query failed")
     {
         Ok(issue_body) => issue_body.issues,
         Err(e) => {
             client
-                .query_issues(retry_query)
+                .query_issues(retry_query, Some(vec!["summary".to_string()]), None)
                 .await
                 .wrap_err(e)
                 .wrap_err(eyre!("Retry query failed"))?

@@ -93,10 +93,7 @@ impl Config {
         }
         .with_suggestion(|| "Create or overwrite config with: jig init")?;
 
-        if cfg.pat_token.is_none() && cfg.api_token.is_none() {
-            Err(eyre!("Neither api_token nor pat_token specified"))
-                .wrap_err("Config load error: Bad config")?
-        } else if cfg.api_token.is_some() && cfg.user_login.is_none() {
+        if cfg.api_token.is_some() && cfg.user_login.is_none() {
             Err(eyre!("'user_login' missing, required with api_token"))
                 .wrap_err("Config load error: Bad config")?
         } else if cfg.api_token.is_none() && cfg.user_login.is_some() {
