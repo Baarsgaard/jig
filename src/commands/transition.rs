@@ -55,10 +55,12 @@ impl ExecCommand for Transition {
                     .wrap_err("No transition selected")?
             };
 
+        // TODO implement terminal UI for handling this
+        // Abort if there's required fields
         if selected_transition
             .fields
             .into_iter()
-            .any(|(_, t)| t.required && t.has_default_value.is_some_and(|v| v))
+            .any(|(_, t)| t.required && !t.has_default_value.is_some_and(|v| v))
         {
             return Err(
                 eyre!("Issue cannot be moved with Jig due to required fields.",).with_suggestion(
