@@ -1,5 +1,4 @@
-use crate::commands::shared::UseFilter;
-use crate::config::Config;
+use crate::{commands::shared::UseFilter, config::Config};
 use chrono::Utc;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use jira::{

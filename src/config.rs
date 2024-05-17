@@ -1,11 +1,11 @@
-use color_eyre::eyre::{eyre, Result, WrapErr};
-use color_eyre::Section;
+use color_eyre::{
+    eyre::{eyre, Result, WrapErr},
+    Section,
+};
 use etcetera::base_strategy::{choose_base_strategy, BaseStrategy};
 use jira::{Credential, JiraClientConfig};
 use serde::{Deserialize, Serialize};
-use std::fs;
-use std::path::PathBuf;
-use std::sync::OnceLock;
+use std::{fs, path::PathBuf, sync::OnceLock};
 use toml::from_str;
 
 // Proof of concept

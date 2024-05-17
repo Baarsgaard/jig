@@ -3,10 +3,7 @@ use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use color_eyre::owo_colors::OwoColorize;
 use inquire::{Confirm, CustomType, Password, Select, Text};
-use std::fmt::Display;
-use std::fs;
-use std::path::PathBuf;
-use std::{env, process::Command};
+use std::{env, fmt::Display, fs, path::PathBuf, process::Command};
 use url::Url;
 
 use super::Hooks;
