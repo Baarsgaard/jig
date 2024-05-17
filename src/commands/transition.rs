@@ -1,6 +1,9 @@
 use crate::{config::Config, interactivity::issue_from_branch_or_prompt, repo::Repository};
 use clap::Args;
-use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::{
+    eyre::{eyre, Result, WrapErr},
+    Section,
+};
 use inquire::Select;
 use jira::{
     types::{IssueKey, PostTransitionBody, PostTransitionIdBody},
@@ -57,7 +60,11 @@ impl ExecCommand for Transition {
             .into_iter()
             .any(|(_, t)| t.required && t.has_default_value.is_some_and(|v| v))
         {
-            return Err(eyre!("Issue cannot be moved with Jig due to required fields.\n Open issue with `jig open {0}`", issue_key));
+            return Err(
+                eyre!("Issue cannot be moved with Jig due to required fields.",).with_suggestion(
+                    || format!("Open issue in your browser with: jig open {0}", issue_key),
+                ),
+            );
         }
 
         let transition = PostTransitionBody {

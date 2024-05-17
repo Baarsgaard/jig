@@ -93,9 +93,8 @@ impl Hook for CommitMsg {
 
             // Disallow branches without issue key unless explicitly allowed.
             (Err(_), Ok(_)) | (Err(_), Err(_)) if !cfg.hooks_cfg.allow_branch_missing_issue_key => {
-                Err(eyre!(
-                    "Issue key not found in branch name, create branches with: jig branch"
-                ))
+                Err(eyre!("Issue key not found in branch name")
+                    .with_suggestion(|| "create branches with: jig branch"))
             }
             (Err(_), Ok(cik)) => {
                 let mut msg = commit_msg;
