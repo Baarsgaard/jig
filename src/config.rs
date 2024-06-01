@@ -188,7 +188,7 @@ pub fn cache_dir() -> PathBuf {
 
 /// Search parent folders from PWD and returns the first directory that
 /// contains `.git`. If no directory is found, return current location.
-/// the boolan is true if the workspace dir is a repository.
+/// the boolean is true if the workspace dir is a repository.
 pub fn find_workspace() -> (PathBuf, bool) {
     let current_dir = std::env::current_dir().expect("unable to determine current directory");
     for ancestor in current_dir.ancestors() {

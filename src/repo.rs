@@ -309,7 +309,7 @@ mod test {
         )
         .unwrap();
         assert_eq!(
-            String::from("JB-1_Example_summary_that_is_really_long_not_reall"),
+            String::from("JB-1_Example_summary_that_is_really_long_not_really"),
             branch_name
         );
     }
