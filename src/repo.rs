@@ -302,14 +302,14 @@ mod test {
         let branch_name = Repository::branch_name_from_issue(
             &test_issue(
                 None,
-                Some("Example summary that is really long not really but over 50 characters"),
+                Some("Example summary that is over fifty characters long."),
             ),
             false,
             None,
         )
         .unwrap();
         assert_eq!(
-            String::from("JB-1_Example_summary_that_is_really_long_not_reall"),
+            String::from("JB-1_Example_summary_that_is_over_fifty_characters"),
             branch_name
         );
     }
