@@ -209,10 +209,7 @@ pub fn merge_toml_values(left: toml::Value, right: toml::Value, merge_depth: usi
     match (left, right) {
         (Value::Array(mut left_items), Value::Array(right_items)) => {
             // The top-level arrays should be merged but nested arrays should
-            // act as overrides. For the `languages.toml` config, this means
-            // that you can specify a sub-set of languages in an overriding
-            // `languages.toml` but that nested arrays like Language Server
-            // arguments are replaced instead of merged.
+            // act as overrides.
             if merge_depth > 0 {
                 left_items.reserve(right_items.len());
                 for rvalue in right_items {
