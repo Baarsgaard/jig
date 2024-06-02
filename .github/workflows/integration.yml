@@ -1,8 +1,8 @@
-name: "Integration"
+name: Integration
 on:
   push:
     branches:
-      - "master"
+      - master
     paths:
       - "**/src/**"
       - "**/Cargo.toml"
@@ -20,7 +20,7 @@ on:
 
 jobs:
   test:
-    name: "Cargo test"
+    name: Cargo test
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -29,8 +29,8 @@ jobs:
           - x86_64-linux
           # - x86_64-windows
         feature:
-          - "server"
-          - "cloud"
+          - data-center
+          - cloud
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
@@ -59,7 +59,7 @@ jobs:
       - run: cargo test --workspace --features ${{ matrix.feature }}
 
   lint:
-    name: "Cargo check/clippy"
+    name: Cargo check/clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,7 +71,7 @@ jobs:
       - run: cargo clippy -- -D warnings
 
   fmt:
-    name: "Cargo format"
+    name: Cargo format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

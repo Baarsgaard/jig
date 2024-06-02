@@ -32,5 +32,5 @@ url = { version = "2.4.0", default-features = false }
 
 [features]
 default = []
-server = []            # simplifies GH releases
+data-center = []       # simplifies GH releases/workflows
 cloud = ["jira/cloud"]
