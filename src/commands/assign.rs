@@ -5,7 +5,7 @@ use clap::{Args, ValueHint};
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::{Select, Text};
 use jira::{
-    types::{GetAssignableUserParams, IssueKey, User},
+    models::{GetAssignableUserParams, IssueKey, User},
     JiraAPIClient,
 };
 

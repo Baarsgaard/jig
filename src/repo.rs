@@ -2,7 +2,7 @@ use crate::config::find_workspace;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use color_eyre::Section;
 use gix::{Remote, Repository as Gix_Repository, ThreadSafeRepository};
-use jira::types::{Issue, IssueKey};
+use jira::models::{Issue, IssueKey};
 use std::{path::PathBuf, process::Command};
 
 #[derive(Debug, Clone)]
@@ -101,8 +101,8 @@ impl Repository {
         mut suffix: String,
     ) -> String {
         // If suffix plus issue_key_ is longer than 50, discard extra characters to now overwrite issue_key
-        if issue_key.0.len() + "_".len() + suffix.len() > 50 {
-            let _ = suffix.split_off(51 - (issue_key.0.len() + "_".len()));
+        if issue_key.to_string().len() + "_".len() + suffix.len() > 50 {
+            let _ = suffix.split_off(51 - (issue_key.to_string().len() + "_".len()));
         }
 
         if branch_name.len() + suffix.len() > 50 {
@@ -193,7 +193,7 @@ impl Repository {
 #[cfg(test)]
 mod test {
     use super::*;
-    use jira::types::{IssueFields, IssueKey};
+    use jira::models::{IssueFields, IssueKey};
 
     fn test_issue(issue_key: Option<IssueKey>, summary: Option<&str>) -> Issue {
         Issue {
@@ -202,23 +202,10 @@ mod test {
                 ..IssueFields::default()
             },
             id: String::from("10001"),
-            key: issue_key.unwrap_or(IssueKey(String::from("JB-1"))),
+            key: issue_key
+                .unwrap_or(IssueKey::try_from(String::from("JB-1")).expect("Valid issue key")),
             self_ref: String::from("https://ddd.ddd.com/"),
             expand: String::from("Don't remember"),
-            names: None,
-        }
-    }
-
-    fn empty_test_issue() -> Issue {
-        Issue {
-            fields: IssueFields {
-                summary: Some(String::default()),
-                ..IssueFields::default()
-            },
-            id: String::from(""),
-            key: IssueKey(String::default()),
-            self_ref: String::from("https://ddd.ddd.com/"),
-            expand: String::from(""),
             names: None,
         }
     }
@@ -228,26 +215,6 @@ mod test {
         let branch_name =
             Repository::branch_name_from_issue(&test_issue(None, None), false, None).unwrap();
         assert_eq!(String::from("JB-1_Example_summary"), branch_name);
-    }
-
-    #[test]
-    fn branch_name_from_empty_issue() {
-        let branch_name = Repository::branch_name_from_issue(&empty_test_issue(), false, None);
-        assert!(branch_name.is_err());
-    }
-    #[test]
-    fn short_branch_name_from_empty_issue() {
-        let branch_name = Repository::branch_name_from_issue(&empty_test_issue(), true, None);
-        assert!(branch_name.is_err());
-    }
-    #[test]
-    fn branch_name_with_suffix_from_empty_issue() {
-        let branch_name = Repository::branch_name_from_issue(
-            &empty_test_issue(),
-            false,
-            Some(String::from("some suffix")),
-        );
-        assert!(branch_name.is_err());
     }
 
     #[test]

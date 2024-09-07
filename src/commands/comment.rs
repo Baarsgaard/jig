@@ -2,7 +2,7 @@ use crate::{config::Config, interactivity::issue_from_branch_or_prompt, repo::Re
 use clap::Args;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::Text;
-use jira::types::{IssueKey, PostCommentBody};
+use jira::models::{IssueKey, PostCommentBody};
 use jira::JiraAPIClient;
 
 use super::shared::{ExecCommand, UseFilter};

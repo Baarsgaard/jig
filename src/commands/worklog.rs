@@ -10,7 +10,7 @@ use clap::{Args, ValueHint};
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use inquire::DateSelect;
 use jira::{
-    types::{IssueKey, PostWorklogBody, WorklogDuration},
+    models::{IssueKey, PostWorklogBody, WorklogDuration},
     JiraAPIClient,
 };
 

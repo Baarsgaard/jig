@@ -5,7 +5,7 @@ use crate::{
 };
 use clap::{Args, ValueHint};
 use color_eyre::eyre::{Result, WrapErr};
-use jira::{types::IssueKey, JiraAPIClient};
+use jira::{models::IssueKey, JiraAPIClient};
 
 use super::shared::{ExecCommand, UseFilter};
 

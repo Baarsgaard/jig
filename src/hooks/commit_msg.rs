@@ -5,7 +5,7 @@ use crate::{
     repo::{self, Repository},
 };
 use color_eyre::{eyre::eyre, eyre::WrapErr, Result, Section};
-use jira::{types::IssueKey, JiraAPIClient};
+use jira::{models::IssueKey, JiraAPIClient};
 use regex::Regex;
 use std::{fmt::Display, path::PathBuf};
 
@@ -71,24 +71,24 @@ impl Hook for CommitMsg {
 
         let (issue_key, mut msg) = match (branch_issue_key, commit_issue_key) {
             // Most common case
-            (Ok(bik), Err(_)) => Ok((bik.0, commit_msg)),
-            (Ok(bik), Ok(cik)) if bik.to_string() != cik.to_string() => Err(eyre!(
+            (Ok(bik), Err(_)) => Ok((bik, commit_msg)),
+            (Ok(bik), Ok(cik)) if bik != cik => Err(eyre!(
                 "Issue key in commit message does not match '{}' in the branch name!",
-                bik.0
+                bik
             )),
             (Ok(_), Ok(cik)) if branch.starts_with(cik.to_string().as_str()) => {
                 let mut msg = commit_msg;
                 msg.replace_range(..cik.to_string().len(), "");
 
-                Ok((cik.0, msg.trim().to_string()))
+                Ok((cik, msg.trim().to_string()))
             }
 
             // Key present in both but incorrect commit msg format, move key to front
             (Ok(_), Ok(cik)) => {
                 let mut msg = commit_msg;
-                msg = msg.replace(cik.0.as_str(), "").replace("  ", " ");
+                msg = msg.replace(cik.to_string().as_str(), "").replace("  ", " ");
 
-                Ok((cik.0, msg.trim().to_string()))
+                Ok((cik, msg.trim().to_string()))
             }
 
             // Disallow branches without issue key unless explicitly allowed.
@@ -99,13 +99,13 @@ impl Hook for CommitMsg {
             (Err(_), Ok(cik)) => {
                 let mut msg = commit_msg;
                 msg.replace_range(..cik.to_string().len(), "");
-                Ok((cik.0, msg.trim().to_string()))
+                Ok((cik, msg.trim().to_string()))
             }
             (Err(_), Err(_)) => {
                 let client = JiraAPIClient::new(&cfg.jira_cfg)?;
                 let issues = query_issues_with_retry(&client, cfg).await?;
                 let issue_key = prompt_user_with_issue_select(issues)?.key;
-                Ok((issue_key.0, commit_msg))
+                Ok((issue_key, commit_msg))
             }
         }
         .with_suggestion(|| "Skip check with: --no-verify")?;

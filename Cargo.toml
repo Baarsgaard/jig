@@ -19,7 +19,7 @@ color-eyre = { version = "0.6.2", default-features = false }
 etcetera = "0.8.0"
 gix = { version = "0.66.0", default-features = false }
 inquire = { version = "0.7.0", features = ["date"] }
-jira = { version = "0.4.2", default-features = false, package = "jira-issue-api" }
+jira = { version = "0.4.7", default-features = false, package = "jira-issue-api" }
 regex = { version = "1.8.4", features = ["std"], default-features = false }
 self_update = { version = "0.41.0", default-features = false, features = [
   "rustls",

@@ -2,7 +2,7 @@ use crate::{commands::shared::UseFilter, config::Config};
 use chrono::Utc;
 use color_eyre::eyre::{eyre, Result, WrapErr};
 use jira::{
-    types::{Issue, IssueKey},
+    models::{Issue, IssueKey},
     JiraAPIClient,
 };
 
@@ -11,7 +11,7 @@ mod filter {
     use super::*;
 
     use inquire::MultiSelect;
-    use jira::types::Filter;
+    use jira::models::Filter;
     pub fn pick_filter(cfg: &Config, filters: Vec<Filter>) -> Result<String> {
         if filters.is_empty() {
             return Err(eyre!("List of filters is empty"));

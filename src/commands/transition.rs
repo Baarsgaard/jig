@@ -6,7 +6,7 @@ use color_eyre::{
 };
 use inquire::Select;
 use jira::{
-    types::{IssueKey, PostTransitionBody, PostTransitionIdBody},
+    models::{IssueKey, PostTransitionBody, PostTransitionIdBody},
     JiraAPIClient,
 };
 
