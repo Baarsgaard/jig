@@ -203,7 +203,7 @@ mod test {
             },
             id: String::from("10001"),
             key: issue_key.unwrap_or(IssueKey(String::from("JB-1"))),
-            self_reference: String::from("https://ddd.ddd.com/"),
+            self_ref: String::from("https://ddd.ddd.com/"),
             expand: String::from("Don't remember"),
             names: None,
         }
@@ -217,7 +217,7 @@ mod test {
             },
             id: String::from(""),
             key: IssueKey(String::default()),
-            self_reference: String::from("https://ddd.ddd.com/"),
+            self_ref: String::from("https://ddd.ddd.com/"),
             expand: String::from(""),
             names: None,
         }

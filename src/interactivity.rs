@@ -24,7 +24,7 @@ mod filter {
 
         let filter_list = selected_filters
             .iter()
-            .map(Filter::filter_query)
+            .map(|filter| format!("filter={}", filter.id))
             .collect::<Vec<String>>();
 
         if cfg.inclusive_filters.unwrap_or(true) {
