@@ -18,8 +18,6 @@ pub struct RawConfig {
     pub jira_url: String,
     /// Primary query to use when fetching issues.
     pub issue_query: String,
-    /// If normal issue_query is empty.
-    pub retry_query: String,
     /// email or username used as login.
     pub user_login: Option<String>,
     /// API token for Cloud.
@@ -30,8 +28,6 @@ pub struct RawConfig {
     pub jira_timeout_seconds: Option<u64>,
     /// Accept invalid TLS certificates.
     pub tls_accept_invalid_certs: Option<bool>,
-    /// Only use issue key as branch name.
-    pub always_short_branch_names: Option<bool>,
     /// Max number of issues to fetch.
     /// max 1500.
     pub max_query_results: Option<u32>,
@@ -59,8 +55,6 @@ pub struct GitHooksConfig {
 #[derive(Debug, Clone)]
 pub struct Config {
     pub issue_query: String,
-    pub retry_query: String,
-    pub always_short_branch_names: Option<bool>,
     pub enable_comment_prompts: Option<bool>,
     pub one_transition_auto_move: Option<bool>,
     #[cfg(feature = "cloud")]
@@ -143,8 +137,6 @@ impl From<RawConfig> for Config {
 
         Config {
             issue_query: cfg.issue_query,
-            retry_query: cfg.retry_query,
-            always_short_branch_names: cfg.always_short_branch_names,
             enable_comment_prompts: cfg.enable_comment_prompts,
             one_transition_auto_move: cfg.one_transition_auto_move,
             #[cfg(feature = "cloud")]

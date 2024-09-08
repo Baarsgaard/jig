@@ -61,8 +61,6 @@ impl InitConfig {
             jira_timeout_seconds: Some(10),
             tls_accept_invalid_certs: Some(false),
             issue_query: String::from("assignee = currentUser() ORDER BY updated DESC"),
-            retry_query: String::from("reporter = currentUser() ORDER BY updated DESC"),
-            always_short_branch_names: Some(false),
             max_query_results: Some(100),
             enable_comment_prompts: Some(false),
             one_transition_auto_move: Some(false),
@@ -101,9 +99,6 @@ impl InitConfig {
                 "Try using existing filters: 'filter=<filterID> OR filter=<filterID>'",
             )
             .prompt()?;
-        new_cfg.retry_query = Text::new("Retry query")
-            .with_default(&new_cfg.retry_query)
-            .prompt()?;
         new_cfg.max_query_results = Some(
             CustomType::<u32>::new("Maximum query results")
                 .with_help_message("Lower is faster in case of large queries (max 1500)")
@@ -117,13 +112,6 @@ impl InitConfig {
                 .prompt()?,
         );
 
-        // Boolean prompts
-        new_cfg.always_short_branch_names = Some(
-            Confirm::new("Always omit summary from branch names")
-                .with_default(new_cfg.always_short_branch_names.unwrap())
-                .with_help_message("Invert setting with 'branch --short'")
-                .prompt()?,
-        );
         new_cfg.enable_comment_prompts = Some(
             Confirm::new("Always prompt for comments (Worklog)")
                 .with_default(new_cfg.enable_comment_prompts.unwrap())

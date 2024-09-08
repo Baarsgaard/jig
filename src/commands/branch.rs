@@ -4,7 +4,11 @@ use crate::{
     repo::Repository,
 };
 use clap::{Args, ValueHint};
-use color_eyre::eyre::{Result, WrapErr};
+use color_eyre::{
+    eyre::{eyre, Result, WrapErr},
+    Section,
+};
+use inquire::Select;
 use jira::{models::IssueKey, JiraAPIClient};
 
 use super::shared::{ExecCommand, UseFilter};
@@ -16,14 +20,18 @@ pub struct Branch {
     #[arg(short, long, value_name = "SUFFIX", value_hint = ValueHint::Unknown)]
     append: Option<String>,
 
+    /// Overwrite Issue summary and supply a branch name
+    #[arg(short, long, visible_aliases = ["n", "name"], value_name = "OVERWRITE", value_hint = ValueHint::Unknown)]
+    overwrite: Option<String>,
+
     /// Skip querying Jira for Issue summary
     #[arg(value_name = "ISSUE_KEY")]
     issue_key_input: Option<String>,
 
-    /// Only use ISSUE_KEY as branch name
+    /// Use ISSUE_KEY as the branch name
     /// Inverts 'always_short_branch_names' setting
     #[arg(short = 's', long = "short")]
-    toggle_short_name: bool,
+    short_name: bool,
 
     #[command(flatten)]
     use_filter: UseFilter,
@@ -31,7 +39,19 @@ pub struct Branch {
 
 impl ExecCommand for Branch {
     async fn exec(self, cfg: &Config) -> Result<String> {
-        let repo = Repository::open().wrap_err("Failed to open repo")?;
+        if matches!(
+            (
+                self.short_name,
+                self.append.is_some(),
+                self.overwrite.is_some(),
+            ),
+            (true, true, _) | (true, _, true) | (_, true, true)
+        ) {
+            return Err(eyre!("Multiple branch name modifiers specified"))
+                .with_suggestion(|| "Append, Overwrite, and short are mutually exlusive");
+        }
+
+        let repo = Repository::open().wrap_err("Failed to open repository")?;
         let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
         let issue = if let Some(maybe_issue_key) = self.issue_key_input {
@@ -42,17 +62,31 @@ impl ExecCommand for Branch {
             issue_from_branch_or_prompt(&client, cfg, String::default(), self.use_filter).await?
         };
 
-        let mut use_short_name = cfg.always_short_branch_names.unwrap_or(false);
-        if self.toggle_short_name {
-            use_short_name = !use_short_name;
-        }
+        // Get existing branches
+        let branches = repo
+            .get_existing_branchs(&issue.key.to_string())
+            .context("Failed to read branch names")?;
 
-        if let Ok(branch_name) = repo.issue_branch_exists(&issue, self.append.clone()) {
-            repo.checkout_branch(&branch_name, false)
+        // Prompt user if branches exist or fall back to selected issue.
+        let opt_existing_branch = if !branches.is_empty() {
+            Select::new("Checkout existing branch?", branches)
+                .with_help_message("Skip by pressing the escape key")
+                .prompt_skippable()
+                .context("Failed to open prompt with existing branches")?
         } else {
-            let branch_name =
-                Repository::branch_name_from_issue(&issue, use_short_name, self.append)?;
-            repo.checkout_branch(&branch_name, true)
-        }
+            None
+        };
+
+        let branch_name = if let Some(branch_name) = opt_existing_branch {
+            branch_name
+        } else if self.short_name {
+            issue.key.to_string()
+        } else if let Some(overwritten_name) = self.overwrite {
+            Repository::sanitize_branch_name(&format!("{} {}", issue.key, overwritten_name))
+        } else {
+            Repository::branch_name_from_issue(&issue, self.append)?
+        };
+
+        repo.checkout_branch(&branch_name, true)
     }
 }

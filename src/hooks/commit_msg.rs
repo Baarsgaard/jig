@@ -1,7 +1,7 @@
 use super::lib::Hook;
 use crate::{
     config::Config,
-    interactivity::{prompt_user_with_issue_select, query_issues_with_retry},
+    interactivity::{prompt_user_with_issue_select, query_issues_empty_err},
     repo::{self, Repository},
 };
 use color_eyre::{eyre::eyre, eyre::WrapErr, Result, Section};

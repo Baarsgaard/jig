@@ -46,7 +46,7 @@ pub async fn issue_key_from_branch_or_prompt(
         return Ok(query_issue_details(client, issue_key).await?.key);
     }
 
-    let issues = query_issues_with_retry(client, cfg).await?;
+    let issues = query_issues_empty_err(client, &cfg.issue_query).await?;
 
     Ok(prompt_user_with_issue_select(issues)?.key)
 }
@@ -69,7 +69,7 @@ pub async fn issue_from_branch_or_prompt(
         false => cfg.issue_query.clone(),
     };
 
-    let issues = override_query_issues_with_retry(client, &query, &cfg.retry_query).await?;
+    let issues = query_issues_empty_err(client, &query).await?;
     prompt_user_with_issue_select(issues)
 }
 
@@ -93,53 +93,22 @@ pub fn now() -> String {
 }
 
 pub async fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) -> Result<Issue> {
-    let issues = match client
-        .query_issues(
-            &format!("issuekey = {}", issue_key),
-            Some(vec!["summary".to_string()]),
-            None,
-        )
-        .await?
-        .issues
-    {
-        Some(i) => i,
-        None => Err(eyre!("Issue query response object empty"))?,
-    };
-
-    match issues.first() {
-        Some(i) => Ok(i.to_owned()),
-        None => Err(eyre!("Error issue not found: {}", issue_key)),
-    }
-}
-
-// This exists to allow overriding the default configured retry query
-pub async fn override_query_issues_with_retry(
-    client: &JiraAPIClient,
-    issue_query: &String,
-    retry_query: &String,
-) -> Result<Vec<Issue>> {
-    let maybe_issues = match client
-        .query_issues(issue_query, Some(vec!["summary".to_string()]), None)
+    client
+        .get_issue(&issue_key, None)
         .await
-        .wrap_err("Initial issue query failed")
-    {
-        Ok(issue_body) => issue_body.issues,
-        Err(e) => {
-            client
-                .query_issues(retry_query, Some(vec!["summary".to_string()]), None)
-                .await
-                .wrap_err(e)
-                .wrap_err(eyre!("Retry query failed"))?
-                .issues
-        }
-    };
-
-    match maybe_issues {
-        Some(i) => Ok(i),
-        None => Err(eyre!("Issue list is empty"))?,
-    }
+        .wrap_err("Fetching issue details failed")
 }
 
-pub async fn query_issues_with_retry(client: &JiraAPIClient, cfg: &Config) -> Result<Vec<Issue>> {
-    override_query_issues_with_retry(client, &cfg.issue_query, &cfg.retry_query).await
+pub async fn query_issues_empty_err(client: &JiraAPIClient, query: &String) -> Result<Vec<Issue>> {
+    match client
+        .query_issues(query, Some(vec!["summary".to_string()]), None)
+        .await
+        .wrap_err("Issue query failed")
+    {
+        Ok(query_res) if query_res.total == 0 => {
+            Err(eyre!("No issues found using set issue_query"))
+        }
+        Ok(query_res) => Ok(query_res.issues),
+        Err(e) => Err(eyre!(e)),
+    }
 }
