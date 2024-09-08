@@ -28,7 +28,7 @@ impl Repository {
         }
     }
 
-    pub fn get_existing_branchs(&self, partial_branch_name: &str) -> Result<Vec<String>> {
+    pub fn get_existing_branches(&self, partial_branch_name: &str) -> Result<Vec<String>> {
         Ok(self
             .repo
             .references()?

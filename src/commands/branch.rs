@@ -64,7 +64,7 @@ impl ExecCommand for Branch {
 
         // Get existing branches
         let branches = repo
-            .get_existing_branchs(&issue.key.to_string())
+            .get_existing_branches(&issue.key.to_string())
             .context("Failed to read branch names")?;
 
         // Prompt user if branches exist or fall back to selected issue.
