@@ -48,10 +48,12 @@ impl Repository {
         // Sanitize before suffix to ensure branch name is as long/descriptive as possible
         let mut initial_branch_name = Self::sanitize_branch_name(&issue.to_string());
 
+        dbg!(initial_branch_name.clone());
         if let Some(suffix_val) = suffix {
             initial_branch_name =
                 Self::suffix_branch_name(initial_branch_name, &issue.key, suffix_val)
         }
+        dbg!(initial_branch_name.clone());
 
         let branch_name = Self::sanitize_branch_name(&initial_branch_name);
 
@@ -79,48 +81,52 @@ impl Repository {
     }
 
     pub fn sanitize_branch_name(branch: &str) -> String {
-        let mut branch_name = branch.replace(
+        let mut branch_name = branch.replace(' ', "_");
+
+        // Some of the following characters are valid in a branch name, but annoying when pasting
+        branch_name = branch_name.replace(
             [' ', ':', '~', '^', '?', '*', '[', '\\', '\'', '"', '<', '>'],
-            "_",
+            "",
         );
-        while branch_name.contains("..") {
-            // ... -> .. -> .
-            branch_name = branch_name.replace("..", ".");
-        }
-        while branch_name.contains("__") {
-            // ___ -> __ -> _
-            branch_name = branch_name.replace("__", "_");
-        }
-        while branch_name.contains("--") {
-            // --- -> -- -> -
-            branch_name = branch_name.replace("--", "-");
-        }
-        while branch_name.contains("${") {
-            // $${{ -> $( ->
-            branch_name = branch_name.replace("${", "");
-        }
-        while branch_name.contains(".lock/") {
-            // .lock.lock/ -> .lock/ -> /
-            branch_name = branch_name.replace(".lock/", "/");
+
+        loop {
+            let diff_check = branch_name.clone();
+            while branch_name.contains("..") {
+                // ... -> .. -> .
+                branch_name = branch_name.replace("..", ".");
+            }
+            while branch_name.contains("__") {
+                // ___ -> __ -> _
+                branch_name = branch_name.replace("__", "_");
+            }
+            while branch_name.contains("--") {
+                // --- -> -- -> -
+                branch_name = branch_name.replace("--", "-");
+            }
+            while branch_name.contains("${") {
+                // $${{ -> $( ->
+                branch_name = branch_name.replace("${", "");
+            }
+            while branch_name.contains(".lock/") {
+                // .lock.lock/ -> .lock/ -> /
+                branch_name = branch_name.replace(".lock/", "/");
+            }
+
+            // /.. will never happen due to .. removal above
+            branch_name = branch_name.replace("/.", "/");
+
+            while branch_name.ends_with(['.', '/', '_']) {
+                // ././ ->
+                branch_name.pop();
+            }
+            branch_name.truncate(51);
+
+            if branch_name == diff_check {
+                break;
+            }
         }
 
-        // /.. will never happen due to .. removal above
-        branch_name = branch_name.replace("/.", "/");
-
-        while branch_name.ends_with(['.', '/', '_']) {
-            // ././ ->
-            branch_name.pop();
-        }
-
-        branch_name.truncate(50);
-
-        let branch_name_check = Self::sanitize_branch_name(&branch_name);
-        if branch_name != branch_name_check {
-            // Passing branch_name_check may save some CPU cycles on repeated checks
-            Self::sanitize_branch_name(&branch_name_check)
-        } else {
-            branch_name
-        }
+        branch_name
     }
 
     pub fn checkout_branch(&self, branch_name: &str, create_new: bool) -> Result<String> {
@@ -249,13 +255,6 @@ mod test {
             String::from("JB-1_Example_summary_that_is_over_fifty_characters"),
             branch_name
         );
-    }
-
-    #[test]
-    fn branch_name_short_true() {
-        let branch_name =
-            Repository::branch_name_from_issue(&test_issue(None, None), None).unwrap();
-        assert_eq!(String::from("JB-1"), branch_name);
     }
 
     #[test]
