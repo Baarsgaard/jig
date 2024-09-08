@@ -11,6 +11,6 @@ pub trait ExecCommand {
 pub struct UseFilter {
     /// Prompt for filter to use as default_query
     #[cfg(feature = "cloud")]
-    #[arg(short = 'f', long = "filter")]
+    #[arg(long = "filter")]
     pub value: bool,
 }
