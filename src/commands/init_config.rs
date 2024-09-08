@@ -75,7 +75,7 @@ impl InitConfig {
 
         if Confirm::new("Install Git hook commit-msg")
             .with_help_message(
-                "Auto prepends issue key in branch name to commit messages without it",
+                "Prefixes commits with issue key from branch name and prevents commits without an issue key",
             )
             .with_default(true)
             .prompt()?

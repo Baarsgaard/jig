@@ -26,7 +26,7 @@ impl ExecCommand for Transition {
     async fn exec(self, cfg: &Config) -> Result<String> {
         let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
-        let maybe_repo = Repository::open().wrap_err("Failed to open repo");
+        let maybe_repo = Repository::open().wrap_err("Failed to open repository");
         let head = match maybe_repo {
             Ok(repo) => repo.get_branch_name()?,
             Err(_) => String::default(),

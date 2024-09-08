@@ -33,7 +33,7 @@ impl Hooks {
 
         hooks_path.push("commit-msg");
         if hooks_path.exists() {
-            let replace = match self.force {
+            let replace_hook = match self.force {
                 true => true,
                 false => Confirm::new(
                     format!(
@@ -47,7 +47,7 @@ impl Hooks {
                 .prompt()?,
             };
 
-            if replace {
+            if replace_hook {
                 std::fs::remove_file(hooks_path.clone())?;
             }
         }
