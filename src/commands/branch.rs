@@ -48,7 +48,7 @@ impl ExecCommand for Branch {
             (true, true, _) | (true, _, true) | (_, true, true)
         ) {
             return Err(eyre!("Multiple branch name modifiers specified"))
-                .with_suggestion(|| "Append, Overwrite, and short are mutually exlusive");
+                .with_suggestion(|| "Avoid specifying Append, Overwrite, and short together");
         }
 
         let repo = Repository::open().wrap_err("Failed to open repository")?;
