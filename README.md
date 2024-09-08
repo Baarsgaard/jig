@@ -82,7 +82,7 @@ Supports Global and Local config files.
 `~/.config/jig/config.toml` and `.jig.toml` respectively ([XDG](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)).  
 If both exist, they are merged with the Local config taking priority.
 
-This is useful when working across different repositories with different cobtribution workflows or issue queries when creating branches or worklogs.
+This is useful when working across repositories with varying contribution workflows or issue queries tailored to creating branches or worklogs from the current location.
 
 See [example_config.toml](./example_config.toml)
 
