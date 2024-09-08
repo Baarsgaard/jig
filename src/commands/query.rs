@@ -1,6 +1,6 @@
 use crate::config::Config;
 use clap::Args;
-use color_eyre::eyre::{eyre, Context, Result};
+use color_eyre::eyre::{Context, Result};
 use inquire::Autocomplete;
 use jira::JiraAPIClient;
 
@@ -8,6 +8,18 @@ use super::shared::{ExecCommand, UseFilter};
 
 #[derive(Args, Debug)]
 pub struct Query {
+    /// Skip querying Jira for Issue summary
+    #[arg(value_name = "QUERY")]
+    query: String,
+
+    /// Pretty print JSON
+    #[arg(short, long)]
+    pretty: bool,
+
+    /// Comma separated list of fields to return
+    #[arg(short, long, num_args = 1, value_delimiter = ',')]
+    fields: Option<Vec<String>>,
+
     #[command(flatten)]
     use_filter: UseFilter,
 }
@@ -16,23 +28,17 @@ impl ExecCommand for Query {
     async fn exec(self, cfg: &Config) -> Result<String> {
         let client = JiraAPIClient::new(&cfg.jira_cfg)?;
 
-        let query = String::default();
-
-        let issues = match client
-            .query_issues(&query, Some(vec!["summary".to_string()]), None)
+        // Avoid query_issues_
+        let query_response = client
+            .query_issues(&self.query, self.fields, None)
             .await
-            .wrap_err("First issue query failed")
-        {
-            Ok(issue_body) => issue_body.issues.unwrap(),
-            Err(_) => client
-                .query_issues(&cfg.retry_query, Some(vec!["summary".to_string()]), None)
-                .await
-                .wrap_err(eyre!("Retry query failed"))?
-                .issues
-                .unwrap(),
-        };
+            .wrap_err("Issue query failed")?;
 
-        toml::to_string(&issues).wrap_err("failed exporting issues")
+        if self.pretty {
+            serde_json::to_string_pretty(&query_response.issues).wrap_err("failed exporting issues")
+        } else {
+            serde_json::to_string(&query_response.issues).wrap_err("failed exporting issues")
+        }
     }
 }
 

@@ -50,7 +50,6 @@ enum Commands {
     Open(Open),
     /// Interactively send JQL queries to Jira when tab is pressed
     #[command(visible_alias = "q")]
-    #[cfg(debug_assertions)]
     Query(Query),
     /// Download and install latest version
     #[command(visible_alias = "u", alias = "update")]
@@ -72,7 +71,6 @@ impl Commands {
             Commands::Worklog(worklog) => worklog.exec(&cfg?).await,
             Commands::Transition(transition) => transition.exec(&cfg?).await,
             Commands::Open(open) => open.exec(&cfg?).await,
-            #[cfg(debug_assertions)]
             Commands::Query(query) => query.exec(&cfg?).await,
             Commands::Upgrade(upgrade) => upgrade.exec(),
         }
