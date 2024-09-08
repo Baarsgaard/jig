@@ -77,7 +77,7 @@ impl ExecCommand for Branch {
             None
         };
 
-        let branch_name = if let Some(branch_name) = opt_existing_branch {
+        let branch_name = if let Some(branch_name) = opt_existing_branch.clone() {
             branch_name
         } else if self.short_name {
             issue.key.to_string()
@@ -87,6 +87,6 @@ impl ExecCommand for Branch {
             Repository::branch_name_from_issue(&issue, self.append)?
         };
 
-        repo.checkout_branch(&branch_name, true)
+        repo.checkout_branch(&branch_name, opt_existing_branch.is_none())
     }
 }
