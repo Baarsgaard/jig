@@ -4,7 +4,10 @@ use crate::{
     interactivity::{prompt_user_with_issue_select, query_issues_empty_err},
     repo::{self, Repository},
 };
-use color_eyre::{eyre::eyre, eyre::WrapErr, Result, Section};
+use color_eyre::{
+    eyre::{eyre, WrapErr},
+    Result, Section,
+};
 use jira::{models::IssueKey, JiraAPIClient};
 use regex::Regex;
 use std::{fmt::Display, path::PathBuf};
@@ -120,7 +123,17 @@ impl Hook for CommitMsg {
             }
             .with_suggestion(|| "Skip check with: --no-verify")?;
 
-        let first_char = msg.chars().nth(0).unwrap();
+        let first_char = match msg.chars().nth(0) {
+            Some(c) => c,
+            None => {
+                return Err(
+                    eyre!("Commit message only contains an issue key").with_suggestion(|| {
+                        "Please write a commit message conveying the intent of the change"
+                    }),
+                );
+            }
+        };
+
         if first_char.is_ascii_alphabetic() && first_char.is_lowercase() {
             msg.replace_range(..1, &first_char.to_ascii_uppercase().to_string());
         }
