@@ -45,11 +45,13 @@ pub struct RawConfig {
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct GitHooksRawConfig {
     pub allow_branch_missing_issue_key: Option<bool>,
+    pub allow_branch_and_commit_msg_mismatch: Option<bool>,
 }
 
 #[derive(Debug, Clone)]
 pub struct GitHooksConfig {
     pub allow_branch_missing_issue_key: bool,
+    pub allow_branch_and_commit_msg_mismatch: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -113,10 +115,14 @@ impl From<Option<GitHooksRawConfig>> for GitHooksConfig {
         if let Some(cfg) = value {
             GitHooksConfig {
                 allow_branch_missing_issue_key: cfg.allow_branch_missing_issue_key.unwrap_or(false),
+                allow_branch_and_commit_msg_mismatch: cfg
+                    .allow_branch_and_commit_msg_mismatch
+                    .unwrap_or(false),
             }
         } else {
             GitHooksConfig {
                 allow_branch_missing_issue_key: false,
+                allow_branch_and_commit_msg_mismatch: false,
             }
         }
     }

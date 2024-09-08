@@ -69,46 +69,56 @@ impl Hook for CommitMsg {
         let branch_issue_key = IssueKey::try_from(branch.clone());
         let commit_issue_key = IssueKey::try_from(commit_msg.clone());
 
-        let (issue_key, mut msg) = match (branch_issue_key, commit_issue_key) {
-            // Most common case
-            (Ok(bik), Err(_)) => Ok((bik, commit_msg)),
-            (Ok(bik), Ok(cik)) if bik != cik => Err(eyre!(
-                "Issue key in commit message does not match '{}' in the branch name!",
-                bik
-            )),
-            (Ok(_), Ok(cik)) if branch.starts_with(cik.to_string().as_str()) => {
-                let mut msg = commit_msg;
-                msg.replace_range(..cik.to_string().len(), "");
+        let (issue_key, mut msg) =
+            match (branch_issue_key, commit_issue_key) {
+                // Fail if keys do not match unless allowed
+                (Ok(bik), Ok(cik))
+                    if bik != cik && !cfg.hooks_cfg.allow_branch_and_commit_msg_mismatch =>
+                {
+                    Err(eyre!(
+                        "Issue key in commit message does not match '{bik}' in the branch name!",
+                    )
+                    .with_note(|| {
+                        "Enabling 'allow_branch_and_commit_msg_mismatch' will skip this check"
+                    }))
+                }
+                // Fail if branch is missing issue key unless allowed
+                (Err(_), _) if !cfg.hooks_cfg.allow_branch_missing_issue_key => {
+                    Err(eyre!("Issue key not found in branch name")
+                        .with_suggestion(|| "create a branch using: jig branch")
+                        .with_note(|| {
+                            "Enabling 'allow_branch_missing_issue_key' will skip this check"
+                        }))
+                }
 
-                Ok((cik, msg.trim().to_string()))
-            }
+                // Happy path
+                (Ok(bik), Err(_)) => Ok((bik, commit_msg)),
 
-            // Key present in both but incorrect commit msg format, move key to front
-            (Ok(_), Ok(cik)) => {
-                let mut msg = commit_msg;
-                msg = msg.replace(cik.to_string().as_str(), "").replace("  ", " ");
+                // Remove key from commit message and re-add after
+                (_, Ok(cik)) if commit_msg.starts_with(cik.to_string().as_str()) => {
+                    let mut msg = commit_msg;
+                    msg.replace_range(..cik.to_string().len(), "");
 
-                Ok((cik, msg.trim().to_string()))
-            }
+                    Ok((cik, msg.trim().to_string()))
+                }
+                // Key present in msg but incorrect msg format, move key to front
+                (_, Ok(cik)) => {
+                    let msg = commit_msg
+                        .replace(cik.to_string().as_str(), "")
+                        .trim()
+                        .to_string();
+                    Ok((cik, msg))
+                }
 
-            // Disallow branches without issue key unless explicitly allowed.
-            (Err(_), Ok(_)) | (Err(_), Err(_)) if !cfg.hooks_cfg.allow_branch_missing_issue_key => {
-                Err(eyre!("Issue key not found in branch name")
-                    .with_suggestion(|| "create branches with: jig branch"))
+                // Commit msg should ALWAYS have an issue key, should only be hit if second Failure condition is skipped
+                (Err(_), Err(_)) => {
+                    let client = JiraAPIClient::new(&cfg.jira_cfg)?;
+                    let issues = query_issues_empty_err(&client, &cfg.issue_query).await?;
+                    let issue_key = prompt_user_with_issue_select(issues)?.key;
+                    Ok((issue_key, commit_msg))
+                }
             }
-            (Err(_), Ok(cik)) => {
-                let mut msg = commit_msg;
-                msg.replace_range(..cik.to_string().len(), "");
-                Ok((cik, msg.trim().to_string()))
-            }
-            (Err(_), Err(_)) => {
-                let client = JiraAPIClient::new(&cfg.jira_cfg)?;
-                let issues = query_issues_with_retry(&client, cfg).await?;
-                let issue_key = prompt_user_with_issue_select(issues)?.key;
-                Ok((issue_key, commit_msg))
-            }
-        }
-        .with_suggestion(|| "Skip check with: --no-verify")?;
+            .with_suggestion(|| "Skip check with: --no-verify")?;
 
         let first_char = msg.chars().nth(0).unwrap();
         if first_char.is_ascii_alphabetic() && first_char.is_lowercase() {

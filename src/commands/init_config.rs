@@ -52,6 +52,7 @@ impl InitConfig {
         let jira_url = InitConfig::jira_url()?;
         let mut new_git_hooks = GitHooksRawConfig {
             allow_branch_missing_issue_key: Some(false),
+            allow_branch_and_commit_msg_mismatch: Some(false),
         };
         let mut new_cfg = RawConfig {
             jira_url,
@@ -138,6 +139,14 @@ impl InitConfig {
                 .with_help_message("Prompts with issue select when branch is missing an Issue key")
                 .with_default(false)
                 .prompt()?,
+        );
+        new_git_hooks.allow_branch_and_commit_msg_mismatch = Some(
+            Confirm::new(
+                "Githook: Skip 'branch and commit message issue keys do not match' checks",
+            )
+            .with_help_message("Allows overriding issue keys in commits without '--no-verify'")
+            .with_default(false)
+            .prompt()?,
         );
 
         new_cfg.git_hooks = Some(new_git_hooks);

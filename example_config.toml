@@ -12,3 +12,5 @@ inclusive_filters = true
 
 [git_hooks]
 allow_branch_missing_issue_key = false
+# Allows mismatch between branch and commit message issue keys
+allow_branch_and_commit_msg_issue_key_mismatch = false
