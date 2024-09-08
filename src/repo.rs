@@ -48,12 +48,10 @@ impl Repository {
         // Sanitize before suffix to ensure branch name is as long/descriptive as possible
         let mut initial_branch_name = Self::sanitize_branch_name(&issue.to_string());
 
-        dbg!(initial_branch_name.clone());
         if let Some(suffix_val) = suffix {
             initial_branch_name =
                 Self::suffix_branch_name(initial_branch_name, &issue.key, suffix_val)
         }
-        dbg!(initial_branch_name.clone());
 
         let branch_name = Self::sanitize_branch_name(&initial_branch_name);
 
