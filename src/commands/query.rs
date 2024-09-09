@@ -1,8 +1,14 @@
+use std::collections::HashMap;
+
 use crate::config::Config;
 use clap::Args;
 use color_eyre::eyre::{Context, Result};
-use inquire::Autocomplete;
-use jira::JiraAPIClient;
+use jira::{
+    models::{Issue, PostIssueQueryResponseBody},
+    JiraAPIClient,
+};
+use serde::Serialize;
+use serde_json::Value as JsonValue;
 
 use super::shared::{ExecCommand, UseFilter};
 
@@ -34,32 +40,66 @@ impl ExecCommand for Query {
             .await
             .wrap_err("Issue query failed")?;
 
+        let formatted_response = PrintIssueQuery::from(query_response);
+
         if self.pretty {
-            serde_json::to_string_pretty(&query_response.issues).wrap_err("failed exporting issues")
+            serde_json::to_string_pretty(&formatted_response).wrap_err("failed exporting issues")
         } else {
-            serde_json::to_string(&query_response.issues).wrap_err("failed exporting issues")
+            serde_json::to_string(&formatted_response).wrap_err("failed exporting issues")
         }
     }
 }
 
-#[derive(Clone)] //Default
-pub struct IssueQueryBuilder {}
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct PrintIssueQuery {
+    /// https://docs.atlassian.com/software/jira/docs/api/REST/7.6.1/#api/2/search
+    pub expand: String,
+    pub issues: Vec<PrintIssue>,
+    pub max_results: u32,
+    pub start_at: u32,
+    pub total: u32,
+    /// Some when expanding names on query_issues
+    pub names: Option<HashMap<String, String>>,
+}
 
-impl IssueQueryBuilder {}
+impl From<PostIssueQueryResponseBody> for PrintIssueQuery {
+    fn from(body: PostIssueQueryResponseBody) -> Self {
+        let issues = body.issues.into_iter().map(PrintIssue::from).collect();
 
-impl Autocomplete for IssueQueryBuilder {
-    fn get_suggestions(
-        &mut self,
-        _input: &str,
-    ) -> std::result::Result<Vec<String>, inquire::CustomUserError> {
-        todo!()
+        PrintIssueQuery {
+            issues,
+            expand: body.expand,
+            max_results: body.max_results,
+            start_at: body.start_at,
+            total: body.total,
+            names: body.names,
+        }
     }
+}
 
-    fn get_completion(
-        &mut self,
-        _input: &str,
-        _highlighted_suggestion: Option<String>,
-    ) -> std::result::Result<inquire::autocompletion::Replacement, inquire::CustomUserError> {
-        todo!()
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+struct PrintIssue(HashMap<String, JsonValue>);
+
+impl From<Issue> for PrintIssue {
+    fn from(issue: Issue) -> Self {
+        let orig_fields = serde_json::to_value(&issue.fields).unwrap();
+        let orig_fields = orig_fields.as_object().unwrap();
+
+        let mut fields: HashMap<String, JsonValue> = HashMap::new();
+
+        for (k, v) in orig_fields {
+            let value = match v {
+                JsonValue::Null => None,
+                JsonValue::Array(a) if a.is_empty() => None,
+                any => Some(any),
+            };
+
+            if let Some(value) = value {
+                fields.insert(k.to_owned(), value.to_owned());
+            }
+        }
+        PrintIssue(fields)
     }
 }

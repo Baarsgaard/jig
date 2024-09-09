@@ -183,7 +183,7 @@ mod test {
             key: issue_key
                 .unwrap_or(IssueKey::try_from(String::from("JB-1")).expect("Valid issue key")),
             self_ref: String::from("https://ddd.ddd.com/"),
-            expand: String::from("Don't remember"),
+            expand: Some(String::from("Don't remember")),
             names: None,
         }
     }
