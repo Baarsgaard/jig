@@ -40,7 +40,7 @@ enum Commands {
     /// Initialise config file(s)
     Init(InitConfig),
     /// Create a work log entry on a Jira issue
-    #[command(visible_aliases = ["w", "wl", "l", "log"], arg_required_else_help(true))]
+    #[command(visible_aliases = ["w", "l", "log"], arg_required_else_help(true))]
     Worklog(Worklog),
     /// Move ticket through transitions
     #[command(visible_alias = "t")]
@@ -49,10 +49,10 @@ enum Commands {
     #[command(visible_alias = "o")]
     Open(Open),
     /// Interactively send JQL queries to Jira when tab is pressed
-    #[command(visible_alias = "q")]
+    #[command(visible_alias = "search")]
     Query(Query),
     /// Download and install latest version
-    #[command(visible_alias = "u", alias = "update")]
+    #[command(visible_alias = "update")]
     Upgrade(Upgrade),
 }
 
