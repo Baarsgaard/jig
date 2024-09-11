@@ -61,18 +61,45 @@ jig move
 
 [![asciicast](https://asciinema.org/a/609019.svg)](https://asciinema.org/a/609019)
 
-## Installation
 
-See releases for installation instructions: [releases](https://github.com/Baarsgaard/jig/releases)
+## installation
 
+Pick between `cloud` and `data-center` instances (The APIs are slightly different)
+
+### Linux
+
+wget
+
+```bash
+mkdir -p ~/.local/bin || true
+# Cloud 
+wget -O ~/.local/bin/jig "https://github.com/baarsgaard/jig/releases/latest/download/jig-cloud-x86_64-unknown-linux-gnu"
+# Data-center
+wget -O ~/.local/bin/jig "https://github.com/baarsgaard/jig/releases/latest/download/jig-data-center-x86_64-unknown-linux-gnu"
+
+chmod +x ~/.local/bin/jig
+
+# A musl variant is available be replacing gnu with musl
+```
+
+Using [eget](https://github.com/zyedidia/eget)
+```bash
+eget baarsgaard/jig --to ~/.local/bin/jig -a gnu -a cloud
+```
 
 ### Compile from source
 
-Compile from source with [Rust-lang](https://www.rust-lang.org/tools/install) with
+Compile from source with [Rust](https://www.rust-lang.org/tools/install)
 
 ```bash
-cargo install --locked --git https://github.com/baarsgaard/jig
-# Optionally add `--features cloud` to enable ApiV3/Cloud only features.
+cargo install --locked --git https://github.com/baarsgaard/jig --features <cloud|data-center>
+```
+
+### Windows
+
+Untested, mileage will vary
+```posh
+Invoke-WebRequest -Uri "https://github.com/baarsgaard/jig/releases/download/latest/jig-$INSTANCE-x86_64-pc-windows-msvc.exe" -OutFile "C:\<Somewhere in PATH>"
 ```
 
 
