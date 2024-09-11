@@ -18,13 +18,17 @@ pub struct Query {
     #[arg(value_name = "QUERY")]
     query: String,
 
-    /// Pretty print JSON
-    #[arg(short, long)]
-    pretty: bool,
+    /// Override max_query_results in config (default: 50)
+    #[arg(short, long, value_name = "COUNT")]
+    count: Option<u32>,
 
     /// Comma separated list of fields to return
     #[arg(short, long, num_args = 1, value_delimiter = ',')]
     fields: Option<Vec<String>>,
+
+    /// Pretty print JSON
+    #[arg(short, long)]
+    pretty: bool,
 
     #[command(flatten)]
     use_filter: UseFilter,
@@ -32,7 +36,17 @@ pub struct Query {
 
 impl ExecCommand for Query {
     async fn exec(self, cfg: &Config) -> Result<String> {
-        let client = JiraAPIClient::new(&cfg.jira_cfg)?;
+        let client = match self.count {
+            None => {
+                JiraAPIClient::new(&cfg.jira_cfg).with_context(|| "Failed to construct API client")
+            }
+            Some(count) => {
+                let mut jira_cfg = cfg.jira_cfg.to_owned();
+                jira_cfg.max_query_results = count;
+                JiraAPIClient::new(&jira_cfg)
+                    .with_context(|| "Failed to construct API client with override")
+            }
+        }?;
 
         // Avoid query_issues_
         let query_response = client
