@@ -74,7 +74,7 @@ impl Upgrade {
             let _ = cfg
                 .build()?
                 .update()
-                .with_suggestion(|| "If ratelimited: export GITHUB_TOKEN='insert_token_here'");
+                .with_suggestion(|| "If ratelimited: export GITHUB_TOKEN='insert_token_here'")?;
 
             Ok(String::default())
         })
