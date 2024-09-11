@@ -1,17 +1,13 @@
 name: Create Release
 
 on:
+  push:
   workflow_dispatch:
-    inputs:
-      draft:
-        required: false
-        default: true
-        description: Produce a draft release
-        type: boolean
 
 jobs:
   get-tags:
     name: Create tagged release
+    if: contains(github.event.head_commit.message, 'Bump version') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     outputs:
       crate-version: ${{ steps.crate-version.outputs.CRATE_VERSION }}
@@ -34,20 +30,9 @@ jobs:
       - run: "echo '::notice:: Tag = v${{ steps.crate-version.outputs.CRATE_VERSION }}'"
 
       - name: Create draft release
-        if: ${{ github.event.inputs.draft }}
         run: >
           envsubst '$CRATE_VERSION $OLD_VERSION' < .github/release-notes.md |
           gh release create "v$CRATE_VERSION" --title "v$CRATE_VERSION" --notes-file - --draft
-        env:
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
-          CRATE_VERSION: ${{ steps.crate-version.outputs.CRATE_VERSION }}
-          OLD_VERSION: ${{ steps.old-version.outputs.OLD_VERSION }}
-
-      - name: Create release
-        if: ${{ !github.event.inputs.draft }}
-        run: >
-          envsubst '$CRATE_VERSION $OLD_VERSION' < .github/release-notes.md |
-          gh release create "v$CRATE_VERSION" --notes-file -
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CRATE_VERSION: ${{ steps.crate-version.outputs.CRATE_VERSION }}
