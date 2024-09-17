@@ -98,7 +98,7 @@ struct PrintIssue(HashMap<String, JsonValue>);
 
 impl From<Issue> for PrintIssue {
     fn from(issue: Issue) -> Self {
-        let orig_fields = serde_json::to_value(&issue.fields).unwrap();
+        let orig_fields = serde_json::to_value(issue.fields).unwrap();
         let orig_fields = orig_fields.as_object().unwrap();
 
         let mut fields: HashMap<String, JsonValue> = HashMap::new();
