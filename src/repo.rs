@@ -65,9 +65,10 @@ impl Repository {
         issue_key: &IssueKey,
         mut suffix: String,
     ) -> String {
-        // If suffix plus issue_key_ is longer than 50, discard extra characters to now overwrite issue_key
-        if issue_key.to_string().len() + "_".len() + suffix.len() > 50 {
-            let _ = suffix.split_off(51 - (issue_key.to_string().len() + "_".len()));
+        // If suffix plus ISSUEKEY-0000_ is longer than 50, discard extra characters to now overwrite issue_key
+        // Plus 1 for '_'
+        if issue_key.to_string().len() + 1 + suffix.len() > 50 {
+            let _ = suffix.split_off(51 - (issue_key.to_string().len() + 1));
         }
 
         if branch_name.len() + suffix.len() > 50 {

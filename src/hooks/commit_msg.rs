@@ -19,7 +19,7 @@ pub struct CommitMsg {
 }
 
 impl CommitMsg {
-    fn write_commit(self, commit_msg: String) -> Result<()> {
+    fn write_commit(self, commit_msg: &str) -> Result<()> {
         std::fs::write(self.commit_msg_file, commit_msg).wrap_err("Failed to write new commit_msg")
     }
 }
@@ -150,6 +150,6 @@ impl Hook for CommitMsg {
             )));
         }
 
-        CommitMsg::write_commit(self, final_msg)
+        CommitMsg::write_commit(self, &final_msg)
     }
 }

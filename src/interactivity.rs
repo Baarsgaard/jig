@@ -99,7 +99,7 @@ pub async fn query_issue_details(client: &JiraAPIClient, issue_key: IssueKey) ->
         .wrap_err("Fetching issue details failed")
 }
 
-pub async fn query_issues_empty_err(client: &JiraAPIClient, query: &String) -> Result<Vec<Issue>> {
+pub async fn query_issues_empty_err(client: &JiraAPIClient, query: &str) -> Result<Vec<Issue>> {
     match client
         .query_issues(query, Some(vec!["summary".to_string()]), None)
         .await

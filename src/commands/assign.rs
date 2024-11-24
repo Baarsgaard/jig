@@ -50,7 +50,7 @@ impl ExecCommand for Assign {
 
         // Disable query and prompt if --user is supplied
         let user = if let Some(user) = self.user {
-            client.get_user(user).await?
+            client.get_user(&user).await?
         } else {
             let username = Text::new("User search:")
                 .prompt()
