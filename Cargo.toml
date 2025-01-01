@@ -6,7 +6,7 @@ authors = ["Steffen Baarsgaard <sbaarsgaard@gmail.com>"]
 repository = "https://github.com/baarsgaard/jig"
 
 [dependencies]
-chrono = { version = "0.4.38", default-features = false, features = ["clock"] }
+chrono = { version = "0.4.39", default-features = false, features = ["clock"] }
 clap = { version = "4.5.21", default-features = false, features = [
   "help",
   "std",
