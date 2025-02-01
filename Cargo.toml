@@ -14,7 +14,7 @@ clap = { version = "4.5.23", default-features = false, features = [
   "derive",
   "usage",
 ] }
-clap_complete = "4.5.38"
+clap_complete = "4.5.44"
 color-eyre = { version = "0.6.3", default-features = false }
 etcetera = "0.8.0"
 gix = { version = "0.68.0", default-features = false }
