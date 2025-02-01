@@ -17,7 +17,7 @@ clap = { version = "4.5.23", default-features = false, features = [
 clap_complete = "4.5.38"
 color-eyre = { version = "0.6.3", default-features = false }
 etcetera = "0.8.0"
-gix = { version = "0.68.0", default-features = false }
+gix = { version = "0.70.0", default-features = false }
 inquire = { version = "0.7.5", features = ["date"] }
 jira = { version = "0.5.6", default-features = false, package = "jira-issue-api" }
 regex = { version = "1.11.1", features = ["std"], default-features = false }
