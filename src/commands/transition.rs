@@ -1,13 +1,13 @@
 use crate::{config::Config, interactivity::issue_from_branch_or_prompt, repo::Repository};
 use clap::Args;
 use color_eyre::{
-    eyre::{eyre, Result, WrapErr},
     Section,
+    eyre::{Result, WrapErr, eyre},
 };
 use inquire::Select;
 use jira::{
-    models::{IssueKey, PostTransitionBody, PostTransitionIdBody},
     JiraAPIClient,
+    models::{IssueKey, PostTransitionBody, PostTransitionIdBody},
 };
 
 use super::shared::{ExecCommand, UseFilter};

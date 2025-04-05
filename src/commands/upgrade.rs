@@ -1,6 +1,6 @@
 use clap::Args;
-use color_eyre::eyre::{Result, WrapErr};
 use color_eyre::Section;
+use color_eyre::eyre::{Result, WrapErr};
 use inquire::Select;
 use self_update::{
     backends::github::{ReleaseList, Update},
@@ -38,9 +38,9 @@ impl ExecCommand for Upgrade {
                     .build()?
                     .fetch()
                     .wrap_err("Unable to fetch list of releases")
-                    .with_suggestion(|| {
-                        "If ratelimited: export GITHUB_TOKEN='insert_token_here'"
-                    })?;
+                    .with_suggestion(
+                        || "If ratelimited: export GITHUB_TOKEN='insert_token_here'",
+                    )?;
 
                 let releases = raw_releases
                     .iter()

@@ -7,11 +7,11 @@ use crate::{
 };
 use chrono::{NaiveDate, Weekday};
 use clap::{Args, ValueHint};
-use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::eyre::{Result, WrapErr, eyre};
 use inquire::DateSelect;
 use jira::{
-    models::{IssueKey, PostWorklogBody, WorklogDuration},
     JiraAPIClient,
+    models::{IssueKey, PostWorklogBody, WorklogDuration},
 };
 
 use super::shared::{ExecCommand, UseFilter};

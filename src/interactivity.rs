@@ -1,9 +1,9 @@
 use crate::{commands::shared::UseFilter, config::Config};
 use chrono::Utc;
-use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::eyre::{Result, WrapErr, eyre};
 use jira::{
-    models::{Issue, IssueKey},
     JiraAPIClient,
+    models::{Issue, IssueKey},
 };
 
 #[cfg(feature = "cloud")]

@@ -4,8 +4,8 @@ use crate::config::Config;
 use clap::Args;
 use color_eyre::eyre::{Context, Result};
 use jira::{
-    models::{Issue, PostIssueQueryResponseBody},
     JiraAPIClient,
+    models::{Issue, PostIssueQueryResponseBody},
 };
 use serde::Serialize;
 use serde_json::Value as JsonValue;

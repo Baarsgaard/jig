@@ -2,11 +2,11 @@ use std::fmt::{Display, Formatter};
 
 use crate::{config::Config, interactivity::issue_from_branch_or_prompt, repo::Repository};
 use clap::{Args, ValueHint};
-use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::eyre::{Result, WrapErr, eyre};
 use inquire::{Select, Text};
 use jira::{
-    models::{GetAssignableUserParams, IssueKey, User},
     JiraAPIClient,
+    models::{GetAssignableUserParams, IssueKey, User},
 };
 
 use super::shared::{ExecCommand, UseFilter};

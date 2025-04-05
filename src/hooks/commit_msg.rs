@@ -5,10 +5,10 @@ use crate::{
     repo::{self, Repository},
 };
 use color_eyre::{
-    eyre::{eyre, WrapErr},
     Result, Section,
+    eyre::{WrapErr, eyre},
 };
-use jira::{models::IssueKey, JiraAPIClient};
+use jira::{JiraAPIClient, models::IssueKey};
 use regex::Regex;
 use std::{fmt::Display, path::PathBuf};
 
@@ -81,17 +81,17 @@ impl Hook for CommitMsg {
                     Err(eyre!(
                         "Issue key in commit message does not match '{bik}' in the branch name!",
                     )
-                    .with_note(|| {
-                        "Enabling 'allow_branch_and_commit_msg_mismatch' will skip this check"
-                    }))
+                    .with_note(
+                        || "Enabling 'allow_branch_and_commit_msg_mismatch' will skip this check",
+                    ))
                 }
                 // Fail if branch is missing issue key unless allowed
                 (Err(_), _) if !cfg.hooks_cfg.allow_branch_missing_issue_key => {
                     Err(eyre!("Issue key not found in branch name")
                         .with_suggestion(|| "create a branch using: jig branch")
-                        .with_note(|| {
-                            "Enabling 'allow_branch_missing_issue_key' will skip this check"
-                        }))
+                        .with_note(
+                            || "Enabling 'allow_branch_missing_issue_key' will skip this check",
+                        ))
                 }
 
                 // Happy path
@@ -127,9 +127,9 @@ impl Hook for CommitMsg {
             Some(c) => c,
             None => {
                 return Err(
-                    eyre!("Commit message only contains an issue key").with_suggestion(|| {
-                        "Please write a commit message conveying the intent of the change"
-                    }),
+                    eyre!("Commit message only contains an issue key").with_suggestion(
+                        || "Please write a commit message conveying the intent of the change",
+                    ),
                 );
             }
         };

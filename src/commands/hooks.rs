@@ -1,7 +1,7 @@
 use crate::repo::Repository;
 use clap::Args;
-use color_eyre::eyre::{eyre, Result, WrapErr};
 use color_eyre::Section;
+use color_eyre::eyre::{Result, WrapErr, eyre};
 use inquire::Confirm;
 use std::env::{current_exe, var};
 use std::path::PathBuf;

@@ -1,4 +1,4 @@
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{Result, eyre};
 use std::{fmt::Display, path::PathBuf};
 
 use super::*;

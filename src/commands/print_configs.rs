@@ -1,6 +1,6 @@
 use crate::config::{self, Config};
 use clap::Args;
-use color_eyre::eyre::{eyre, Result};
+use color_eyre::eyre::{Result, eyre};
 
 use super::shared::ExecCommand;
 

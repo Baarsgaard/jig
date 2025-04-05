@@ -1,7 +1,7 @@
 use crate::{config::Config, interactivity::issue_from_branch_or_prompt, repo::Repository};
 use clap::Args;
 use color_eyre::eyre::{Result, WrapErr};
-use jira::{models::IssueKey, JiraAPIClient};
+use jira::{JiraAPIClient, models::IssueKey};
 use std::{env, process::Command};
 
 use super::shared::{ExecCommand, UseFilter};

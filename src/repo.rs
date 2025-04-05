@@ -1,6 +1,6 @@
 use crate::config::find_workspace;
-use color_eyre::eyre::{eyre, Result, WrapErr};
 use color_eyre::Section;
+use color_eyre::eyre::{Result, WrapErr, eyre};
 use gix::{Repository as Gix_Repository, ThreadSafeRepository};
 use jira::models::{Issue, IssueKey};
 use std::{path::PathBuf, process::Command};

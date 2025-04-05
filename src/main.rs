@@ -4,12 +4,12 @@ mod hooks;
 mod interactivity;
 mod repo;
 
-use clap::{command, CommandFactory, Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand, command};
 use color_eyre::eyre::{Result, WrapErr};
 use color_eyre::owo_colors::OwoColorize;
 use commands::{shared::ExecCommand, *};
 use config::Config;
-use hooks::{is_git_hook, Hook};
+use hooks::{Hook, is_git_hook};
 use inquire::InquireError;
 
 #[derive(Parser)]

@@ -5,11 +5,11 @@ use crate::{
 };
 use clap::{Args, ValueHint};
 use color_eyre::{
-    eyre::{eyre, Result, WrapErr},
     Section,
+    eyre::{Result, WrapErr, eyre},
 };
 use inquire::Select;
-use jira::{models::IssueKey, JiraAPIClient};
+use jira::{JiraAPIClient, models::IssueKey};
 
 use super::shared::{ExecCommand, UseFilter};
 

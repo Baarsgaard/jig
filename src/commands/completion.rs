@@ -1,7 +1,7 @@
 use std::io;
 
 use clap::{Args, Command};
-use clap_complete::{generate, Shell};
+use clap_complete::{Shell, generate};
 use color_eyre::eyre::Result;
 
 #[derive(Args, Debug)]

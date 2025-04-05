@@ -1,8 +1,8 @@
 use color_eyre::{
-    eyre::{eyre, Result, WrapErr},
     Section,
+    eyre::{Result, WrapErr, eyre},
 };
-use etcetera::base_strategy::{choose_base_strategy, BaseStrategy};
+use etcetera::base_strategy::{BaseStrategy, choose_base_strategy};
 use jira::{Credential, JiraClientConfig};
 use serde::{Deserialize, Serialize};
 use std::{fs, path::PathBuf, sync::OnceLock};

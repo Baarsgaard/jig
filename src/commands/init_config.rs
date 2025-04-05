@@ -1,6 +1,6 @@
 use crate::config::{self, GitHooksRawConfig, RawConfig};
 use clap::Args;
-use color_eyre::eyre::{eyre, Result, WrapErr};
+use color_eyre::eyre::{Result, WrapErr, eyre};
 use color_eyre::owo_colors::OwoColorize;
 use inquire::{Confirm, CustomType, Password, Select, Text};
 use std::{env, fmt::Display, fs, path::PathBuf, process::Command};
