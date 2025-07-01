@@ -64,7 +64,7 @@ impl ExecCommand for Transition {
         {
             return Err(
                 eyre!("Issue cannot be moved with Jig due to required fields.",).with_suggestion(
-                    || format!("Open issue in your browser with: jig open {0}", issue_key),
+                    || format!("Open issue in your browser with: jig open {issue_key}"),
                 ),
             );
         }

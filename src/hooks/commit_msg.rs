@@ -140,7 +140,7 @@ impl Hook for CommitMsg {
 
         let commit_msg_re = Regex::new(r"^([A-Z]{2,}-[0-9]+) [A-Z0-9].*")
             .wrap_err("Unable to compile commit_msg_re")?;
-        let final_msg = format!("{} {}", issue_key, msg);
+        let final_msg = format!("{issue_key} {msg}");
 
         // Final sanity check
         if !commit_msg_re.is_match(&final_msg) {

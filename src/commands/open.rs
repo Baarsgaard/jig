@@ -17,7 +17,7 @@ pub struct Open {
 
 impl Open {
     pub fn open_issue(client: &JiraAPIClient, issue_key: IssueKey) -> Result<String> {
-        let url = client.url.join(format!("/browse/{}", issue_key).as_str())?;
+        let url = client.url.join(format!("/browse/{issue_key}").as_str())?;
         let (browser, args) = match cfg!(target_os = "windows") {
             false => (
                 env::var("BROWSER").wrap_err("Failed to open, missing 'BROWSER' env var")?,
@@ -31,7 +31,7 @@ impl Open {
 
         match Command::new(browser.clone()).args(args).spawn() {
             Ok(_) => Ok(String::default()),
-            Err(e) => Err(e).wrap_err(format!("Failed to open {} using {}", issue_key, browser)),
+            Err(e) => Err(e).wrap_err(format!("Failed to open {issue_key} using {browser}")),
         }
     }
 }

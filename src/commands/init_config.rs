@@ -82,7 +82,7 @@ impl InitConfig {
             match Hooks::install(Hooks { force: false }) {
                 Ok(_) => (),
                 Err(e) => {
-                    eprintln!("{}", format!("Failed to install hook with error: {}\ncd to repository and install with:\njig hook\n", e).bright_red());
+                    eprintln!("{}", format!("Failed to install hook with error: {e}\ncd to repository and install with:\njig hook\n").bright_red());
                     println!()
                 }
             }
@@ -175,7 +175,7 @@ impl InitConfig {
             .prompt()?;
 
         let parsed_url = if !url_input.starts_with("http") {
-            Url::parse(&format!("https://{}", url_input)).wrap_err("Unable to parse url")?
+            Url::parse(&format!("https://{url_input}")).wrap_err("Unable to parse url")?
         } else {
             Url::parse(&url_input).wrap_err("Unable to parse url")?
         };

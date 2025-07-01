@@ -77,7 +77,7 @@ impl ExecCommand for Upgrade {
                 .show_download_progress(!self.quiet)
                 .no_confirm(true);
             if !target_ver.is_empty() {
-                cfg = cfg.target_version_tag(&format!("v{0}", target_ver));
+                cfg = cfg.target_version_tag(&format!("v{target_ver}"));
             }
             if !token.is_empty() {
                 cfg = cfg.auth_token(&token);

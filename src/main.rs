@@ -91,7 +91,7 @@ async fn main() -> Result<()> {
                     | Some(InquireError::OperationCanceled) => std::process::exit(1),
                     _ => {
                         // Add better comments from old hook
-                        eprintln!("{}", format!("Error:\n   {}", e).bright_red());
+                        eprintln!("{}", format!("Error:\n   {e}").bright_red());
                         std::process::exit(1);
                     }
                 }
@@ -100,7 +100,7 @@ async fn main() -> Result<()> {
     } else {
         let res = Commands::exec(cfg).await;
         match res {
-            Ok(msg) => println!("{}", msg),
+            Ok(msg) => println!("{msg}"),
             Err(e) => match e.root_cause().downcast_ref::<InquireError>() {
                 Some(InquireError::OperationInterrupted)
                 | Some(InquireError::OperationCanceled) => std::process::exit(1),
