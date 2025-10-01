@@ -17,7 +17,6 @@ on:
       - .cargo/**
       - .github/workflows/integration.yml
   workflow_dispatch:
-
 jobs:
   test:
     name: Cargo test
@@ -28,19 +27,15 @@ jobs:
         build:
           - x86_64-linux
           # - x86_64-windows
-        feature:
-          - data-center
-          - cloud
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
             build: x86_64-linux
             ext: ""
-
-          # - target: x86_64-pc-windows-msvc
-          #   os: windows-latest
-          #   build: x86_64-windows
-          #   ext: .exe
+            # - target: x86_64-pc-windows-msvc
+            #   os: windows-latest
+            #   build: x86_64-windows
+            #   ext: .exe
     steps:
       - uses: actions/checkout@v5
       - uses: actions/cache@v4
@@ -52,12 +47,10 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: cargo-test-${{ matrix.build }}-${{ matrix.feature }}-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: cargo-test-${{ matrix.build }}-${{ matrix.feature }}-
-
+          key: cargo-test-${{ matrix.build }}-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: cargo-test-${{ matrix.build }}-
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo test --workspace --features ${{ matrix.feature }}
-
+      - run: cargo test --workspace
   lint:
     name: Cargo check/clippy
     runs-on: ubuntu-latest
@@ -66,10 +59,8 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
-
       - run: cargo check
       - run: cargo clippy -- -D warnings
-
   fmt:
     name: Cargo format
     runs-on: ubuntu-latest

@@ -11,7 +11,7 @@ use color_eyre::{
 use inquire::Select;
 use jira::{JiraAPIClient, models::IssueKey};
 
-use super::shared::{ExecCommand, UseFilter};
+use super::shared::ExecCommand;
 
 #[derive(Args, Debug)]
 pub struct Branch {
@@ -32,9 +32,6 @@ pub struct Branch {
     /// Inverts 'always_short_branch_names' setting
     #[arg(short = 's', long = "short")]
     short_name: bool,
-
-    #[command(flatten)]
-    use_filter: UseFilter,
 }
 
 impl ExecCommand for Branch {
@@ -59,7 +56,7 @@ impl ExecCommand for Branch {
 
             query_issue_details(&client, issue_key).await?
         } else {
-            issue_from_branch_or_prompt(&client, cfg, String::default(), self.use_filter).await?
+            issue_from_branch_or_prompt(&client, cfg, String::default()).await?
         };
 
         // Get existing branches

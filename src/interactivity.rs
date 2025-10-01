@@ -1,39 +1,10 @@
-use crate::{commands::shared::UseFilter, config::Config};
+use crate::config::Config;
 use chrono::Utc;
 use color_eyre::eyre::{Result, WrapErr, eyre};
 use jira::{
     JiraAPIClient,
     models::{Issue, IssueKey},
 };
-
-#[cfg(feature = "cloud")]
-mod filter {
-    use super::*;
-
-    use inquire::MultiSelect;
-    use jira::models::Filter;
-    pub fn pick_filter(cfg: &Config, filters: Vec<Filter>) -> Result<String> {
-        if filters.is_empty() {
-            return Err(eyre!("List of filters is empty"));
-        }
-
-        let selected_filters = MultiSelect::new("Saved issue filter:", filters)
-            .with_help_message("Only displays favourited filters")
-            .prompt()
-            .wrap_err("Filter prompt interrupted")?;
-
-        let filter_list = selected_filters
-            .iter()
-            .map(|filter| format!("filter={}", filter.id))
-            .collect::<Vec<String>>();
-
-        if cfg.inclusive_filters.unwrap_or(true) {
-            Ok(filter_list.join(" OR "))
-        } else {
-            Ok(filter_list.join(" AND "))
-        }
-    }
-}
 
 // Might be useful one day
 #[allow(dead_code)]
@@ -55,19 +26,12 @@ pub async fn issue_from_branch_or_prompt(
     client: &JiraAPIClient,
     cfg: &Config,
     head_name: String,
-    _use_filter: UseFilter,
 ) -> Result<Issue> {
     if let Ok(issue_key) = IssueKey::try_from(head_name) {
         return query_issue_details(client, issue_key).await;
     }
 
-    #[cfg(not(feature = "cloud"))]
     let query = cfg.issue_query.clone();
-    #[cfg(feature = "cloud")]
-    let query = match _use_filter.value {
-        true => filter::pick_filter(cfg, client.search_filters(None).await?.filters)?,
-        false => cfg.issue_query.clone(),
-    };
 
     let issues = query_issues_empty_err(client, &query).await?;
     prompt_user_with_issue_select(issues)
@@ -105,7 +69,7 @@ pub async fn query_issues_empty_err(client: &JiraAPIClient, query: &str) -> Resu
         .await
         .wrap_err("Issue query failed")
     {
-        Ok(query_res) if query_res.total == 0 => {
+        Ok(query_res) if query_res.issues.is_empty() => {
             Err(eyre!("No issues found using set issue_query"))
         }
         Ok(query_res) => Ok(query_res.issues),

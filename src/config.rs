@@ -1,6 +1,6 @@
 use color_eyre::{
     Section,
-    eyre::{Result, WrapErr, eyre},
+    eyre::{Result, WrapErr},
 };
 use etcetera::base_strategy::{BaseStrategy, choose_base_strategy};
 use jira::{Credential, JiraClientConfig};
@@ -18,10 +18,6 @@ pub struct RawConfig {
     pub jira_url: String,
     /// Primary query to use when fetching issues.
     pub issue_query: String,
-    /// email or username used as login.
-    pub user_login: Option<String>,
-    /// API token for Cloud.
-    pub api_token: Option<String>,
     /// Personal access token for Server.
     pub pat_token: Option<String>,
     /// How long to wait for a response.
@@ -35,9 +31,6 @@ pub struct RawConfig {
     pub enable_comment_prompts: Option<bool>,
     /// When moving issue, skip prompt if there is only one option.
     pub one_transition_auto_move: Option<bool>,
-    #[cfg(feature = "cloud")]
-    /// Combine filters using `OR` instead of `AND`.
-    pub inclusive_filters: Option<bool>,
     /// Git hooks specific config section.
     pub git_hooks: Option<GitHooksRawConfig>,
 }
@@ -59,8 +52,6 @@ pub struct Config {
     pub issue_query: String,
     pub enable_comment_prompts: Option<bool>,
     pub one_transition_auto_move: Option<bool>,
-    #[cfg(feature = "cloud")]
-    pub inclusive_filters: Option<bool>,
     pub jira_cfg: JiraClientConfig,
     pub hooks_cfg: GitHooksConfig,
 }
@@ -88,14 +79,6 @@ impl Config {
             (Err(e), Err(_)) => Err(e).wrap_err("Config load error"),
         }
         .with_suggestion(|| "Create or overwrite config with: jig init")?;
-
-        if cfg.api_token.is_some() && cfg.user_login.is_none() {
-            Err(eyre!("'user_login' missing, required with api_token"))
-                .wrap_err("Config load error: Bad config")?
-        } else if cfg.api_token.is_none() && cfg.user_login.is_some() {
-            Err(eyre!("'api_token' missing, required with user_login"))
-                .wrap_err("Config load error: Bad config")?
-        }
 
         let mut url = cfg.jira_url.clone();
         if !url.starts_with("http") {
@@ -132,11 +115,6 @@ impl From<RawConfig> for Config {
     fn from(cfg: RawConfig) -> Self {
         let credential = if let Some(pat) = cfg.pat_token {
             Credential::PersonalAccessToken(pat)
-        } else if let Some(api_token) = cfg.api_token {
-            Credential::ApiToken {
-                login: cfg.user_login.expect("user_login is unset."),
-                token: api_token,
-            }
         } else {
             Credential::Anonymous
         };
@@ -145,8 +123,6 @@ impl From<RawConfig> for Config {
             issue_query: cfg.issue_query,
             enable_comment_prompts: cfg.enable_comment_prompts,
             one_transition_auto_move: cfg.one_transition_auto_move,
-            #[cfg(feature = "cloud")]
-            inclusive_filters: cfg.inclusive_filters,
             jira_cfg: JiraClientConfig {
                 credential,
                 max_query_results: cfg.max_query_results.unwrap_or(50u32),

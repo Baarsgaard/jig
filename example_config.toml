@@ -1,15 +1,11 @@
 # Example configuration generated when running: jig init
 jira_url = "https://example.atlassian.net"
-user_login = ""
-api_token = ""
-# pat_token = "" # Auth method for datacenter deployments
+pat_token = ""
 issue_query = "assignee = currentUser() ORDER BY updated DESC"
 jira_timeout_seconds = 10
 max_query_results = 100
 enable_comment_prompts = false
 one_transition_auto_move = false
-# Cloud only
-inclusive_filters = true
 
 [git_hooks]
 # Disables check for branch name containing issue key

@@ -1,11 +1,9 @@
 name: Create Release
-
 on:
   push:
     branches:
       - master
   workflow_dispatch:
-
 jobs:
   get-tags:
     name: Create tagged release
@@ -16,30 +14,25 @@ jobs:
       old-version: ${{ steps.old-version.outputs.OLD_VERSION }}
     steps:
       - uses: actions/checkout@v5
-
       - name: Get old tag
         id: old-version
         shell: bash
         run: |
           echo OLD_VERSION="$(curl "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/tags" | jq -r '.[0].name')" >> $GITHUB_OUTPUT
-
       - name: Get tag
         id: crate-version
         shell: bash
         run: |
           echo CRATE_VERSION=$(awk -F ' = ' '$1 ~ /version/ { gsub(/["]/, "", $2); printf("%s",$2) }' Cargo.toml) >> $GITHUB_OUTPUT
-
       - run: "echo '::notice:: Tag = v${{ steps.crate-version.outputs.CRATE_VERSION }}'"
-
       - name: Create draft release
         run: >
-          envsubst '$CRATE_VERSION $OLD_VERSION' < .github/release-notes.md |
-          gh release create "v$CRATE_VERSION" --title "v$CRATE_VERSION" --notes-file - --draft
+          envsubst '$CRATE_VERSION $OLD_VERSION' < .github/release-notes.md | gh release create "v$CRATE_VERSION" --title "v$CRATE_VERSION" --notes-file - --draft
+
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           CRATE_VERSION: ${{ steps.crate-version.outputs.CRATE_VERSION }}
           OLD_VERSION: ${{ steps.old-version.outputs.OLD_VERSION }}
-
   build:
     name: Build & Upload
     runs-on: ${{ matrix.os }}
@@ -52,9 +45,6 @@ jobs:
           - x86_64-linux
           - x86_64-linux-musl
           - x86_64-windows
-        feature:
-          - data-center
-          - cloud
         include:
           - target: x86_64-unknown-linux-gnu
             os: ubuntu-latest
@@ -70,7 +60,6 @@ jobs:
             ext: .exe
     steps:
       - uses: actions/checkout@v5
-
       - uses: actions/cache@v4
         continue-on-error: false
         with:
@@ -80,24 +69,20 @@ jobs:
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
             target/
-          key: cargo-release-${{ matrix.build }}-${{ matrix.feature }}-${{ hashFiles('**/Cargo.toml') }}
-          restore-keys: cargo-release-${{ matrix.build }}-${{ matrix.feature }}-
-
+          key: cargo-release-${{ matrix.build }}-${{ hashFiles('**/Cargo.toml') }}
+          restore-keys: cargo-release-${{ matrix.build }}-
       - if: ${{ contains(matrix.target, '-musl')}}
         run: sudo apt install musl-tools
-
       - uses: dtolnay/rust-toolchain@nightly
         with:
           targets: ${{ matrix.target }}
-
-      - name: "Build ${{ matrix.build }} features: ${{ matrix.feature }}"
-        run: cargo +nightly build --release --features ${{ matrix.feature }} --target ${{ matrix.target }}
+      - name: "Build ${{ matrix.build }}"
+        run: cargo +nightly build --release --target ${{ matrix.target }}
         env:
           RUSTFLAGS: -Zlocation-detail=none
-
       - run: mkdir dist
-      - run: mv target/${{ matrix.target }}/release/jig${{ matrix.ext }}      dist/jig-${{ matrix.feature }}-${{ matrix.target }}${{ matrix.ext }}
-      - run: gh release upload 'v${{ needs.get-tags.outputs.crate-version }}' dist/jig-${{ matrix.feature }}-${{ matrix.target }}${{ matrix.ext }}
+      - run: mv target/${{ matrix.target }}/release/jig${{ matrix.ext }}      dist/jig-${{ matrix.target }}${{ matrix.ext }}
+      - run: gh release upload 'v${{ needs.get-tags.outputs.crate-version }}' dist/jig-${{ matrix.target }}${{ matrix.ext }}
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
-      - run: "echo '::notice:: Upload finished: jig-${{ matrix.feature }}-${{ matrix.target }}${{ matrix.ext }}'"
+      - run: "echo '::notice:: Upload finished: jig-${{ matrix.target }}${{ matrix.ext }}'"

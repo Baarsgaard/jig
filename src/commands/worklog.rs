@@ -14,7 +14,7 @@ use jira::{
     models::{IssueKey, PostWorklogBody, WorklogDuration},
 };
 
-use super::shared::{ExecCommand, UseFilter};
+use super::shared::ExecCommand;
 
 #[derive(Args, Debug)]
 pub struct Worklog {
@@ -42,9 +42,6 @@ pub struct Worklog {
 
     #[arg(value_name = "ISSUE_KEY")]
     issue_key_input: Option<String>,
-
-    #[command(flatten)]
-    use_filter: UseFilter,
 }
 
 impl ExecCommand for Worklog {
@@ -59,11 +56,7 @@ impl ExecCommand for Worklog {
         // issue key
         let issue_key = match self.issue_key_input {
             Some(issue_key_input) => IssueKey::try_from(issue_key_input)?,
-            None => {
-                issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)
-                    .await?
-                    .key
-            }
+            None => issue_from_branch_or_prompt(&client, cfg, head).await?.key,
         };
 
         // worklog date

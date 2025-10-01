@@ -8,8 +8,6 @@ use self_update::{
 };
 use std::{env, fmt::Display, thread};
 
-use crate::{config::Config, shared::ExecCommand};
-
 #[derive(Args, Debug)]
 pub struct Upgrade {
     /// Suppress all output
@@ -22,9 +20,8 @@ pub struct Upgrade {
     select: bool,
 }
 
-impl ExecCommand for Upgrade {
-    async fn exec(self, cfg: &Config) -> Result<String> {
-        let cfg = cfg.clone();
+impl Upgrade {
+    pub async fn upgrade(self) -> Result<String> {
         thread::spawn(move || {
             let token = env::var("GITHUB_TOKEN").unwrap_or_default();
             let target_ver = if self.select {
@@ -58,20 +55,11 @@ impl ExecCommand for Upgrade {
                 self_update::cargo_crate_version!()
             };
 
-            // TODO Identifier does not work
-            // TODO make this rely on features when the correct bins have been downloaded
-            let target = if cfg.jira_cfg.url.contains("atlassian.net") {
-                format!("{}-{}", "cloud", env!("TARGET"))
-            } else {
-                format!("{}-{}", "data-center", env!("TARGET"))
-            };
-
             let mut builder = Update::configure();
             let mut cfg = builder
                 .repo_owner("baarsgaard")
                 .repo_name("jig")
                 .bin_name("jig")
-                .target(target.as_str())
                 .show_output(!self.quiet)
                 .current_version(current_ver)
                 .show_download_progress(!self.quiet)

@@ -5,7 +5,7 @@ use inquire::Text;
 use jira::JiraAPIClient;
 use jira::models::{IssueKey, PostCommentBody};
 
-use super::shared::{ExecCommand, UseFilter};
+use super::shared::ExecCommand;
 
 #[derive(Args, Debug)]
 pub struct Comment {
@@ -14,9 +14,6 @@ pub struct Comment {
 
     #[arg(value_name = "ISSUE_KEY")]
     issue_key_input: Option<String>,
-
-    #[command(flatten)]
-    use_filter: UseFilter,
 }
 
 impl ExecCommand for Comment {
@@ -31,9 +28,7 @@ impl ExecCommand for Comment {
         let issue_key = if self.issue_key_input.is_some() {
             IssueKey::try_from(self.issue_key_input.unwrap())?
         } else {
-            issue_from_branch_or_prompt(&client, cfg, head, self.use_filter)
-                .await?
-                .key
+            issue_from_branch_or_prompt(&client, cfg, head).await?.key
         };
 
         let comment = match self.comment_input {

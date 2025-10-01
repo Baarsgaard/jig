@@ -10,7 +10,7 @@ use jira::{
 use serde::Serialize;
 use serde_json::Value as JsonValue;
 
-use super::shared::{ExecCommand, UseFilter};
+use super::shared::ExecCommand;
 
 #[derive(Args, Debug)]
 pub struct Query {
@@ -29,9 +29,6 @@ pub struct Query {
     /// Pretty print JSON
     #[arg(short, long)]
     pretty: bool,
-
-    #[command(flatten)]
-    use_filter: UseFilter,
 }
 
 impl ExecCommand for Query {
@@ -68,11 +65,7 @@ impl ExecCommand for Query {
 #[serde(rename_all = "camelCase")]
 struct PrintIssueQuery {
     /// https://docs.atlassian.com/software/jira/docs/api/REST/7.6.1/#api/2/search
-    pub expand: String,
     pub issues: Vec<PrintIssue>,
-    pub max_results: u32,
-    pub start_at: u32,
-    pub total: u32,
     /// Some when expanding names on query_issues
     pub names: Option<HashMap<String, String>>,
 }
@@ -83,10 +76,6 @@ impl From<PostIssueQueryResponseBody> for PrintIssueQuery {
 
         PrintIssueQuery {
             issues,
-            expand: body.expand,
-            max_results: body.max_results,
-            start_at: body.start_at,
-            total: body.total,
             names: body.names,
         }
     }

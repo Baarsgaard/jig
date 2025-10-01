@@ -64,18 +64,14 @@ jig move
 
 ## installation
 
-Pick between `cloud` and `data-center` instances (The APIs are slightly different)
-
 ### Linux
 
 wget
 
 ```bash
 mkdir -p ~/.local/bin || true
-# Cloud 
-wget -O ~/.local/bin/jig "https://github.com/baarsgaard/jig/releases/latest/download/jig-cloud-x86_64-unknown-linux-gnu"
-# Data-center
-wget -O ~/.local/bin/jig "https://github.com/baarsgaard/jig/releases/latest/download/jig-data-center-x86_64-unknown-linux-gnu"
+
+wget -O ~/.local/bin/jig "https://github.com/baarsgaard/jig/releases/latest/download/jig-x86_64-unknown-linux-gnu"
 
 chmod +x ~/.local/bin/jig
 
@@ -84,7 +80,7 @@ chmod +x ~/.local/bin/jig
 
 Using [eget](https://github.com/zyedidia/eget)
 ```bash
-eget baarsgaard/jig --to ~/.local/bin/jig -a gnu -a cloud
+eget baarsgaard/jig --to ~/.local/bin/jig -a gnu
 ```
 
 ### Compile from source
@@ -92,7 +88,7 @@ eget baarsgaard/jig --to ~/.local/bin/jig -a gnu -a cloud
 Compile from source with [Rust](https://www.rust-lang.org/tools/install)
 
 ```bash
-cargo install --locked --git https://github.com/baarsgaard/jig --features <cloud|data-center>
+cargo install --locked --git https://github.com/baarsgaard/jig
 ```
 
 ### Windows

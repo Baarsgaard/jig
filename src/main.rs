@@ -72,7 +72,7 @@ impl Commands {
             Commands::Transition(transition) => transition.exec(&cfg?).await,
             Commands::Open(open) => open.exec(&cfg?).await,
             Commands::Query(query) => query.exec(&cfg?).await,
-            Commands::Upgrade(upgrade) => upgrade.exec(&cfg?).await,
+            Commands::Upgrade(upgrade) => upgrade.upgrade().await,
         }
     }
 }

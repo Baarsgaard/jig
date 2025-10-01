@@ -56,8 +56,6 @@ impl InitConfig {
         };
         let mut new_cfg = RawConfig {
             jira_url,
-            user_login: None,
-            api_token: None,
             pat_token: None,
             jira_timeout_seconds: Some(10),
             tls_accept_invalid_certs: Some(false),
@@ -65,8 +63,6 @@ impl InitConfig {
             max_query_results: Some(100),
             enable_comment_prompts: Some(false),
             one_transition_auto_move: Some(false),
-            #[cfg(feature = "cloud")]
-            inclusive_filters: Some(true),
             git_hooks: Some(new_git_hooks.clone()),
         };
 
@@ -124,15 +120,6 @@ impl InitConfig {
                 .with_default(new_cfg.one_transition_auto_move.unwrap())
                 .prompt()?,
         );
-        #[cfg(feature = "cloud")]
-        {
-            new_cfg.inclusive_filters = Some(
-                Confirm::new("Join using 'OR' instead of 'AND'")
-                    .with_default(new_cfg.inclusive_filters.unwrap())
-                    .with_help_message("filter=10001 OR filter=10002")
-                    .prompt()?,
-            );
-        }
 
         new_git_hooks.allow_branch_missing_issue_key = Some(
             Confirm::new("Githook: Skip 'branch is missing Issue Key' checks")
@@ -188,11 +175,7 @@ impl InitConfig {
     }
 
     fn set_credentials(icfg: &mut RawConfig) -> Result<()> {
-        let auth_url = if icfg.jira_url.contains("atlassian.net") {
-            let url = String::from("https://id.atlassian.com/manage-profile/security/api-tokens");
-            icfg.api_token = Some(String::default());
-            url
-        } else {
+        let auth_url = {
             let url = format!("{}/secure/ViewProfile.jspa", icfg.jira_url);
             icfg.pat_token = Some(String::default());
             url
@@ -213,14 +196,7 @@ impl InitConfig {
             }
             Ok(browser) => {
                 let _ = Command::new(browser).args(args).spawn();
-                println!(
-                    "Opening your browser, please create a new {}.",
-                    if cfg!(feature = "cloud") {
-                        "API-Token"
-                    } else {
-                        "Personal Access token"
-                    }
-                );
+                println!("Opening your browser, please create a new Personal Access Token(PAT).");
             }
         }
 
@@ -230,16 +206,7 @@ impl InitConfig {
             .prompt()
             .wrap_err("Missing authentication token input")?;
 
-        if icfg.api_token.is_some() {
-            icfg.api_token = Some(token);
-            icfg.user_login = Some(
-                Text::new("Username")
-                    .prompt()
-                    .wrap_err("Username prompt failed")?,
-            );
-        } else {
-            icfg.pat_token = Some(token);
-        }
+        icfg.pat_token = Some(token);
 
         Ok(())
     }

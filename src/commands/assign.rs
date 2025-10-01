@@ -9,7 +9,7 @@ use jira::{
     models::{GetAssignableUserParams, IssueKey, User},
 };
 
-use super::shared::{ExecCommand, UseFilter};
+use super::shared::ExecCommand;
 
 #[derive(Args, Debug)]
 pub struct Assign {
@@ -18,11 +18,8 @@ pub struct Assign {
     issue_key_input: Option<String>,
 
     /// Skip user selection prompt
-    #[arg(short, long, value_name = if cfg!(feature = "cloud") {"ACCOUNT_ID"} else {"NAME"}, value_hint = ValueHint::Unknown)]
+    #[arg(short, long, value_name = "NAME", value_hint = ValueHint::Unknown)]
     user: Option<String>,
-
-    #[command(flatten)]
-    use_filter: UseFilter,
 }
 
 impl ExecCommand for Assign {
@@ -38,14 +35,9 @@ impl ExecCommand for Assign {
         let issue_key = if self.issue_key_input.is_some() {
             IssueKey::try_from(self.issue_key_input.unwrap())?
         } else {
-            issue_from_branch_or_prompt(
-                &client,
-                cfg,
-                head.unwrap_or(String::default()),
-                self.use_filter,
-            )
-            .await?
-            .key
+            issue_from_branch_or_prompt(&client, cfg, head.unwrap_or(String::default()))
+                .await?
+                .key
         };
 
         // Disable query and prompt if --user is supplied
@@ -89,15 +81,10 @@ impl ExecCommand for Assign {
     }
 }
 
-// Necessary to allow also searching server:name and cloud:email
+// Necessary to allow also searching server:name
 struct JiraUser(User);
 
 impl Display for JiraUser {
-    #[cfg(feature = "cloud")]
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}: {}", self.0.display_name, self.0.account_id)
-    }
-    #[cfg(not(feature = "cloud"))]
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}: {}", self.0.display_name, self.0.name)
     }
