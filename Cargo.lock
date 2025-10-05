@@ -1578,7 +1578,7 @@ dependencies = [
 
 [[package]]
 name = "jig"
-version = "0.8.0"
+version = "0.8.1"
 dependencies = [
  "chrono",
  "clap",
@@ -1599,7 +1599,9 @@ dependencies = [
 
 [[package]]
 name = "jira-issue-api"
-version = "0.6.0"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e1eb10916151e118ee6a0db017521e6cc32d13f31f482da9d450121d4f717b2"
 dependencies = [
  "base64",
  "regex",

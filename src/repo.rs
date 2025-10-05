@@ -171,6 +171,8 @@ impl Repository {
 
 #[cfg(test)]
 mod test {
+    use std::collections::BTreeMap;
+
     use super::*;
     use jira::models::{IssueFields, IssueKey};
 
@@ -180,12 +182,13 @@ mod test {
                 summary: Some(String::from(summary.unwrap_or("Example summary"))),
                 ..IssueFields::default()
             },
-            id: String::from("10001"),
+            id: Some(serde_json::to_value("10001").unwrap()),
             key: issue_key
                 .unwrap_or(IssueKey::try_from(String::from("JB-1")).expect("Valid issue key")),
             self_ref: String::from("https://ddd.ddd.com/"),
             expand: Some(String::from("Don't remember")),
             names: None,
+            remainder: BTreeMap::default(),
         }
     }
 
