@@ -72,7 +72,12 @@ struct PrintIssueQuery {
 
 impl From<PostIssueQueryResponseBody> for PrintIssueQuery {
     fn from(body: PostIssueQueryResponseBody) -> Self {
-        let issues = body.issues.into_iter().map(PrintIssue::from).collect();
+        let issues = body
+            .issues
+            .unwrap_or_default()
+            .into_iter()
+            .map(PrintIssue::from)
+            .collect();
 
         PrintIssueQuery {
             issues,

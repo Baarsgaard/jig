@@ -69,10 +69,10 @@ pub async fn query_issues_empty_err(client: &JiraAPIClient, query: &str) -> Resu
         .await
         .wrap_err("Issue query failed")
     {
-        Ok(query_res) if query_res.issues.is_empty() => {
-            Err(eyre!("No issues found using set issue_query"))
+        Ok(query_res) if query_res.issues.is_none() => {
+            Err(eyre!("No issues found using given issue_query"))
         }
-        Ok(query_res) => Ok(query_res.issues),
+        Ok(query_res) => Ok(query_res.issues.unwrap()),
         Err(e) => Err(eyre!(e)),
     }
 }
