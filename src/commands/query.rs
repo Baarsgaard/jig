@@ -26,6 +26,10 @@ pub struct Query {
     #[arg(short, long, num_args = 1, value_delimiter = ',')]
     fields: Option<Vec<String>>,
 
+    /// Comma separated list of expansions
+    #[arg(short, long, num_args = 1, value_delimiter = ',')]
+    expand: Option<Vec<String>>,
+
     /// Pretty print JSON
     #[arg(short, long)]
     pretty: bool,
@@ -47,16 +51,15 @@ impl ExecCommand for Query {
 
         // Avoid query_issues_
         let query_response = client
-            .query_issues(&self.query, self.fields, None)
+            .query_issues(&self.query, self.fields, self.expand)
             .await
             .wrap_err("Issue query failed")?;
 
-        let formatted_response = PrintIssueQuery::from(query_response);
-
         if self.pretty {
+            let formatted_response = PrintIssueQuery::from(query_response);
             serde_json::to_string_pretty(&formatted_response).wrap_err("failed exporting issues")
         } else {
-            serde_json::to_string(&formatted_response).wrap_err("failed exporting issues")
+            serde_json::to_string(&query_response).wrap_err("failed exporting issues")
         }
     }
 }
