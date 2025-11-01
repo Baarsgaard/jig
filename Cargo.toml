@@ -27,5 +27,5 @@ self_update = { version = "0.42.0", default-features = false, features = [
 serde = { version = "1.0.228", features = ["derive"] }
 serde_json = "1.0.145"
 tokio = { version = "1.47.1", features = ["full"] }
-toml = "0.9.5"
+toml = "0.9.8"
 url = { version = "2.5.4", default-features = false }
