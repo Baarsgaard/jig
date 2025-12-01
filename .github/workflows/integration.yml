@@ -37,7 +37,7 @@ jobs:
             #   build: x86_64-windows
             #   ext: .exe
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/cache@v4
         continue-on-error: false
         with:
@@ -55,7 +55,7 @@ jobs:
     name: Cargo check/clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
@@ -65,7 +65,7 @@ jobs:
     name: Cargo format
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
