@@ -4,7 +4,7 @@ mod hooks;
 mod interactivity;
 mod repo;
 
-use clap::{CommandFactory, Parser, Subcommand, command};
+use clap::{CommandFactory, Parser, Subcommand};
 use color_eyre::eyre::{Result, WrapErr};
 use color_eyre::owo_colors::OwoColorize;
 use commands::{shared::ExecCommand, *};
