@@ -1,8 +1,10 @@
 use crate::config::find_workspace;
 use color_eyre::Section;
 use color_eyre::eyre::{Result, WrapErr, eyre};
+use gix::bstr::ByteSlice;
 use gix::{Repository as Gix_Repository, ThreadSafeRepository};
 use jira::models::{Issue, IssueKey};
+use std::str::FromStr;
 use std::{path::PathBuf, process::Command};
 
 #[derive(Debug, Clone)]
@@ -141,16 +143,15 @@ impl Repository {
         }
     }
 
-    pub fn get_hooks_path() -> Result<PathBuf> {
-        let args = vec!["config", "--get", "core.hooksPath"];
-
-        match Command::new("git").args(args).output() {
-            Ok(o) => match String::from_utf8_lossy(&o.stdout) {
-                output if !output.is_empty() => Ok(PathBuf::from(output.to_string().trim())),
-                _ => Self::default_hooks_path(),
-            },
-            Err(_e) => Self::default_hooks_path(),
+    pub fn get_hooks_path(&self) -> Result<PathBuf> {
+        let cfg = self.repo.config_snapshot();
+        if let Some(path) = cfg.string("core.hooksPath")
+            && !path.trim().is_empty()
+        {
+            return Ok(PathBuf::from_str(path.to_str()?)?);
         }
+
+        Self::default_hooks_path()
     }
 
     fn default_hooks_path() -> Result<PathBuf> {
