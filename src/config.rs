@@ -23,7 +23,9 @@ pub struct RawConfig {
     /// How long to wait for a response.
     pub jira_timeout_seconds: Option<u64>,
     /// Accept invalid TLS certificates.
-    pub tls_accept_invalid_certs: Option<bool>,
+    pub insecure_skip_tls_verify: Option<bool>,
+    /// Path to PEM encoded CA certificate
+    pub tls_ca_certificate_path: Option<String>,
     /// Max number of issues to fetch.
     /// max 1500.
     pub max_query_results: Option<u32>,
@@ -128,7 +130,8 @@ impl From<RawConfig> for Config {
                 max_query_results: cfg.max_query_results.unwrap_or(50u32),
                 url: cfg.jira_url,
                 timeout: cfg.jira_timeout_seconds.unwrap_or(10u64),
-                tls_accept_invalid_certs: cfg.tls_accept_invalid_certs.unwrap_or(false),
+                insecure_skip_tls_verify: cfg.insecure_skip_tls_verify.unwrap_or(false),
+                tls_ca_certificate_path: cfg.tls_ca_certificate_path,
             },
             hooks_cfg: GitHooksConfig::from(cfg.git_hooks),
         }

@@ -58,7 +58,7 @@ impl InitConfig {
             jira_url,
             pat_token: None,
             jira_timeout_seconds: Some(10),
-            tls_accept_invalid_certs: Some(false),
+            insecure_skip_tls_verify: Some(false),
             issue_query: String::from("assignee = currentUser() ORDER BY updated DESC"),
             max_query_results: Some(100),
             enable_comment_prompts: Some(false),
