@@ -32,8 +32,8 @@ impl ExecCommand for Assign {
             Err(_) => None,
         };
 
-        let issue_key = if self.issue_key_input.is_some() {
-            IssueKey::try_from(self.issue_key_input.unwrap())?
+        let issue_key = if let Some(key_input) = self.issue_key_input {
+            IssueKey::try_from(key_input)?
         } else {
             issue_from_branch_or_prompt(&client, cfg, head.unwrap_or(String::default()))
                 .await?
