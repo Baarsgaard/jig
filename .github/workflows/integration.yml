@@ -38,6 +38,7 @@ jobs:
             #   ext: .exe
     steps:
       - uses: actions/checkout@v6
+
       - uses: actions/cache@v5
         continue-on-error: false
         with:
@@ -49,24 +50,24 @@ jobs:
             target/
           key: cargo-test-${{ matrix.build }}-${{ hashFiles('**/Cargo.toml') }}
           restore-keys: cargo-test-${{ matrix.build }}-
+
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo test --workspace
+
+      - run: "cargo check"
+
+      - run: "cargo test --workspace"
+
+
   lint:
     name: Cargo check/clippy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+
       - uses: dtolnay/rust-toolchain@stable
         with:
-          components: clippy
-      - run: cargo check
-      - run: cargo clippy -- -D warnings
-  fmt:
-    name: Cargo format
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-      - run: cargo fmt --all --verbose --check
+          components: clippy,rustfmt
+
+      - run: "cargo clippy -- -D warnings"
+
+      - run: "cargo fmt --all --verbose --check"
