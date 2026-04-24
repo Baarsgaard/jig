@@ -100,7 +100,7 @@ async fn main() -> Result<()> {
     } else {
         let res = Commands::exec(cfg).await;
         match res {
-            Ok(msg) => println!("Jig Error: {msg}"),
+            Ok(msg) => println!("{msg}"),
             Err(e) => match e.root_cause().downcast_ref::<InquireError>() {
                 Some(InquireError::OperationInterrupted)
                 | Some(InquireError::OperationCanceled) => std::process::exit(1),

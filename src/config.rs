@@ -121,6 +121,14 @@ impl From<RawConfig> for Config {
             Credential::Anonymous
         };
 
+        let ca_certificate = if let Some(path) = cfg.tls_ca_certificate_path
+            && !path.trim().is_empty()
+        {
+            fs::read_to_string(path).ok()
+        } else {
+            None
+        };
+
         Config {
             issue_query: cfg.issue_query,
             enable_comment_prompts: cfg.enable_comment_prompts,
@@ -131,7 +139,7 @@ impl From<RawConfig> for Config {
                 url: cfg.jira_url,
                 timeout: cfg.jira_timeout_seconds.unwrap_or(10u64),
                 insecure_skip_tls_verify: cfg.insecure_skip_tls_verify.unwrap_or(false),
-                tls_ca_certificate_path: cfg.tls_ca_certificate_path,
+                ca_certificate,
             },
             hooks_cfg: GitHooksConfig::from(cfg.git_hooks),
         }
