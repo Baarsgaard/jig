@@ -2113,9 +2113,9 @@ dependencies = [
 
 [[package]]
 name = "jira-issue-api"
-version = "0.7.1"
+version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b74830194c256da6c2a1b52114392fdd7ac0482c72275df77b3d6f7ca49c67f6"
+checksum = "8487239e5152052a0d0034cd12a3bfcae08e7a69b3f730291d41c96eaea69191"
 dependencies = [
  "base64",
  "regex",
