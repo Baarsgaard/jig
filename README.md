@@ -1,3 +1,5 @@
+
+
 [![Build Status](https://github.com/baarsgaard/jig/actions/workflows/integration.yml/badge.svg)](https://github.com/baarsgaard/jig/actions)
 
 # Jig
@@ -56,7 +58,7 @@ jig comment "Note: Changed impl due to X"
 jig log 1h --comment "Bug squashed"
 
 # Transition issue according to your workflow.
-jig move
+jig transition
 ```
 
 [![asciicast](https://asciinema.org/a/609019.svg)](https://asciinema.org/a/609019)
@@ -141,4 +143,3 @@ Primarily:
 - [Scripting](./scripts/weekly_worklogs.sh), I live for automation.
 
 </details>
-
